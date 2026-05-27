@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
-import { checkinSchema } from '@/lib/validations'
+import { updateTaskSchema } from '@/lib/validations'
 
-export async function POST(request) {
+export async function PATCH(request, { params }) {
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
     const { success } = await rateLimiter.limit(ip)
@@ -14,38 +14,27 @@ export async function POST(request) {
     if (!user) return unauthorized()
 
     const body = await request.json()
-    const parsed = checkinSchema.safeParse(body)
+    const parsed = updateTaskSchema.safeParse(body)
     if (!parsed.success) return badRequest(parsed.error.errors[0].message)
 
     const supabase = await createClient()
-
-    // Save checkin
     const { data, error } = await supabase
-      .from('checkins')
-      .insert({ ...parsed.data, user_id: user.id })
+      .from('tasks')
+      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .eq('id', params.id)
+      .eq('user_id', user.id)
       .select()
       .single()
 
     if (error) return serverError(error.message)
 
-    // Update task status too
-    await supabase
-      .from('tasks')
-      .update({
-        status: parsed.data.status === 'done' ? 'done' :
-                parsed.data.status === 'stuck' ? 'stuck' : 'in_progress',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', parsed.data.task_id)
-      .eq('user_id', user.id)
-
-    return NextResponse.json({ data }, { status: 201 })
+    return NextResponse.json({ data })
   } catch (err) {
     return serverError()
   }
 }
 
-export async function GET(request) {
+export async function DELETE(request, { params }) {
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
     const { success } = await rateLimiter.limit(ip)
@@ -55,16 +44,15 @@ export async function GET(request) {
     if (!user) return unauthorized()
 
     const supabase = await createClient()
-    const { data, error } = await supabase
-      .from('checkins')
-      .select('*, tasks(title)')
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', params.id)
       .eq('user_id', user.id)
-      .order('checked_at', { ascending: false })
-      .limit(20)
 
     if (error) return serverError(error.message)
 
-    return NextResponse.json({ data })
+    return NextResponse.json({ message: 'Task deleted' })
   } catch (err) {
     return serverError()
   }
