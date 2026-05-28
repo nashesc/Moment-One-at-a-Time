@@ -9,7 +9,7 @@ export async function GET(request) {
     const { success } = await rateLimiter.limit(ip)
     if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
-    const user = await getUser()
+    const user = await getUser(request)
     if (!user) return unauthorized()
 
     const { searchParams } = new URL(request.url)

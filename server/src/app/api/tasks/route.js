@@ -12,7 +12,7 @@ export async function GET(request) {
     if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     // Auth check
-    const user = await getUser()
+    const user = await getUser(request)
     if (!user) return unauthorized()
 
     // Get date filter from query params
@@ -44,13 +44,13 @@ export async function POST(request) {
     if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     // Auth check
-    const user = await getUser()
+    const user = await getUser(request)
     if (!user) return unauthorized()
 
     // Validate body
     const body = await request.json()
     const parsed = taskSchema.safeParse(body)
-    if (!parsed.success) return badRequest(parsed.error.errors[0].message)
+    if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
     // Insert
     const supabase = await createClient()

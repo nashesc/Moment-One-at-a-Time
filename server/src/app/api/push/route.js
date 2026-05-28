@@ -7,12 +7,12 @@ import { sendPushNotification } from '@/lib/push'
 // Save push subscription
 export async function POST(request) {
   try {
-    const user = await getUser()
+    const user = await getUser(request)
     if (!user) return unauthorized()
 
     const body = await request.json()
     const parsed = pushSubscriptionSchema.safeParse(body)
-    if (!parsed.success) return badRequest(parsed.error.errors[0].message)
+    if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
     const supabase = await createClient()
     const { error } = await supabase
@@ -33,7 +33,7 @@ export async function POST(request) {
 // Send test push notification
 export async function GET(request) {
   try {
-    const user = await getUser()
+    const user = await getUser(request)
     if (!user) return unauthorized()
 
     const supabase = await createClient()

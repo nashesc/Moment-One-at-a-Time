@@ -10,12 +10,12 @@ export async function POST(request) {
     const { success } = await rateLimiter.limit(ip)
     if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
-    const user = await getUser()
+    const user = await getUser(request)
     if (!user) return unauthorized()
 
     const body = await request.json()
     const parsed = checkinSchema.safeParse(body)
-    if (!parsed.success) return badRequest(parsed.error.errors[0].message)
+    if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
     const supabase = await createClient()
 
@@ -51,7 +51,7 @@ export async function GET(request) {
     const { success } = await rateLimiter.limit(ip)
     if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
-    const user = await getUser()
+    const user = await getUser(request)
     if (!user) return unauthorized()
 
     const supabase = await createClient()

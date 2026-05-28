@@ -5,6 +5,8 @@ const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL,
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
 })
+console.log('Redis URL:', process.env.UPSTASH_REDIS_REST_URL)
+console.log('Redis Token:', process.env.UPSTASH_REDIS_REST_TOKEN)
 
 // 10 requests per 10 seconds per IP
 export const rateLimiter = new Ratelimit({
