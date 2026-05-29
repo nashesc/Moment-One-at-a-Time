@@ -5,7 +5,9 @@ export const taskSchema = z.object({
   description: z.string().max(500).optional(),
   status: z.enum(['pending', 'in_progress', 'done', 'stuck', 'skipped']).default('pending'),
   priority: z.number().int().min(1).max(3).default(1),
-  scheduled_date: z.string().default(() => new Date().toISOString().split('T')[0]),
+  scheduled_date: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD')
+    .default(() => new Date().toISOString().split('T')[0]),
   estimated_minutes: z.number().int().min(5).max(480).default(30),
   order_index: z.number().int().default(0),
 })

@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { supabase } from '@/lib/supabase/server'
 import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
 import { pushSubscriptionSchema } from '@/lib/validations'
 import { sendPushNotification } from '@/lib/push'
+import { rateLimiter } from '@/lib/ratelimit'
 
 // Save push subscription
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
+    const { success } = await rateLimiter.limit(ip)
+    if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+
     const user = await getUser(request)
     if (!user) return unauthorized()
 
@@ -14,7 +19,6 @@ export async function POST(request) {
     const parsed = pushSubscriptionSchema.safeParse(body)
     if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
-    const supabase = await createClient()
     const { error } = await supabase
       .from('subscriptions')
       .upsert({
@@ -36,7 +40,6 @@ export async function GET(request) {
     const user = await getUser(request)
     if (!user) return unauthorized()
 
-    const supabase = await createClient()
     const { data, error } = await supabase
       .from('subscriptions')
       .select('subscription')

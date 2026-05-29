@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { supabase } from '@/lib/supabase/server'
 import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { checkinSchema } from '@/lib/validations'
@@ -17,8 +17,15 @@ export async function POST(request) {
     const parsed = checkinSchema.safeParse(body)
     if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
-    const supabase = await createClient()
+    const { data: task } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('id', parsed.data.task_id)
+      .eq('user_id', user.id)
+      .single()
 
+    if (!task) return badRequest('Task not found')
+      
     // Save checkin
     const { data, error } = await supabase
       .from('checkins')
@@ -54,7 +61,6 @@ export async function GET(request) {
     const user = await getUser(request)
     if (!user) return unauthorized()
 
-    const supabase = await createClient()
     const { data, error } = await supabase
       .from('checkins')
       .select('*, tasks(title)')

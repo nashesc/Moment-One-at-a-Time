@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { supabase } from '@/lib/supabase/server'
 import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { updateTaskSchema } from '@/lib/validations'
 
 export async function PATCH(request, context) {
   const { id } = await context.params
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!uuidRegex.test(id)) return badRequest('Invalid task ID')
 
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
@@ -19,7 +22,6 @@ export async function PATCH(request, context) {
     const parsed = updateTaskSchema.safeParse(body)
     if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
-    const supabase = await createClient()
     const { data, error } = await supabase
       .from('tasks')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
@@ -47,7 +49,6 @@ export async function DELETE(request, context) {
     const user = await getUser(request)
     if (!user) return unauthorized()
 
-    const supabase = await createClient()
     const { error } = await supabase
       .from('tasks')
       .delete()

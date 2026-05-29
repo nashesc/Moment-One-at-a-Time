@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { supabase } from '@/lib/supabase/server'
 import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { taskSchema } from '@/lib/validations'
@@ -17,10 +17,12 @@ export async function GET(request) {
 
     // Get date filter from query params
     const { searchParams } = new URL(request.url)
-    const date = searchParams.get('date') || new Date().toISOString().split('T')[0]
+    const rawDate = searchParams.get('date')
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+    if (rawDate && !dateRegex.test(rawDate)) return badRequest('Invalid date format. Use YYYY-MM-DD')
+    const date = rawDate || new Date().toISOString().split('T')[0]
 
     // Query
-    const supabase = await createClient()
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
@@ -53,7 +55,6 @@ export async function POST(request) {
     if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
     // Insert
-    const supabase = await createClient()
     const { data, error } = await supabase
       .from('tasks')
       .insert({ ...parsed.data, user_id: user.id })
