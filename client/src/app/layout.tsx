@@ -1,37 +1,23 @@
-import type { Metadata } from 'next'
-import { Playfair_Display, Inter } from 'next/font/google'
-import { Navigation } from '@/components/layout/Navigation'
-import './globals.css'
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
-  display: 'swap',
-})
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
+import type { Metadata, Viewport } from 'next'
+import './globals.css' // adjust if your globals.css is in styles/
 
 export const metadata: Metadata = {
-  title: 'Moment: One at a Time',
-  description: 'Focus on what truly matters, one moment at a time.',
+  title: 'Moment — One at a Time',
+  description: 'A calm, focused task app.',
+  manifest: '/manifest.json',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#2D5A27',
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
-      <body>
-        <Navigation />
-        <div className="md:pl-64">
-          {children}
-        </div>
+    <html lang="en">
+      <body className="min-h-screen bg-[var(--off-white)]">
+        {children}
       </body>
     </html>
   )

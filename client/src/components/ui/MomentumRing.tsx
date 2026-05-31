@@ -1,50 +1,45 @@
-import React from "react";
-
 interface MomentumRingProps {
-  completed: number;
-  total: number;
+  done: number
+  total: number
+  size?: number
 }
 
-export function MomentumRing({ completed, total }: MomentumRingProps) {
-  const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
-  const radius = 45;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+export default function MomentumRing({ done, total, size = 84 }: MomentumRingProps) {
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100)
+  const r = (size / 2) - 8
+  const circ = 2 * Math.PI * r
+  const offset = circ - (pct / 100) * circ
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-2">
-      <div className="relative w-32 h-32 flex items-center justify-center">
-        {/* Background Track */}
-        <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 128 128">
-          <circle
-            cx="64"
-            cy="64"
-            r={radius}
-            stroke="var(--color-pale-green)"
-            strokeWidth="8"
-            fill="none"
-          />
-          {/* Progress Ring */}
-          <circle
-            cx="64"
-            cy="64"
-            r={radius}
-            stroke="var(--color-sage-green)"
-            strokeWidth="8"
-            fill="none"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
-          />
-        </svg>
-        <span className="font-playfair text-3xl font-bold text-nature-green">
-          {percentage}%
-        </span>
-      </div>
-      <span className="text-xs text-text-gray font-inter">
-        {completed} of {total} moments completed
-      </span>
+    <div className="flex flex-col items-center">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          fill="none" stroke="var(--green-pale)" strokeWidth="7"
+        />
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          fill="none" stroke="var(--green-sage)" strokeWidth="7"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+        />
+        <text
+          x={size / 2} y={size / 2 + 5}
+          textAnchor="middle"
+          fontFamily="'Playfair Display', serif"
+          fontSize={size > 90 ? 20 : 16}
+          fontWeight="600"
+          fill="var(--text-dark)"
+        >
+          {pct}%
+        </text>
+      </svg>
+      <p className="mt-1 text-xs text-[var(--text-gray)]">
+        {done} of {total} moments completed
+      </p>
     </div>
-  );
+  )
 }

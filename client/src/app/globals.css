@@ -1,126 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap');
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
 
 :root {
-  /* Nature Green */
-  --green-900: #1a3a16;
-  --green-800: #2D5A27;
-  --green-700: #3D7A35;
-  --green-500: #5A9E50;
-  --green-300: #A8C5A0;
-  --green-100: #D4E8CF;
-  --green-50:  #EEF5EC;
-
-  /* Sky Blue */
-  --blue-900: #0f2340;
-  --blue-800: #1B3A6B;
-  --blue-400: #4a7bc4;
-  --blue-100: #dce8f7;
-
-  /* Neutrals */
-  --tan:       #C4B49A;
-  --offwhite:  #F5F2EC;
-  --white:     #FDFCFA;
+  --green-primary: #2D5A27;
+  --green-forest: #3D7A35;
+  --green-sage: #5A9E50;
+  --green-soft: #A8C5A0;
+  --green-pale: #D4E8CF;
+  --blue-primary: #1B3A6B;
+  --warm-tan: #C4B49A;
+  --off-white: #F5F2EC;
   --text-dark: #1A1A1A;
   --text-gray: #6B6B6B;
-  --text-light:#9B9B9B;
-  --border:    #E2DDD6;
-
-  /* Status */
-  --status-done-bg:    #D4E8CF;
-  --status-done-text:  #2D5A27;
-  --status-stuck-bg:   #FEF3C7;
-  --status-stuck-text: #92400E;
-  --status-skip-bg:    #F3F4F6;
-  --status-skip-text:  #6B7280;
-  --status-prog-bg:    #DBEAFE;
-  --status-prog-text:  #1E40AF;
-  --status-pend-bg:    #F3F4F6;
-  --status-pend-text:  #4B5563;
-
-  /* Font */
   --font-display: 'Playfair Display', Georgia, serif;
-  --font-body:    'Inter', sans-serif;
-
-  /* Radius */
-  --r-sm:  8px;
-  --r-md:  12px;
-  --r-lg:  16px;
-  --r-xl:  24px;
-  --r-full: 9999px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(45,90,39,0.08), 0 1px 2px rgba(45,90,39,0.05);
-  --shadow-md: 0 4px 12px rgba(45,90,39,0.10), 0 2px 4px rgba(45,90,39,0.06);
-  --shadow-lg: 0 12px 32px rgba(45,90,39,0.12), 0 4px 8px rgba(45,90,39,0.08);
-  --shadow-card: 0 2px 16px rgba(26,58,22,0.08);
+  --font-body: 'DM Sans', sans-serif;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { font-size: 16px; -webkit-font-smoothing: antialiased; }
-
-body {
+html, body {
   font-family: var(--font-body);
-  background-color: var(--offwhite);
+  background-color: var(--off-white);
   color: var(--text-dark);
-  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Typography */
-.font-display  { font-family: var(--font-display); }
-.font-body     { font-family: var(--font-body); }
-
-h1, h2, h3 { font-family: var(--font-display); }
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeInSlow {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes ringFill {
-  from { stroke-dashoffset: 220; }
-  to   { stroke-dashoffset: var(--ring-offset); }
-}
-@keyframes strikethrough {
-  from { width: 0; }
-  to   { width: 100%; }
-}
-@keyframes leafFloat {
-  0%,100% { transform: translateY(0) rotate(-5deg); }
-  50%      { transform: translateY(-8px) rotate(5deg); }
-}
-@keyframes pulse-soft {
-  0%,100% { opacity: 1; }
-  50%      { opacity: 0.7; }
-}
-
-.animate-fade-in     { animation: fadeIn 0.5s ease both; }
-.animate-fade-slow   { animation: fadeInSlow 1.2s ease both; }
-.animate-scale-in    { animation: scaleIn 0.4s ease both; }
-.animate-slide-up    { animation: slideUp 0.5s ease both; }
-.animate-leaf        { animation: leafFloat 3s ease-in-out infinite; }
-.animate-pulse-soft  { animation: pulse-soft 2s ease-in-out infinite; }
-
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
-.delay-500 { animation-delay: 0.5s; }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--green-300); border-radius: 99px; }
+/* Scrollbar hidden for mobile feel */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }

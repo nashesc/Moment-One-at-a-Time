@@ -15,7 +15,7 @@ const registerSchema = z.object({
   full_name: z.string().min(1, 'Name is required').max(100),
 })
 
-export async function login(formData) {
+export async function login(formData: FormData) {
   const parsed = loginSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -29,7 +29,7 @@ export async function login(formData) {
   redirect('/dashboard')
 }
 
-export async function register(formData) {
+export async function register(formData: FormData) {
   const parsed = registerSchema.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -51,5 +51,5 @@ export async function register(formData) {
 export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
-  redirect('/')
+  redirect('/login')
 }
