@@ -1,14 +1,23 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/server'
-import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
+import { getUser, unauthorized, badRequest, serverError, notFound, logError } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { updateTaskSchema } from '@/lib/validations'
+
+// Validate UUID format
+function isValidUUID(id) {
+  try {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+  } catch {
+    return false
+  }
+}
 
 export async function PATCH(request, context) {
   const { id } = await context.params
 
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (!uuidRegex.test(id)) return badRequest('Invalid task ID')
+  // Validate UUID format
+  if (!isValidUUID(id)) return badRequest('Invalid task ID format')
 
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
@@ -22,6 +31,19 @@ export async function PATCH(request, context) {
     const parsed = updateTaskSchema.safeParse(body)
     if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
+    // First verify task exists AND belongs to user
+    const { data: existingTask, error: fetchError } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (fetchError || !existingTask) {
+      return notFound()
+    }
+
+    // Now update
     const { data, error } = await supabase
       .from('tasks')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
@@ -30,16 +52,23 @@ export async function PATCH(request, context) {
       .select()
       .single()
 
-    if (error) return serverError(error.message)
+    if (error) {
+      logError('PATCH /api/tasks/[id]', error)
+      return serverError('Failed to update task', error)
+    }
 
     return NextResponse.json({ data })
   } catch (err) {
-    return serverError()
+    logError('PATCH /api/tasks/[id] [CATCH]', err)
+    return serverError('Failed to update task', err)
   }
 }
 
 export async function DELETE(request, context) {
   const { id } = await context.params
+
+  // Validate UUID format
+  if (!isValidUUID(id)) return badRequest('Invalid task ID format')
 
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
@@ -49,16 +78,33 @@ export async function DELETE(request, context) {
     const user = await getUser(request)
     if (!user) return unauthorized()
 
+    // First verify task exists AND belongs to user
+    const { data: existingTask, error: fetchError } = await supabase
+      .from('tasks')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (fetchError || !existingTask) {
+      return notFound()
+    }
+
+    // Now delete
     const { error } = await supabase
       .from('tasks')
       .delete()
       .eq('id', id)
       .eq('user_id', user.id)
 
-    if (error) return serverError(error.message)
+    if (error) {
+      logError('DELETE /api/tasks/[id]', error)
+      return serverError('Failed to delete task', error)
+    }
 
     return NextResponse.json({ message: 'Task deleted' })
   } catch (err) {
-    return serverError()
+    logError('DELETE /api/tasks/[id] [CATCH]', err)
+    return serverError('Failed to delete task', err)
   }
 }

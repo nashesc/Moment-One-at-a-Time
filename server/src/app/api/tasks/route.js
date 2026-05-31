@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/server'
-import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
+import { getUser, unauthorized, badRequest, serverError, logError } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { taskSchema } from '@/lib/validations'
 
@@ -30,11 +30,15 @@ export async function GET(request) {
       .eq('scheduled_date', date)
       .order('order_index', { ascending: true })
 
-    if (error) return serverError(error.message)
+    if (error) {
+      logError('GET /api/tasks', error)
+      return serverError('Failed to fetch tasks', error)
+    }
 
     return NextResponse.json({ data })
   } catch (err) {
-    return serverError()
+    logError('GET /api/tasks [CATCH]', err)
+    return serverError('Failed to fetch tasks', err)
   }
 }
 
@@ -61,10 +65,14 @@ export async function POST(request) {
       .select()
       .single()
 
-    if (error) return serverError(error.message)
+    if (error) {
+      logError('POST /api/tasks', error)
+      return serverError('Failed to create task', error)
+    }
 
     return NextResponse.json({ data }, { status: 201 })
   } catch (err) {
-    return serverError()
+    logError('POST /api/tasks [CATCH]', err)
+    return serverError('Failed to create task', err)
   }
 }

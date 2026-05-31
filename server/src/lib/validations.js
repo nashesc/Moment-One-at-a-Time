@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/
+
 export const taskSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
   description: z.string().max(500).optional(),
@@ -27,4 +29,20 @@ export const pushSubscriptionSchema = z.object({
     p256dh: z.string(),
     auth: z.string(),
   }),
+})
+
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password required'),
+})
+
+export const registerSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string()
+    .min(12, 'Password must be at least 12 characters')
+    .regex(
+      passwordRegex,
+      'Password must contain uppercase, number, and special character (@$!%*?&)'
+    ),
+  full_name: z.string().min(1, 'Name is required').max(100),
 })

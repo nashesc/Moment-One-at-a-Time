@@ -6,6 +6,14 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
+function logError(context, error) {
+  console.error(`[${context}]`, {
+    message: error?.message,
+    code: error?.code,
+    timestamp: new Date().toISOString(),
+  })
+}
+
 export async function getUser(request) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -30,6 +38,15 @@ export function badRequest(message) {
   return NextResponse.json({ error: message }, { status: 400 })
 }
 
-export function serverError(message = 'Internal server error') {
-  return NextResponse.json({ error: message }, { status: 500 })
+export function serverError(context = 'Unknown error', errorObj = null) {
+  if (errorObj) {
+    logError(context, errorObj)
+  }
+  return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 }
+
+export function notFound() {
+  return NextResponse.json({ error: 'Not found' }, { status: 404 })
+}
+
+export { logError }
