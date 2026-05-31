@@ -4,21 +4,14 @@ import { createClient } from './server'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
-const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/
-
 const loginSchema = z.object({
   email: z.string().email('Invalid email'),
-  password: z.string().min(1, 'Password required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email'),
-  password: z.string()
-    .min(12, 'Password must be at least 12 characters')
-    .regex(
-      passwordRegex,
-      'Password must contain uppercase, number, and special character (@$!%*?&)'
-    ),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
   full_name: z.string().min(1, 'Name is required').max(100),
 })
 
