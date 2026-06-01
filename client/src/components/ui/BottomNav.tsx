@@ -4,44 +4,44 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, LayoutList, BarChart2, Leaf, Settings } from 'lucide-react'
 
-const navItems = [
-  { href: '/dashboard', label: 'Today', Icon: Home },
-  { href: '/moments', label: 'Moments', Icon: LayoutList },
-  { href: '/recap', label: 'Recap', Icon: BarChart2 },
-  { href: '/reflections', label: 'Reflections', Icon: Leaf },
-  { href: '/settings', label: 'Settings', Icon: Settings },
+const NAV = [
+  { href: '/dashboard',    label: 'Today',        Icon: Home        },
+  { href: '/moments',      label: 'Moments',      Icon: LayoutList  },
+  { href: '/recap',        label: 'Recap',        Icon: BarChart2   },
+  { href: '/reflections',  label: 'Reflections',  Icon: Leaf        },
+  { href: '/settings',     label: 'Settings',     Icon: Settings    },
 ]
 
 export default function BottomNav() {
-  const pathname = usePathname()
+  const path = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex bg-white border-t border-[#e8e4dc] pb-safe">
-      {navItems.map(({ href, label, Icon }) => {
-        const active = pathname === href
+    <nav
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 flex bg-white/90 backdrop-blur-md border-t"
+      style={{ borderColor: 'var(--border)', paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}
+    >
+      {NAV.map(({ href, label, Icon }) => {
+        const active = path === href
         return (
           <Link
             key={href}
             href={href}
-            className="flex flex-1 flex-col items-center gap-[3px] py-2 no-underline"
+            className="flex flex-1 flex-col items-center gap-1 pt-2 pb-1 select-none"
+            style={{ textDecoration: 'none' }}
           >
             <span
-              className={`flex h-7 w-9 items-center justify-center rounded-lg transition-colors ${
-                active ? 'bg-[(--green-pale)]' : ''
-              }`}
+              className="flex h-8 w-10 items-center justify-center rounded-xl transition-colors duration-150"
+              style={{ background: active ? 'var(--gpa)' : 'transparent' }}
             >
               <Icon
-                size={20}
-                className={active ? 'text-[(--green-primary)]' : 'text-[(--text-gray)]'}
-                strokeWidth={1.75}
+                size={19}
+                strokeWidth={active ? 2 : 1.5}
+                color={active ? 'var(--gp)' : 'var(--tg)'}
               />
             </span>
             <span
-              className={`text-[10px] ${
-                active
-                  ? 'font-medium text-[(--green-primary)]'
-                  : 'text-[(--text-gray)]'
-              }`}
+              className="text-[10px] font-medium tracking-wide"
+              style={{ color: active ? 'var(--gp)' : 'var(--tg)' }}
             >
               {label}
             </span>

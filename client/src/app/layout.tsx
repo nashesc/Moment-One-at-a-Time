@@ -1,24 +1,24 @@
 import type { Metadata, Viewport } from 'next'
-import './globals.css' // adjust if your globals.css is in styles/
+import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Moment — One at a Time',
-  description: 'A calm, focused task app.',
+  description: 'Focus on one thing. Then the next.',
   manifest: '/manifest.json',
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Moment' },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#2D5A27',
+  maximumScale: 1,
+  themeColor: '#F5F2EC',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-[var(--off-white)]">
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

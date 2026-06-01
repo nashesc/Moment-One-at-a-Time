@@ -1,55 +1,56 @@
 import BottomNav from '@/components/ui/BottomNav'
+import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import MomentumRing from '@/components/ui/MomentumRing'
 
-const WEEK_DATA = [50, 80, 40, 90, 60, 30, 75]
+const WEEK = [50, 80, 40, 90, 60, 30, 75]
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
 export default function RecapPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-[(--off-white)] pb-20">
-      <div className="px-6 pt-5 pb-2">
-        <h1 className="text-[24px] text-[(--text-dark)]" style={{ fontFamily: '(--font-display)' }}>Daily recap</h1>
-        <p className="text-[13px] text-[(--text-gray)] mt-1">How today felt.</p>
-      </div>
+    <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
+      <DesktopSidebar />
+      <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 px-5 md:px-8">
 
-      <div className="flex flex-col items-center py-4">
-        <MomentumRing done={3} total={4} size={110} />
-        <p className="mt-3 max-w-[220px] text-center text-[15px] leading-relaxed text-[(--green-primary)] italic" style={{ fontFamily: '(--font-display)' }}>
-          "Progress is still progress. Even the small ones."
-        </p>
-      </div>
+        <div className="pt-6 pb-4">
+          <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>Daily recap</h1>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>How today felt.</p>
+        </div>
 
-      <div className="grid grid-cols-2 gap-2 px-5 pb-4">
-        {[
-          { num: 3, label: 'Completed', color: '#27500A' },
-          { num: 1, label: 'In progress', color: '#0C447C' },
-          { num: 0, label: 'Stuck', color: '#633806' },
-          { num: 0, label: 'Skipped', color: '#5F5E5A' },
-        ].map(({ num, label, color }) => (
-          <div key={label} className="rounded-[13px] bg-white border border-[#eee] px-4 py-3 text-center">
-            <p className="text-[26px]" style={{ fontFamily: '(--font-display)', color }}>{num}</p>
-            <p className="text-[11px] text-[(--text-gray)] mt-[2px]">{label}</p>
-          </div>
-        ))}
-      </div>
+        <div className="rounded-2xl p-5 mb-4" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+          <MomentumRing done={3} total={4} size={90} showImage />
+          <p className="mt-4 text-[15px] italic text-center" style={{ fontFamily: 'var(--font-display)', color: 'var(--gp)' }}>
+            "Progress is still progress. Even the small ones."
+          </p>
+        </div>
 
-      <div className="px-5">
-        <p className="text-[11px] text-[(--text-gray)] uppercase tracking-wider mb-2">Last 7 days</p>
-        <div className="flex items-end gap-2 h-16">
-          {WEEK_DATA.map((pct, i) => (
-            <div key={i} className="flex flex-1 flex-col items-center gap-1 h-full">
-              <div className="flex-1 w-full rounded bg-[(--green-pale)] flex items-end">
-                <div
-                  className="w-full rounded bg-[(--green-sage)]"
-                  style={{ height: `${pct}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-[(--text-gray)]">{DAYS[i]}</span>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {[
+            { n: 3, label: 'Completed',   color: '#3B6D11' },
+            { n: 1, label: 'In Progress', color: '#185FA5' },
+            { n: 0, label: 'Stuck',       color: '#854F0B' },
+            { n: 0, label: 'Skipped',     color: '#888780' },
+          ].map(({ n, label, color }) => (
+            <div key={label} className="rounded-2xl p-4 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <p className="text-[28px] font-bold" style={{ fontFamily: 'var(--font-display)', color }}>{n}</p>
+              <p className="text-[12px] mt-1" style={{ color: 'var(--tg)' }}>{label}</p>
             </div>
           ))}
         </div>
-      </div>
 
+        <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+          <p className="text-[11px] uppercase tracking-widest mb-4" style={{ color: 'var(--tg)' }}>Last 7 days</p>
+          <div className="flex items-end gap-2 h-20">
+            {WEEK.map((pct, i) => (
+              <div key={i} className="flex flex-1 flex-col items-center gap-1.5 h-full">
+                <div className="flex-1 w-full rounded-lg overflow-hidden flex items-end" style={{ background: 'var(--gpa)' }}>
+                  <div className="w-full rounded-lg" style={{ height: `${pct}%`, background: 'var(--gs)', transition: 'height 0.6s ease' }} />
+                </div>
+                <span className="text-[10px]" style={{ color: 'var(--tg)' }}>{DAYS[i]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
       <BottomNav />
     </div>
   )

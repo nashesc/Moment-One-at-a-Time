@@ -1,35 +1,22 @@
 'use client'
-
 import { useState } from 'react'
 
-interface ToggleProps {
-  defaultOn?: boolean
-  onChange?: (val: boolean) => void
-}
-
-export default function Toggle({ defaultOn = true, onChange }: ToggleProps) {
+export default function Toggle({ defaultOn = true, onChange }: { defaultOn?: boolean; onChange?: (v: boolean) => void }) {
   const [on, setOn] = useState(defaultOn)
-
-  const handle = () => {
-    setOn(v => {
-      onChange?.(!v)
-      return !v
-    })
-  }
-
   return (
     <button
-      onClick={handle}
-      aria-checked={on}
       role="switch"
-      className={`relative h-[21px] w-[38px] rounded-full border-none transition-colors duration-200 cursor-pointer shrink-0 ${
-        on ? 'bg-[(--green-sage)]' : 'bg-[#ddd]'
-      }`}
+      aria-checked={on}
+      onClick={() => { setOn(v => { onChange?.(!v); return !v }) }}
+      className="relative shrink-0 rounded-full border-none cursor-pointer transition-colors duration-200"
+      style={{
+        width: 42, height: 24,
+        background: on ? 'var(--gs)' : '#D1D1D1',
+      }}
     >
       <span
-        className={`absolute top-[3px] h-[15px] w-[15px] rounded-full bg-white transition-all duration-200 ${
-          on ? 'left-[3px]' : 'left-[20px]'
-        }`}
+        className="absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-sm transition-all duration-200"
+        style={{ left: on ? 'calc(100% - 21px)' : '3px' }}
       />
     </button>
   )

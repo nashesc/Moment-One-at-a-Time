@@ -1,28 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
 :root {
-  --green-primary: #2D5A27;
-  --green-forest: #3D7A35;
-  --green-sage: #5A9E50;
-  --green-soft: #A8C5A0;
-  --green-pale: #D4E8CF;
-  --blue-primary: #1B3A6B;
-  --warm-tan: #C4B49A;
-  --off-white: #F5F2EC;
-  --text-dark: #1A1A1A;
-  --text-gray: #6B6B6B;
+  --gp: #2D5A27;
+  --gf: #3D7A35;
+  --gs: #5A9E50;
+  --gso: #A8C5A0;
+  --gpa: #D4E8CF;
+  --bp: #1B3A6B;
+  --tan: #C4B49A;
+  --ow: #F5F2EC;
+  --card: #FAFAF7;
+  --td: #1A1A1A;
+  --tg: #6B6B6B;
+  --tgl: #9B9B9B;
+  --border: rgba(0,0,0,0.07);
   --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'DM Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-btn: 0 2px 8px rgba(45,90,39,0.25);
 }
 
 html, body {
   font-family: var(--font-body);
-  background-color: var(--off-white);
-  color: var(--text-dark);
+  background-color: var(--ow);
+  color: var(--td);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar hidden for mobile feel */
+* { box-sizing: border-box; }
 ::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; }
+
+/* Safe area for PWA */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
