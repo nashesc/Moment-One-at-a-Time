@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Home, LayoutList, BarChart2, Leaf, Settings } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 const NAV = [
   { href: '/dashboard',    label: 'Today',        Icon: Home        },
@@ -14,6 +15,11 @@ const NAV = [
 
 export default function DesktopSidebar() {
   const path = usePathname()
+  const { profile } = useAuth()
+
+  const initials = profile?.full_name
+    ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : '?'
 
   return (
     <aside
@@ -66,12 +72,19 @@ export default function DesktopSidebar() {
           className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-semibold shrink-0"
           style={{ background: 'var(--gp)' }}
         >
-          M
+          {initials}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-medium truncate" style={{ color: 'var(--td)' }}>Maria Santos</p>
+          <p className="text-[13px] font-medium truncate" style={{ color: 'var(--td)' }}>
+            {profile?.full_name ?? '—'}
+          </p>
+          <p className="text-[10px] truncate" style={{ color: 'var(--tg)' }}>
+            {profile?.email ?? ''}
+          </p>
         </div>
-        <Settings size={15} color="var(--tg)" strokeWidth={1.5} />
+        <Link href="/settings" style={{ display: 'flex', textDecoration: 'none' }}>
+          <Settings size={15} color="var(--tg)" strokeWidth={1.5} />
+        </Link>
       </div>
     </aside>
   )

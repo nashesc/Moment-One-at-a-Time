@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { TaskProvider } from '@/context/TaskContext'
+import { AuthProvider } from '@/context/AuthContext'
+import { SettingsProvider } from '@/context/SettingsContext'
+import { Providers } from '@/lib/providers'
 import '@/app/globals.css'
 
 export const metadata: Metadata = {
@@ -20,9 +23,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <TaskProvider>
-          {children}
-        </TaskProvider>
+        <Providers>
+          <SettingsProvider>
+            <AuthProvider>
+              <TaskProvider>
+                {children}
+              </TaskProvider>
+            </AuthProvider>
+          </SettingsProvider>
+        </Providers>
       </body>
     </html>
   )

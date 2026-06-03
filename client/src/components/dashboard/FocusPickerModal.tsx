@@ -1,15 +1,22 @@
 'use client'
 
-import { CheckCircle2, Clock } from 'lucide-react'
+import { Circle, Clock } from 'lucide-react'
 import type { Task } from '@/context/TaskContext'
 
-const priorityLabel = { 1: 'High', 2: 'Medium', 3: 'Low' }
-const priorityDot   = { 1: '#5A9E50', 2: '#C4A35A', 3: '#1B3A6B' }
+const priorityLabel: Record<number, string> = { 1: 'High', 2: 'Medium', 3: 'Low' }
+const priorityDot:   Record<number, string> = { 1: '#5A9E50', 2: '#C4A35A', 3: '#1B3A6B' }
 
-export default function FocusPickerModal({ tasks, onSelect }: { tasks: Task[]; onSelect: (t: Task) => void }) {
+export default function FocusPickerModal({
+  tasks,
+  onSelect,
+}: {
+  tasks: Task[]
+  onSelect: (t: Task) => void
+}) {
   return (
+    // No absolute positioning — parent controls placement (fixed on mobile, block on desktop)
     <div
-      className="absolute inset-0 z-20 flex flex-col px-5 pt-8 pb-6 overflow-y-auto"
+      className="w-full h-full flex flex-col px-5 pt-8 pb-6 overflow-y-auto"
       style={{ background: 'rgba(245,242,236,0.97)', backdropFilter: 'blur(8px)' }}
     >
       <h2
@@ -27,7 +34,7 @@ export default function FocusPickerModal({ tasks, onSelect }: { tasks: Task[]; o
           <button
             key={task.id}
             onClick={() => onSelect(task)}
-            className="w-full flex items-center gap-4 rounded-2xl px-4 py-4 text-left transition-all duration-150"
+            className="w-full flex items-center gap-4 rounded-2xl px-4 py-4 text-left transition-all duration-150 group"
             style={{
               background: 'white',
               border: '1px solid var(--border)',
@@ -35,7 +42,10 @@ export default function FocusPickerModal({ tasks, onSelect }: { tasks: Task[]; o
               cursor: 'pointer',
             }}
           >
-            <CheckCircle2 size={20} strokeWidth={1.5} color="var(--gso)" className="shrink-0" />
+            <span className="shrink-0 transition-colors duration-150"
+              style={{ color: 'var(--gso)' }}>
+              <Circle size={20} strokeWidth={1.5} />
+            </span>
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-medium truncate" style={{ color: 'var(--td)' }}>
                 {task.title}
@@ -47,7 +57,8 @@ export default function FocusPickerModal({ tasks, onSelect }: { tasks: Task[]; o
                 </span>
                 <span>·</span>
                 <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: priorityDot[task.priority] }} />
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ background: priorityDot[task.priority] }} />
                   {priorityLabel[task.priority]}
                 </span>
               </p>

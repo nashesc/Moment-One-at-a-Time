@@ -1,36 +1,221 @@
 'use client'
 
+import { useState } from 'react'
+import { Check, X, Pencil, Bell, Clock } from 'lucide-react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import Toggle from '@/components/ui/Toggle'
 import { logout } from '@/lib/supabase/actions'
+import { useSettings } from '@/context/SettingsContext'
+import { useAuth } from '@/context/AuthContext'
 
-const SECTIONS = [
-  { title: 'Appearance',    rows: [{ label: 'Theme', value: 'Light' }] },
-  {
-    title: 'Display',
-    rows: [
-      { label: 'Show opening quote',  toggle: true, defaultOn: true  },
-      { label: 'One task at a time',  toggle: true, defaultOn: true  },
-    ],
-  },
-  {
-    title: 'Notifications',
-    rows: [
-      { label: 'Push notifications',  toggle: true, defaultOn: false },
-      { label: 'Reminder time',       value: '9:00 AM'               },
-    ],
-  },
-  {
-    title: 'Account',
-    rows: [
-      { label: 'Name',  value: 'Maria Santos'      },
-      { label: 'Email', value: 'maria@example.com' },
-    ],
-  },
-]
+function EditableField({
+  label,
+  value,
+  type = 'text',
+  onSave,
+  hint,
+}: {
+  label: string
+  value: string
+  type?: string
+  onSave: (v: string) => Promise<string | undefined>
+  hint?: string
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  function startEdit() {
+    setDraft(value)
+    setError('')
+    setEditing(true)
+  }
+
+  async function handleSave() {
+    if (draft.trim() === value) { setEditing(false); return }
+    setSaving(true)
+    setError('')
+    const err = await onSave(draft.trim())
+    setSaving(false)
+    if (err) {
+      setError(err)
+    } else {
+      setEditing(false)
+    }
+  }
+
+  function handleCancel() {
+    setDraft(value)
+    setError('')
+    setEditing(false)
+  }
+
+  return (
+    <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] uppercase tracking-widest mb-1" style={{ color: 'var(--tg)' }}>{label}</p>
+        {editing ? (
+          <div>
+            <input
+              type={type}
+              value={draft}
+              onChange={e => { setDraft(e.target.value); setError('') }}
+              autoFocus
+              className="w-full rounded-xl px-3 py-2 text-[14px] outline-none"
+              style={{
+                border: error ? '1.5px solid #C0392B' : '1.5px solid var(--gs)',
+                background: 'var(--ow)',
+                color: 'var(--td)',
+                fontFamily: 'var(--font-body)',
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleSave()
+                if (e.key === 'Escape') handleCancel()
+              }}
+            />
+            {error && <p className="text-[11px] mt-1" style={{ color: '#C0392B' }}>{error}</p>}
+            {hint && !error && <p className="text-[11px] mt-1" style={{ color: 'var(--tgl)' }}>{hint}</p>}
+          </div>
+        ) : (
+          <p className="text-[14px]" style={{ color: 'var(--td)' }}>{value || '—'}</p>
+        )}
+      </div>
+
+      {editing ? (
+        <div className="flex items-center gap-2 ml-3 shrink-0">
+          <button
+            onClick={handleCancel}
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: 'var(--gpa)', border: 'none', cursor: 'pointer' }}
+          >
+            <X size={14} color="var(--tg)" />
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: saving ? 'var(--gso)' : 'var(--gp)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer' }}
+          >
+            {saving
+              ? <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+              : <Check size={14} color="white" />
+            }
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={startEdit}
+          className="ml-3 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+          style={{ background: 'var(--gpa)', border: 'none', cursor: 'pointer' }}
+          aria-label={`Edit ${label}`}
+        >
+          <Pencil size={13} color="var(--gp)" />
+        </button>
+      )}
+    </div>
+  )
+}
+
+// Time picker row
+function TimePickerRow({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState(value)
+
+  function handleSave() {
+    onChange(draft)
+    setOpen(false)
+  }
+
+  const displayTime = (() => {
+    const [h, m] = value.split(':').map(Number)
+    const ampm = h >= 12 ? 'PM' : 'AM'
+    const h12 = h % 12 || 12
+    return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
+  })()
+
+  return (
+    <div>
+      <div
+        className="flex items-center justify-between px-5 py-4"
+        style={{ borderBottom: open ? 'none' : '1px solid var(--border)' }}
+      >
+        <span className="flex items-center gap-2 text-[14px]" style={{ color: 'var(--td)' }}>
+          <Clock size={15} color="var(--tg)" />
+          Reminder time
+        </span>
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded-full transition-colors"
+          style={{
+            background: open ? 'var(--gpa)' : 'transparent',
+            color: open ? 'var(--gp)' : 'var(--tg)',
+            border: `1px solid ${open ? 'var(--gs)' : 'var(--border)'}`,
+            cursor: 'pointer',
+            fontFamily: 'var(--font-body)',
+          }}
+        >
+          {displayTime}
+          <Pencil size={11} />
+        </button>
+      </div>
+
+      {open && (
+        <div className="px-5 pb-4 flex items-center gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          <input
+            type="time"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            className="rounded-xl px-3 py-2 text-[14px] outline-none flex-1"
+            style={{
+              border: '1.5px solid var(--gs)',
+              background: 'var(--ow)',
+              color: 'var(--td)',
+              fontFamily: 'var(--font-body)',
+            }}
+          />
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 rounded-full text-[13px] font-medium text-white"
+            style={{ background: 'var(--gp)', border: 'none', cursor: 'pointer' }}
+          >
+            Save
+          </button>
+          <button
+            onClick={() => setOpen(false)}
+            className="px-3 py-2 rounded-full text-[13px]"
+            style={{ background: 'var(--gpa)', color: 'var(--gp)', border: 'none', cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function SettingsPage() {
+  const { prefs, setPref, requestPushPermission, pushSupported } = useSettings()
+  const { profile, updateProfile } = useAuth()
+  const [pushLoading, setPushLoading] = useState(false)
+  const [pushMessage, setPushMessage] = useState('')
+
+  async function handlePushToggle(enabled: boolean) {
+    if (enabled) {
+      setPushLoading(true)
+      setPushMessage('')
+      const granted = await requestPushPermission()
+      setPushLoading(false)
+      if (!granted) {
+        setPushMessage('Permission denied. Please allow notifications in your browser settings.')
+        // toggle will revert in context since we call setPref(false) on failure
+      }
+    } else {
+      setPref('pushNotifications', false)
+    }
+  }
+
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
@@ -43,30 +228,117 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex flex-col gap-4">
-          {SECTIONS.map(section => (
-            <div key={section.title}>
-              <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>
-                {section.title}
-              </p>
-              <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-                {section.rows.map((row, i) => (
-                  <div
-                    key={row.label}
-                    className="flex items-center justify-between px-5 py-4"
-                    style={{ borderBottom: i < section.rows.length - 1 ? '1px solid var(--border)' : 'none' }}
-                  >
-                    <span className="text-[14px]" style={{ color: 'var(--td)' }}>{row.label}</span>
-                    {row.toggle
-                      ? <Toggle defaultOn={row.defaultOn} />
-                      : <span className="text-[13px]" style={{ color: 'var(--tg)' }}>{row.value}</span>
-                    }
-                  </div>
-                ))}
+
+          {/* Account — inline editable */}
+          <div>
+            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Account</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <EditableField
+                label="Name"
+                value={profile?.full_name ?? ''}
+                onSave={async (v) => {
+                  const res = await updateProfile({ full_name: v })
+                  return res.error
+                }}
+              />
+              <EditableField
+                label="Email"
+                value={profile?.email ?? ''}
+                type="email"
+                hint="A confirmation email may be sent to verify your new address."
+                onSave={async (v) => {
+                  const res = await updateProfile({ email: v })
+                  return res.error
+                }}
+              />
+              {/* Last row — no bottom border */}
+              <div className="flex items-center justify-between px-5 py-4">
+                <span className="text-[14px]" style={{ color: 'var(--tg)' }}>Member since</span>
+                <span className="text-[13px]" style={{ color: 'var(--tgl)' }}>
+                  {new Date().getFullYear()}
+                </span>
               </div>
             </div>
-          ))}
+          </div>
 
-          {/* Sign out — calls the server action directly via form */}
+          {/* Display */}
+          <div>
+            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Display</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div>
+                  <p className="text-[14px]" style={{ color: 'var(--td)' }}>Show opening quote</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--tg)' }}>Inspirational quote when app opens</p>
+                </div>
+                <Toggle
+                  defaultOn={prefs.showOpeningQuote}
+                  onChange={(v) => setPref('showOpeningQuote', v)}
+                />
+              </div>
+              <div className="flex items-center justify-between px-5 py-4">
+                <div>
+                  <p className="text-[14px]" style={{ color: 'var(--td)' }}>One task at a time</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--tg)' }}>Focus on a single moment on the dashboard</p>
+                </div>
+                <Toggle
+                  defaultOn={prefs.oneTaskAtATime}
+                  onChange={(v) => setPref('oneTaskAtATime', v)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Notifications */}
+          <div>
+            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Notifications</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <div className="flex items-start justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className="flex-1 min-w-0 mr-4">
+                  <div className="flex items-center gap-2">
+                    <Bell size={14} color="var(--tg)" />
+                    <p className="text-[14px]" style={{ color: 'var(--td)' }}>Push notifications</p>
+                  </div>
+                  <p className="text-[11px] mt-0.5 ml-[22px]" style={{ color: 'var(--tg)' }}>
+                    {pushSupported ? 'Get gentle reminders to check in' : 'Not supported on this device'}
+                  </p>
+                  {pushMessage && (
+                    <p className="text-[11px] mt-1 ml-[22px]" style={{ color: '#C0392B' }}>{pushMessage}</p>
+                  )}
+                </div>
+                <div className="shrink-0">
+                  {pushLoading ? (
+                    <div className="w-11 h-6 flex items-center justify-center">
+                      <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin"
+                        style={{ borderColor: 'var(--gso)', borderTopColor: 'var(--gp)' }} />
+                    </div>
+                  ) : (
+                    <Toggle
+                      defaultOn={prefs.pushNotifications}
+                      onChange={handlePushToggle}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <TimePickerRow
+                value={prefs.reminderTime}
+                onChange={(v) => setPref('reminderTime', v)}
+              />
+            </div>
+          </div>
+
+          {/* Appearance */}
+          <div>
+            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Appearance</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <div className="flex items-center justify-between px-5 py-4">
+                <span className="text-[14px]" style={{ color: 'var(--td)' }}>Theme</span>
+                <span className="text-[13px]" style={{ color: 'var(--tg)' }}>Light</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Sign out */}
           <form action={logout}>
             <button
               type="submit"
@@ -83,6 +355,7 @@ export default function SettingsPage() {
               Sign out
             </button>
           </form>
+
         </div>
       </div>
       <BottomNav />

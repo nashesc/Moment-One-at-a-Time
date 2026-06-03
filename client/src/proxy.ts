@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -25,9 +25,13 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user ?? null
+
   const { pathname } = request.nextUrl
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
+  // splash is accessible when logged in — it's the post-login landing
+  const isSplash = pathname === '/splash'
 
   if (!user && !isAuthRoute && pathname !== '/') {
     const url = request.nextUrl.clone()
@@ -35,9 +39,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // After login, go to splash (not dashboard directly)
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/splash'
     return NextResponse.redirect(url)
   }
 

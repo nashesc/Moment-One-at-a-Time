@@ -1,41 +1,42 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Play } from 'lucide-react'
+import { Play, RefreshCw } from 'lucide-react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import MomentumRing from '@/components/ui/MomentumRing'
 import TaskCard from '@/components/dashboard/TaskCard'
 import DonePanel from '@/components/dashboard/DonePanel'
 import FocusPickerModal from '@/components/dashboard/FocusPickerModal'
+import TaskRow from '@/components/tasks/TaskRow'
 import { useTasks, type Task } from '@/context/TaskContext'
+import { useAuth } from '@/context/AuthContext'
+import { useSettings } from '@/context/SettingsContext'
 
 type FocusState = 'idle' | 'focusing' | 'done'
 
 export default function DashboardPage() {
-  const { tasks, updateStatus, moveToEnd, todayTasks, doneTodayCount, totalTodayCount, loading, error } = useTasks()
+  const { todayTasks, updateStatus, moveToEnd, doneTodayCount, totalTodayCount, loading, error, refresh } = useTasks()
+  const { profile } = useAuth()
+  const { prefs } = useSettings()
+
+  const activeTasks = useMemo(
+    () => todayTasks.filter(t => t.status !== 'done' && t.status !== 'skipped'),
+    [todayTasks]
+  )
+
   const [focused,    setFocused]    = useState<Task | null>(null)
   const [focusState, setFocusState] = useState<FocusState>('idle')
   const [showPicker, setShowPicker] = useState(true)
 
-  // Initialize focused task when todayTasks load
-  useEffect(() => {
-    if (todayTasks.length > 0 && !focused) {
-      const activeTasks = todayTasks.filter(t => t.status !== 'done' && t.status !== 'skipped')
-      setFocused(activeTasks[0] ?? todayTasks[0])
-    }
-  }, [todayTasks, focused])
-
-  // Only pending/in_progress today tasks are actionable
-  const activeTasks = todayTasks.filter(t => t.status !== 'done' && t.status !== 'skipped')
-
   const now      = new Date()
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
   const dateStr  = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
 
-  const allDone      = todayTasks.length > 0 && todayTasks.every(t => t.status === 'done')
-  const pickerTasks  = focused ? activeTasks.filter(t => t.id !== focused.id || focusState === 'idle') : activeTasks
+  const allDone = todayTasks.length > 0 && todayTasks.every(t => t.status === 'done' || t.status === 'skipped')
+  const currentTask = focused ?? activeTasks[0] ?? null
 
   function handlePickerSelect(task: Task) {
     setFocused(task)
@@ -44,45 +45,45 @@ export default function DashboardPage() {
   }
 
   function handleMainBtn() {
-    if (!focused) return
+    if (!currentTask) return
     if (focusState === 'idle') {
-      updateStatus(focused.id, 'in_progress')
+      updateStatus(currentTask.id, 'in_progress')
       setFocusState('focusing')
     } else if (focusState === 'focusing') {
-      updateStatus(focused.id, 'done')
+      updateStatus(currentTask.id, 'done')
       setFocusState('done')
     }
   }
 
   function handleStuck() {
-    if (!focused) return
-    updateStatus(focused.id, 'stuck')
-    moveToEnd(focused.id)
-    const next = activeTasks.find(t => t.id !== focused.id)
+    if (!currentTask) return
+    updateStatus(currentTask.id, 'stuck')
+    moveToEnd(currentTask.id)
+    const next = activeTasks.find(t => t.id !== currentTask.id)
     if (next) { setFocused(next); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle') }
   }
 
   function handleSkip() {
-    if (!focused) return
-    moveToEnd(focused.id)
-    const next = activeTasks.find(t => t.id !== focused.id)
+    if (!currentTask) return
+    moveToEnd(currentTask.id)
+    const next = activeTasks.find(t => t.id !== currentTask.id)
     if (next) { setFocused(next); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle') }
   }
 
   function handleNext() {
-    const next = activeTasks.find(t => !focused || t.id !== focused.id)
-    if (next) {
-      setFocused(next)
-      setFocusState('idle')
-      setShowPicker(false)
-    } else {
-      setFocusState('idle')
-      setShowPicker(false)
-    }
+    const next = activeTasks.find(t => t.id !== currentTask?.id)
+    if (next) { setFocused(next); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle') }
+    setShowPicker(false)
   }
 
   const btnLabel = focusState === 'idle' ? 'Begin Focus' : 'Mark as Done'
   const btnBg    = focusState === 'focusing' ? 'var(--bp)' : 'var(--gp)'
+
+  // LIST VIEW — when one-at-a-time is off
+  const showListView = !prefs.oneTaskAtATime
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
@@ -94,8 +95,9 @@ export default function DashboardPage() {
         <div className="md:hidden flex items-start justify-between px-5 pt-5 pb-2">
           <div>
             <p className="text-[12px]" style={{ color: 'var(--tg)' }}>{dateStr}</p>
-            <p className="text-[20px] font-semibold mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
-              {greeting}, Maria 🌿
+            <p className="text-[20px] font-semibold mt-0.5"
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+              {greeting}, {firstName} 🌿
             </p>
           </div>
           <Link href="/moments" className="text-[12px] px-3 py-1.5 rounded-full border"
@@ -108,8 +110,9 @@ export default function DashboardPage() {
         <div className="hidden md:flex items-center justify-between px-8 pt-8 pb-4">
           <div>
             <p className="text-[13px]" style={{ color: 'var(--tg)' }}>{dateStr}</p>
-            <p className="text-[24px] font-bold mt-0.5" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
-              {greeting}, Maria 🌿
+            <p className="text-[24px] font-bold mt-0.5"
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+              {greeting}, {firstName} 🌿
             </p>
           </div>
           <Link href="/moments" className="text-[13px] px-4 py-2 rounded-full"
@@ -118,30 +121,74 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {/* Error state */}
-        {error && (
-          <div className="mx-4 md:mx-8 rounded-2xl px-4 py-3 mb-4 text-[13px]"
-            style={{ background: '#FEF2F2', color: '#C0392B', border: '1px solid #FBDCDC' }}>
-            {error}
+        {/* Momentum ring */}
+        <div className="mx-4 md:mx-8 rounded-2xl p-5 mb-4"
+          style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+          <MomentumRing done={doneTodayCount} total={totalTodayCount} size={76} showImage />
+        </div>
+
+        {/* Loading state */}
+        {loading && (
+          <div className="mx-4 md:mx-8 rounded-2xl p-8 text-center"
+            style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+            <div className="w-8 h-8 rounded-full border-2 mx-auto mb-3 animate-spin"
+              style={{ borderColor: 'var(--gpa)', borderTopColor: 'var(--gp)' }} />
+            <p className="text-[14px]" style={{ color: 'var(--tg)' }}>Loading your moments...</p>
           </div>
         )}
 
-        {/* Loading state */}
-        {loading ? (
+        {/* Error state */}
+        {!loading && error && (
+          <div className="mx-4 md:mx-8 rounded-2xl p-6 text-center"
+            style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+            <p className="text-[14px] mb-3" style={{ color: 'var(--tg)' }}>{error}</p>
+            <button onClick={refresh}
+              className="flex items-center gap-2 mx-auto text-[13px] px-4 py-2 rounded-full"
+              style={{ background: 'var(--gpa)', color: 'var(--gp)', border: 'none', cursor: 'pointer' }}>
+              <RefreshCw size={14} /> Try again
+            </button>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && !error && todayTasks.length === 0 && (
           <div className="mx-4 md:mx-8 rounded-2xl p-8 text-center"
             style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-            <p className="text-[14px]" style={{ color: 'var(--tg)' }}>Loading your moments...</p>
+            <p className="text-4xl mb-4">🌱</p>
+            <h2 className="text-[20px] font-bold mb-2"
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+              No moments yet
+            </h2>
+            <p className="text-[14px]" style={{ color: 'var(--tg)' }}>
+              Head to Moments to add your first task for today.
+            </p>
           </div>
-        ) : (
-          <>
-            {/* Momentum ring */}
-            <div className="mx-4 md:mx-8 rounded-2xl p-5 mb-4"
-              style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-              <MomentumRing done={doneTodayCount} total={totalTodayCount} size={76} showImage />
-            </div>
+        )}
 
+        {/* List view (one-at-a-time OFF) */}
+        {!loading && !error && showListView && todayTasks.length > 0 && (
+          <div className="mx-4 md:mx-8 flex flex-col gap-2 mb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-widest px-1 pb-1" style={{ color: 'var(--tg)' }}>
+              Today&apos;s Moments
+            </p>
+            {todayTasks.map(t => (
+              <TaskRow
+                key={t.id}
+                title={t.title}
+                date="Today"
+                estimatedMinutes={t.estimatedMinutes}
+                priority={t.priority}
+                status={t.status}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Focused view (one-at-a-time ON) */}
+        {!loading && !error && !showListView && (
+          <>
             {/* All done */}
-            {allDone ? (
+            {allDone && todayTasks.length > 0 && (
               <div className="mx-4 md:mx-8 rounded-2xl p-8 text-center"
                 style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
                 <p className="text-4xl mb-4">🌿</p>
@@ -153,27 +200,26 @@ export default function DashboardPage() {
                   You completed every moment. Rest well.
                 </p>
               </div>
-            ) : focused ? (
+            )}
+
+            {currentTask && !allDone && (
               <>
-                {/* Task card */}
                 <div className="mx-4 md:mx-8 mb-3">
                   <TaskCard
-                    title={focused.title}
-                    description={focused.description}
-                    estimatedMinutes={focused.estimatedMinutes}
-                    priority={focused.priority}
+                    title={currentTask.title}
+                    description={currentTask.description}
+                    estimatedMinutes={currentTask.estimatedMinutes}
+                    priority={currentTask.priority}
                     isDone={focusState === 'done'}
                   />
                 </div>
 
-                {/* Done panel */}
                 {focusState === 'done' && (
                   <div className="mx-4 md:mx-8 mb-3">
-                    <DonePanel taskTitle={focused.title} onNext={handleNext} />
+                    <DonePanel taskTitle={currentTask.title} onNext={handleNext} />
                   </div>
                 )}
 
-                {/* Action buttons */}
                 {focusState !== 'done' && (
                   <div className="mx-4 md:mx-8 flex flex-col gap-3 mb-2">
                     <button onClick={handleMainBtn}
@@ -200,17 +246,17 @@ export default function DashboardPage() {
                   </div>
                 )}
               </>
-            ) : null}
+            )}
 
             {/* Focus picker — mobile fixed overlay */}
-            {showPicker && !allDone && activeTasks.length > 0 && (
+            {showPicker && !allDone && activeTasks.length > 0 && todayTasks.length > 0 && (
               <div className="md:hidden fixed inset-0 z-30">
                 <FocusPickerModal tasks={activeTasks} onSelect={handlePickerSelect} />
               </div>
             )}
 
             {/* Focus picker — desktop inline */}
-            {showPicker && !allDone && activeTasks.length > 0 && (
+            {showPicker && !allDone && activeTasks.length > 0 && todayTasks.length > 0 && (
               <div className="hidden md:block mx-8 mt-2 mb-4 rounded-3xl overflow-hidden border"
                 style={{ borderColor: 'var(--border)' }}>
                 <FocusPickerModal tasks={activeTasks} onSelect={handlePickerSelect} />

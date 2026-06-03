@@ -1,20 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, RefreshCw } from 'lucide-react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import TaskRow from '@/components/tasks/TaskRow'
 import Toggle from '@/components/ui/Toggle'
+import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { useTasks } from '@/context/TaskContext'
+import { useSettings } from '@/context/SettingsContext'
 
 const TABS = ['All', 'Pending', 'Done', 'Stuck'] as const
 type Tab = typeof TABS[number]
 
 export default function MomentsPage() {
-  const { tasks, doneTodayCount, totalTodayCount } = useTasks()
-  const [tab, setTab] = useState<Tab>('All')
-  const [oneAtATime, setOneAtATime] = useState(true)
+  const { tasks, doneTodayCount, totalTodayCount, loading, error, refresh } = useTasks()
+  const { prefs, setPref } = useSettings()
+  const [tab, setTab]         = useState<Tab>('All')
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   const todayAll     = tasks.filter(t => t.date === 'Today')
   const yesterdayAll = tasks.filter(t => t.date === 'Yesterday')
@@ -28,87 +31,169 @@ export default function MomentsPage() {
 
   const todayFiltered     = filterByTab(todayAll)
   const yesterdayFiltered = filterByTab(yesterdayAll)
+  const momentumPct       = totalTodayCount === 0 ? 0 : Math.round((doneTodayCount / totalTodayCount) * 100)
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
 
-      {/* Extra bottom padding so FAB never overlaps content */}
       <div className="flex flex-col flex-1 min-w-0 pb-36 md:pb-16">
 
-        <div className="px-5 md:px-8 pt-6 pb-2">
-          <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
-            Moments
-          </h1>
-          <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>All your tasks, past and present.</p>
+        {/* Header */}
+        <div className="px-5 md:px-8 pt-6 pb-1 flex items-center justify-between">
+          <div>
+            <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+              Moments
+            </h1>
+            <p className="text-[13px] mt-0.5" style={{ color: 'var(--tg)' }}>All your tasks, past and present.</p>
+          </div>
+          {!loading && (
+            <button
+              onClick={refresh}
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--gpa)', border: 'none', cursor: 'pointer' }}
+              aria-label="Refresh"
+            >
+              <RefreshCw size={14} color="var(--gp)" />
+            </button>
+          )}
         </div>
 
-        {/* Progress summary — live from context */}
-        <div className="mx-5 md:mx-8 rounded-2xl px-4 py-3 mb-4 flex items-center gap-3"
-          style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-          <p className="text-[13px] font-medium" style={{ color: 'var(--gp)' }}>Progress</p>
-          <p className="text-[13px]" style={{ color: 'var(--tg)' }}>
-            {doneTodayCount} of {totalTodayCount} completed today
-          </p>
-        </div>
+        {/* Progress card */}
+        {!loading && totalTodayCount > 0 && (
+          <div
+            className="mx-5 md:mx-8 mt-4 rounded-2xl px-5 py-4 mb-4 flex items-center justify-between"
+            style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
+          >
+            <div>
+              <p className="text-[13px] font-semibold" style={{ color: 'var(--gp)' }}>
+                {doneTodayCount} of {totalTodayCount} completed
+              </p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'var(--tg)' }}>
+                {momentumPct}% momentum today
+              </p>
+            </div>
+            <div className="flex-1 mx-4 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--gpa)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${momentumPct}%`, background: 'var(--gs)' }}
+              />
+            </div>
+            <p className="text-[16px] font-bold shrink-0" style={{ fontFamily: 'var(--font-display)', color: 'var(--gp)' }}>
+              {momentumPct}%
+            </p>
+          </div>
+        )}
 
         {/* Filter tabs */}
-        <div className="flex gap-2 px-5 md:px-8 pb-4 overflow-x-auto">
+        <div className="flex gap-2 px-5 md:px-8 pb-4 mt-2 overflow-x-auto">
           {TABS.map(t => (
-            <button key={t} onClick={() => setTab(t)}
+            <button
+              key={t}
+              onClick={() => setTab(t)}
               className="whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-medium transition-all duration-150"
               style={{
                 background: tab === t ? 'var(--gp)' : 'white',
                 color: tab === t ? 'white' : 'var(--tg)',
                 border: tab === t ? 'none' : '1px solid var(--border)',
-                boxShadow: tab === t ? 'none' : 'var(--shadow-card)',
+                boxShadow: tab === t ? 'var(--shadow-btn)' : 'var(--shadow-card)',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-body)',
-              }}>
+              }}
+            >
               {t}
             </button>
           ))}
         </div>
 
-        {/* Task groups */}
-        <div className="flex flex-col gap-2 px-5 md:px-8">
-          {todayFiltered.length > 0 && (
-            <>
-              <p className="text-[11px] uppercase tracking-widest pt-1 pb-1" style={{ color: 'var(--tg)' }}>Today</p>
-              {todayFiltered.map(t => <TaskRow key={t.id} {...t} />)}
-            </>
-          )}
-          {yesterdayFiltered.length > 0 && (
-            <>
-              <p className="text-[11px] uppercase tracking-widest pt-3 pb-1" style={{ color: 'var(--tg)' }}>Yesterday</p>
-              {yesterdayFiltered.map(t => <TaskRow key={t.id} {...t} />)}
-            </>
-          )}
-          {todayFiltered.length === 0 && yesterdayFiltered.length === 0 && (
-            <p className="text-[13px] text-center pt-8" style={{ color: 'var(--tg)' }}>
-              No tasks matching this filter.
-            </p>
-          )}
-        </div>
+        {/* Loading state */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-8 h-8 rounded-full border-2 mb-3 animate-spin"
+              style={{ borderColor: 'var(--gpa)', borderTopColor: 'var(--gp)' }} />
+            <p className="text-[14px]" style={{ color: 'var(--tg)' }}>Loading moments...</p>
+          </div>
+        )}
 
-        {/* Always show one task toggle — sits above FAB, never overlaps */}
-        <div className="mx-5 md:mx-8 mt-5 flex items-center justify-between rounded-2xl px-4 py-4"
-          style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-          <p className="text-[14px] pr-4" style={{ color: 'var(--td)' }}>Always show one task at a time</p>
-          <Toggle defaultOn={oneAtATime} onChange={setOneAtATime} />
-        </div>
+        {/* Error state */}
+        {!loading && error && (
+          <div className="mx-5 md:mx-8 rounded-2xl p-6 text-center"
+            style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+            <p className="text-[14px] mb-3" style={{ color: 'var(--tg)' }}>{error}</p>
+            <button onClick={refresh}
+              className="flex items-center gap-2 mx-auto text-[13px] px-4 py-2 rounded-full"
+              style={{ background: 'var(--gpa)', color: 'var(--gp)', border: 'none', cursor: 'pointer' }}>
+              <RefreshCw size={14} /> Try again
+            </button>
+          </div>
+        )}
+
+        {/* Task groups */}
+        {!loading && !error && (
+          <div className="flex flex-col gap-2 px-5 md:px-8">
+            {todayFiltered.length > 0 && (
+              <>
+                <p className="text-[11px] font-semibold uppercase tracking-widest pt-1 pb-1" style={{ color: 'var(--tg)' }}>
+                  Today
+                </p>
+                {todayFiltered.map(t => <TaskRow key={t.id} title={t.title} date="Today" estimatedMinutes={t.estimatedMinutes} priority={t.priority} status={t.status} />)}
+              </>
+            )}
+            {yesterdayFiltered.length > 0 && (
+              <>
+                <p className="text-[11px] font-semibold uppercase tracking-widest pt-3 pb-1" style={{ color: 'var(--tg)' }}>
+                  Yesterday
+                </p>
+                {yesterdayFiltered.map(t => <TaskRow key={t.id} title={t.title} date="Yesterday" estimatedMinutes={t.estimatedMinutes} priority={t.priority} status={t.status} />)}
+              </>
+            )}
+            {todayFiltered.length === 0 && yesterdayFiltered.length === 0 && !loading && (
+              <div className="text-center py-12">
+                <p className="text-[32px] mb-3">🌿</p>
+                <p className="text-[15px] font-medium" style={{ color: 'var(--td)' }}>Nothing here</p>
+                <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>
+                  {tab === 'All' ? 'Tap + to add your first moment' : `No ${tab.toLowerCase()} tasks`}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Always show one task toggle — wired to SettingsContext */}
+        {!loading && !error && (
+          <div
+            className="mx-5 md:mx-8 mt-5 flex items-center justify-between rounded-2xl px-5 py-4"
+            style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
+          >
+            <div>
+              <p className="text-[14px] font-medium" style={{ color: 'var(--td)' }}>One task at a time</p>
+              <p className="text-[12px] mt-0.5" style={{ color: 'var(--tg)' }}>Focus on a single moment on the dashboard</p>
+            </div>
+            <div className="ml-4 shrink-0">
+              <Toggle
+                defaultOn={prefs.oneTaskAtATime}
+                onChange={(v) => setPref('oneTaskAtATime', v)}
+              />
+            </div>
+          </div>
+        )}
 
       </div>
 
-      {/* FAB — raised higher on mobile so it clears the toggle */}
+      {/* FAB */}
       <button
         aria-label="Add task"
-        className="fixed bottom-28 right-5 md:bottom-8 md:right-8 w-12 h-12 rounded-full text-white flex items-center justify-center transition-transform hover:scale-105 z-40"
-        style={{ background: 'var(--gp)', boxShadow: '0 4px 16px rgba(45,90,39,.3)' }}
+        onClick={() => setSheetOpen(true)}
+        className="fixed bottom-28 right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center transition-all duration-150 z-40 hover:scale-105 active:scale-95"
+        style={{
+          background: 'var(--gp)',
+          boxShadow: '0 4px 16px rgba(45,90,39,.35), 0 2px 4px rgba(45,90,39,.2)',
+        }}
       >
-        <Plus size={22} strokeWidth={2} color="white" />
+        <Plus size={24} strokeWidth={2} color="white" />
       </button>
 
+      <CreateTaskSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
       <BottomNav />
     </div>
   )
