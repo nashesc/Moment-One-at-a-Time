@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import * as api from '@/lib/api'
 import type { Task as BackendTask } from '@/types'
 
@@ -52,18 +53,28 @@ function toUITask(t: BackendTask, todayStr: string): Task {
 }
 
 export function TaskProvider({ children }: { children: React.ReactNode }) {
-  const [tasks, setTasks]   = useState<Task[]>([])
+  const [tasks, setTasks]     = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError]   = useState<string | null>(null)
-  const todayStr            = useRef(new Date().toISOString().split('T')[0])
+  const [error, setError]     = useState<string | null>(null)
+  const todayStr              = useRef(new Date().toISOString().split('T')[0])
 
   const load = useCallback(async () => {
+    // Check session first — don't fire API calls if not authenticated
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      setTasks([])
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     setError(null)
     try {
       const today  = todayStr.current
       const yester = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]
 
+      // 2 API calls total — today + yesterday
       const [todayData, yesterData] = await Promise.all([
         api.getTasks(today),
         api.getTasks(yester).catch(() => [] as BackendTask[]),
@@ -74,7 +85,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         ...yesterData.map(t => toUITask(t, today)),
       ])
     } catch (err) {
-      setError('Could not load tasks. Please check your connection.')
+      const msg = err instanceof Error ? err.message : ''
+      // 401 = not authed, silently ignore
+      if (!msg.includes('401')) {
+        setError('Could not load tasks. Please check your connection.')
+      }
       setTasks([])
     } finally {
       setLoading(false)
@@ -87,7 +102,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
     api.updateTask(id, { status }).catch(console.error)
     if (status === 'done' || status === 'stuck') {
-      api.createCheckin({ task_id: id, status: status === 'done' ? 'done' : 'stuck' }).catch(console.error)
+      api.createCheckin({
+        task_id: id,
+        status: status === 'done' ? 'done' : 'stuck',
+      }).catch(console.error)
     }
   }, [])
 
@@ -100,7 +118,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const addTask = useCallback(async (payload: NewTaskPayload) => {
-    const today = todayStr.current
+    const today  = todayStr.current
     const tempId = `temp-${Date.now()}`
     const newTask: Task = {
       id:               tempId,
@@ -112,14 +130,13 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       date:             'Today',
     }
     setTasks(prev => [...prev, newTask])
-
     try {
       const created = await api.createTask({
-        title:              payload.title,
-        description:        payload.description,
-        priority:           payload.priority,
-        estimated_minutes:  payload.estimatedMinutes,
-        scheduled_date:     today,
+        title:             payload.title,
+        description:       payload.description,
+        priority:          payload.priority,
+        estimated_minutes: payload.estimatedMinutes,
+        scheduled_date:    today,
       })
       setTasks(prev => prev.map(t => t.id === tempId ? toUITask(created, today) : t))
     } catch (err) {

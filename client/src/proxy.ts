@@ -27,19 +27,20 @@ export async function proxy(request: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession()
   const user = session?.user ?? null
-
   const { pathname } = request.nextUrl
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
-  // splash is accessible when logged in — it's the post-login landing
-  const isSplash = pathname === '/splash'
 
-  if (!user && !isAuthRoute && pathname !== '/') {
+  const isAuthRoute    = pathname.startsWith('/login') || pathname.startsWith('/register')
+  const isPublicRoute  = isAuthRoute || pathname === '/'
+  // Splash requires auth — it's the post-login landing screen
+  const isProtected    = !isPublicRoute
+
+  if (!user && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // After login, go to splash (not dashboard directly)
+  // Logged-in users going to /login or /register → send to splash
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/splash'

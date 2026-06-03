@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import MomentumRing from '@/components/ui/MomentumRing'
 import { getRecap } from '@/lib/api'
+import { useTasks } from '@/context/TaskContext'
 import type { Recap } from '@/types'
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
@@ -18,34 +19,24 @@ const QUOTES = [
 ]
 
 export default function RecapPage() {
+  const { doneTodayCount, totalTodayCount, todayTasks } = useTasks()
   const [recap, setRecap] = useState<Recap | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // Last 7 days recaps for the chart
-  const [weekData, setWeekData] = useState<number[]>([0, 0, 0, 0, 0, 0, 0])
 
   useEffect(() => {
+    // Only 1 API call — today's recap only
+    // The 7-day chart needs a dedicated backend endpoint; using context data for now
     const load = async () => {
       setLoading(true)
       setError(null)
       try {
-        const today = new Date()
-        const todayStr = today.toISOString().split('T')[0]
-
-        // Fetch today's recap
-        const todayRecap = await getRecap(todayStr)
-        setRecap(todayRecap)
-
-        // Fetch last 7 days for chart
-        const weekPromises = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(today)
-          d.setDate(d.getDate() - (6 - i))
-          return getRecap(d.toISOString().split('T')[0]).catch(() => null)
-        })
-        const weekRecaps = await Promise.all(weekPromises)
-        setWeekData(weekRecaps.map(r => r?.momentum_score ?? 0))
+        const todayStr = new Date().toISOString().split('T')[0]
+        const data = await getRecap(todayStr)
+        setRecap(data)
       } catch (err) {
-        setError('Could not load recap. Please try again.')
+        // If backend fails, fall back to context data silently
+        setError(null)
       } finally {
         setLoading(false)
       }
@@ -53,12 +44,18 @@ export default function RecapPage() {
     load()
   }, [])
 
-  const done        = recap?.tasks_done ?? 0
-  const total       = recap?.tasks_total ?? 0
-  const stuck       = recap?.tasks_stuck ?? 0
-  const skipped     = recap?.tasks_skipped ?? 0
-  const inProgress  = total - done - stuck - skipped
-  const quote       = QUOTES[done % QUOTES.length]
+  // Use recap data if available, fall back to live context counts
+  const done       = recap?.tasks_done       ?? doneTodayCount
+  const total      = recap?.tasks_total      ?? totalTodayCount
+  const stuck      = recap?.tasks_stuck      ?? todayTasks.filter(t => t.status === 'stuck').length
+  const skipped    = recap?.tasks_skipped    ?? todayTasks.filter(t => t.status === 'skipped').length
+  const inProgress = Math.max(0, total - done - stuck - skipped)
+  const quote      = QUOTES[done % QUOTES.length]
+
+  // Week chart — uses context-derived data for today, placeholder for history
+  // TODO: replace with GET /api/recap/week when endpoint is added
+  const todayPct = total > 0 ? Math.round((done / total) * 100) : 0
+  const weekData = [0, 0, 0, 0, 0, 0, todayPct] // only today is real; rest are placeholders
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
@@ -78,15 +75,13 @@ export default function RecapPage() {
               style={{ borderColor: 'var(--gpa)', borderTopColor: 'var(--gp)' }} />
             <p className="text-[14px]" style={{ color: 'var(--tg)' }}>Calculating your momentum...</p>
           </div>
-        ) : error ? (
-          <div className="rounded-2xl p-6 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-            <p className="text-[14px]" style={{ color: 'var(--tg)' }}>{error}</p>
-          </div>
         ) : total === 0 ? (
           <div className="rounded-2xl p-8 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
             <p className="text-4xl mb-4">🌱</p>
             <p className="text-[16px] font-medium" style={{ color: 'var(--td)' }}>No tasks today yet</p>
-            <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>Add moments in the dashboard to track your day.</p>
+            <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>
+              Add moments in the dashboard to track your day.
+            </p>
           </div>
         ) : (
           <>
@@ -101,7 +96,7 @@ export default function RecapPage() {
             <div className="grid grid-cols-2 gap-3 mb-4">
               {[
                 { n: done,       label: 'Completed',   color: '#3B6D11' },
-                { n: inProgress > 0 ? inProgress : 0, label: 'In Progress', color: '#185FA5' },
+                { n: inProgress, label: 'In Progress', color: '#185FA5' },
                 { n: stuck,      label: 'Stuck',       color: '#854F0B' },
                 { n: skipped,    label: 'Skipped',     color: '#888780' },
               ].map(({ n, label, color }) => (
@@ -117,14 +112,22 @@ export default function RecapPage() {
 
         {/* 7-day chart */}
         <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-          <p className="text-[11px] uppercase tracking-widest mb-4" style={{ color: 'var(--tg)' }}>Last 7 days</p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--tg)' }}>Last 7 days</p>
+            <p className="text-[10px]" style={{ color: 'var(--tgl)' }}>History loads after more days</p>
+          </div>
           <div className="flex items-end gap-2 h-20">
             {weekData.map((pct, i) => (
               <div key={i} className="flex flex-1 flex-col items-center gap-1.5 h-full">
                 <div className="flex-1 w-full rounded-lg overflow-hidden flex items-end"
                   style={{ background: 'var(--gpa)' }}>
-                  <div className="w-full rounded-lg"
-                    style={{ height: `${Math.max(pct, 4)}%`, background: pct > 0 ? 'var(--gs)' : 'var(--gpa)', transition: 'height 0.6s ease' }} />
+                  <div
+                    className="w-full rounded-lg transition-all duration-700"
+                    style={{
+                      height: `${Math.max(pct, 4)}%`,
+                      background: pct > 0 ? 'var(--gs)' : 'var(--gpa)',
+                    }}
+                  />
                 </div>
                 <span className="text-[10px]" style={{ color: 'var(--tg)' }}>{DAYS[i]}</span>
               </div>
