@@ -1,13 +1,7 @@
 'use client'
 
 import { CheckCircle2, Clock } from 'lucide-react'
-
-interface Task {
-  id: string
-  title: string
-  estimatedMinutes: number
-  priority: 1 | 2 | 3
-}
+import type { Task } from '@/context/TaskContext'
 
 const priorityLabel = { 1: 'High', 2: 'Medium', 3: 'Low' }
 const priorityDot   = { 1: '#5A9E50', 2: '#C4A35A', 3: '#1B3A6B' }

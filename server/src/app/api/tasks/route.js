@@ -4,6 +4,10 @@ import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { taskSchema } from '@/lib/validations'
 
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200 })
+}
+
 export async function GET(request) {
   try {
     // Rate limit

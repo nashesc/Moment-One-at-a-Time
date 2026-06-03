@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/server'
-import { getUser, unauthorized, serverError } from '@/lib/auth'
+import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200 })
+}
 
 export async function GET(request) {
   try {

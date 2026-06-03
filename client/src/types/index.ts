@@ -44,3 +44,11 @@ export interface Profile {
   avatar_url?: string
   created_at: string
 }
+
+export interface PushSubscriptionJSON {
+  endpoint: string
+  keys: {
+    p256dh: string
+    auth: string
+  }
+}

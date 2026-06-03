@@ -5,6 +5,10 @@ import { pushSubscriptionSchema } from '@/lib/validations'
 import { sendPushNotification } from '@/lib/push'
 import { rateLimiter } from '@/lib/ratelimit'
 
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200 })
+}
+
 // Save push subscription
 export async function POST(request) {
   try {

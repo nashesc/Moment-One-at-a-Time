@@ -3,21 +3,22 @@
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import Toggle from '@/components/ui/Toggle'
+import { logout } from '@/lib/supabase/actions'
 
 const SECTIONS = [
   { title: 'Appearance',    rows: [{ label: 'Theme', value: 'Light' }] },
   {
     title: 'Display',
     rows: [
-      { label: 'Show opening quote',     toggle: true, defaultOn: true  },
-      { label: 'One task at a time',     toggle: true, defaultOn: true  },
+      { label: 'Show opening quote',  toggle: true, defaultOn: true  },
+      { label: 'One task at a time',  toggle: true, defaultOn: true  },
     ],
   },
   {
     title: 'Notifications',
     rows: [
-      { label: 'Push notifications',     toggle: true, defaultOn: false },
-      { label: 'Reminder time',          value: '9:00 AM'               },
+      { label: 'Push notifications',  toggle: true, defaultOn: false },
+      { label: 'Reminder time',       value: '9:00 AM'               },
     ],
   },
   {
@@ -34,8 +35,11 @@ export default function SettingsPage() {
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
       <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 px-5 md:px-8">
+
         <div className="pt-6 pb-4">
-          <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>Settings</h1>
+          <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+            Settings
+          </h1>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -62,19 +66,23 @@ export default function SettingsPage() {
             </div>
           ))}
 
-          <button
-            className="w-full rounded-full py-[14px] text-[14px] font-medium transition-opacity hover:opacity-80 mt-2"
-            style={{
-              background: 'white',
-              border: '1.5px solid #FBDCDC',
-              color: '#C0392B',
-              boxShadow: 'var(--shadow-card)',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-body)',
-            }}
-          >
-            Sign out
-          </button>
+          {/* Sign out — calls the server action directly via form */}
+          <form action={logout}>
+            <button
+              type="submit"
+              className="w-full rounded-full py-[14px] text-[14px] font-medium transition-opacity hover:opacity-80"
+              style={{
+                background: 'white',
+                border: '1.5px solid #FBDCDC',
+                color: '#C0392B',
+                boxShadow: 'var(--shadow-card)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              Sign out
+            </button>
+          </form>
         </div>
       </div>
       <BottomNav />

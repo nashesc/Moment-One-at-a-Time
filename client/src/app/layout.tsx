@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import './globals.css'
+import { TaskProvider } from '@/context/TaskContext'
+import '@/app/globals.css'
 
 export const metadata: Metadata = {
   title: 'Moment — One at a Time',
@@ -18,7 +19,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <TaskProvider>
+          {children}
+        </TaskProvider>
+      </body>
     </html>
   )
 }

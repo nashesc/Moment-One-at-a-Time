@@ -5,19 +5,24 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email'),
+  email:    z.string().email('Invalid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
 const registerSchema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email:     z.string().email('Invalid email'),
+  password:  z.string().min(6, 'Password must be at least 6 characters'),
   full_name: z.string().min(1, 'Name is required').max(100),
 })
 
-export async function login(formData: FormData) {
+// IMPORTANT: useActionState calls action(prevState, formData)
+// prevState is always first, FormData is always second
+export async function login(
+  _prevState: { error: string },
+  formData: FormData
+): Promise<{ error: string }> {
   const parsed = loginSchema.safeParse({
-    email: formData.get('email'),
+    email:    formData.get('email'),
     password: formData.get('password'),
   })
   if (!parsed.success) return { error: parsed.error.issues[0].message }
@@ -29,19 +34,22 @@ export async function login(formData: FormData) {
   redirect('/dashboard')
 }
 
-export async function register(formData: FormData) {
+export async function register(
+  _prevState: { error: string },
+  formData: FormData
+): Promise<{ error: string }> {
   const parsed = registerSchema.safeParse({
-    email: formData.get('email'),
-    password: formData.get('password'),
+    email:     formData.get('email'),
+    password:  formData.get('password'),
     full_name: formData.get('full_name'),
   })
   if (!parsed.success) return { error: parsed.error.issues[0].message }
 
   const supabase = await createClient()
   const { error } = await supabase.auth.signUp({
-    email: parsed.data.email,
+    email:    parsed.data.email,
     password: parsed.data.password,
-    options: { data: { full_name: parsed.data.full_name } },
+    options:  { data: { full_name: parsed.data.full_name } },
   })
   if (error) return { error: error.message }
 

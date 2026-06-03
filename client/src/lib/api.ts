@@ -1,5 +1,5 @@
 import { createClient } from './supabase/client'
-import type { Task, TaskPriority, Checkin, Recap } from '@/types'
+import type { Task, Checkin, Recap, PushSubscriptionJSON, TaskPriority } from '@/types'
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:3001'
 
@@ -11,6 +11,7 @@ async function getToken(): Promise<string | null> {
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = await getToken()
+
   const res = await fetch(`${SERVER_URL}${path}`, {
     ...options,
     headers: {
@@ -25,7 +26,9 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
     throw new Error(body.error ?? `Request failed: ${res.status}`)
   }
 
-  return res.json() as Promise<T>
+  // Backend always returns { data: T } — unwrap it
+  const json = await res.json()
+  return (json.data ?? json) as T
 }
 
 export function getTasks(date?: string): Promise<Task[]> {
@@ -72,8 +75,14 @@ export function createCheckin(payload: {
   })
 }
 
-export function getCheckins(): Promise<Checkin[]> {
-  return apiFetch<Checkin[]>('/api/checkins')
+// Backend returns checkins with nested tasks(title) — flatten to task_title
+export async function getCheckins(): Promise<Checkin[]> {
+  const raw = await apiFetch<Array<Checkin & { tasks?: { title: string } }>>('/api/checkins')
+  return raw.map(c => ({
+    ...c,
+    task_title: c.task_title ?? c.tasks?.title ?? '',
+    tasks: undefined,
+  }))
 }
 
 export function getRecap(date?: string): Promise<Recap> {
