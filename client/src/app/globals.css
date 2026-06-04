@@ -32,6 +32,22 @@
   50%       { transform: scale(1.025); }
 }
 
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton {
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    var(--gpa) 25%,
+    rgba(255,255,255,0.8) 50%,
+    var(--gpa) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
 html, body {
   font-family: var(--font-body);
   color: var(--td);

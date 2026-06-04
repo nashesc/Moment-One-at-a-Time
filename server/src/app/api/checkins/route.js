@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/server'
 import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
-import { rateLimiter } from '@/lib/ratelimit'
+import { rateLimiter, authRateLimiter } from '@/lib/ratelimit'
 import { checkinSchema } from '@/lib/validations'
 
 export async function OPTIONS() {
@@ -11,7 +11,7 @@ export async function OPTIONS() {
 export async function POST(request) {
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
-    const { success } = await rateLimiter.limit(ip)
+    const { success } = await authRateLimiter.limit(ip)
     if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     const user = await getUser(request)

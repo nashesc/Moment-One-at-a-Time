@@ -86,8 +86,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       ])
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
-      // 401 = not authed, silently ignore
-      if (!msg.includes('401')) {
+      if (msg.includes('401')) {
+        // Session expired — force re-auth instead of silently showing nothing
+        console.warn('[Tasks] Session expired, redirecting to login')
+        window.location.href = '/login'
+      } else {
+        console.error('[Tasks] Load failed:', msg)
         setError('Could not load tasks. Please check your connection.')
       }
       setTasks([])

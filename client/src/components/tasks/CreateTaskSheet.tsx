@@ -26,6 +26,7 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
   const [minutes, setMinutes]   = useState(30)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]       = useState('')
+  const isSubmittingRef = useRef(false)
   const titleRef = useRef<HTMLInputElement>(null)
 
   // Focus title on open
@@ -46,6 +47,8 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!title.trim()) { setError('Please enter a task title.'); return }
+    if (isSubmittingRef.current) return  // block double-tap before setState catches up
+    isSubmittingRef.current = true
     setSubmitting(true)
     setError('')
     try {
@@ -60,6 +63,7 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
       setError('Failed to create task. Please try again.')
     } finally {
       setSubmitting(false)
+      isSubmittingRef.current = false
     }
   }
 
@@ -235,6 +239,7 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
               >
                 {submitting ? 'Adding...' : 'Add to today'}
               </button>
+              <div className="md:hidden" style={{ height: '32px' }} />
             </form>
           </motion.div>
         </>

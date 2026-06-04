@@ -39,7 +39,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       if (stored) {
         setPrefs({ ...DEFAULTS, ...JSON.parse(stored) })
       }
-    } catch {}
+    } catch (err) {
+      console.warn('[Settings] Failed to load preferences from storage:', err)
+      // Corrupted storage — clear it so next save works cleanly
+      try { localStorage.removeItem(STORAGE_KEY) } catch {}
+  }
     setPushSupported('Notification' in window && 'serviceWorker' in navigator)
   }, [])
 
@@ -49,7 +53,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   ) => {
     setPrefs(prev => {
       const next = { ...prev, [key]: value }
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch {}
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      } catch (err) {
+        console.warn('[Settings] Failed to persist preference — storage may be full:', err)
+      }
       return next
     })
   }, [])

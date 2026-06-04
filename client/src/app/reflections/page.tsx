@@ -87,10 +87,19 @@ export default function ReflectionsPage() {
         </div>
 
         {loading ? (
-          <div className="rounded-2xl p-8 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-            <div className="w-8 h-8 rounded-full border-2 mx-auto mb-3 animate-spin"
-              style={{ borderColor: 'var(--gpa)', borderTopColor: 'var(--gp)' }} />
-            <p className="text-[14px]" style={{ color: 'var(--tg)' }}>Loading your reflections...</p>
+          <div className="flex flex-col gap-3">
+            {[0,1,2,3].map(i => (
+              <div key={i} className="rounded-2xl p-5"
+                style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="skeleton h-4" style={{ width: `${45 + (i * 17) % 30}%` }} />
+                  <div className="skeleton h-5 w-16 rounded-full" />
+                </div>
+                <div className="skeleton h-3 w-full mb-2" />
+                <div className="skeleton h-3 mb-4" style={{ width: `${55 + (i * 11) % 25}%` }} />
+                <div className="skeleton h-3 w-20" />
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="rounded-2xl p-6 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>

@@ -45,7 +45,7 @@ async function fetchRecaps(dates: string[]): Promise<(Recap | null)[]> {
       batch.map(d => getRecap(d).catch(() => null))
     )
     results.push(...batchResults)
-    if (i + BATCH < dates.length) await new Promise(r => setTimeout(r, 150))
+    if (i + BATCH < dates.length) await new Promise(r => setTimeout(r, 400))
   }
   return results
 }
@@ -176,10 +176,37 @@ export default function RecapPage() {
         </div>
 
         {loading ? (
-          <div className="rounded-2xl p-8 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-            <div className="w-8 h-8 rounded-full border-2 mx-auto mb-3 animate-spin"
-              style={{ borderColor: 'var(--gpa)', borderTopColor: 'var(--gp)' }} />
-            <p className="text-[14px]" style={{ color: 'var(--tg)' }}>Calculating your momentum...</p>
+          <div className="flex flex-col gap-4">
+            {/* Ring + quote skeleton */}
+            <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <div className="flex items-center gap-4">
+                <div className="skeleton rounded-full shrink-0" style={{ width: 90, height: 90 }} />
+                <div className="flex flex-col gap-2 flex-1">
+                  <div className="skeleton h-4 w-3/4" />
+                  <div className="skeleton h-3 w-1/2 mt-1" />
+                </div>
+              </div>
+              <div className="skeleton h-4 w-2/3 mx-auto mt-5" />
+            </div>
+            {/* Stats grid skeleton */}
+            <div className="grid grid-cols-2 gap-3">
+              {[0,1,2,3].map(i => (
+                <div key={i} className="rounded-2xl p-4 flex flex-col items-center gap-2"
+                  style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                  <div className="skeleton h-8 w-10" />
+                  <div className="skeleton h-3 w-16" />
+                </div>
+              ))}
+            </div>
+            {/* Chart skeleton */}
+            <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <div className="skeleton h-3 w-24 mb-4" />
+              <div className="flex items-end gap-2 h-20">
+                {[60,40,80,55,70,45,90].map((h, i) => (
+                  <div key={i} className="skeleton flex-1 rounded-lg" style={{ height: `${h}%` }} />
+                ))}
+              </div>
+            </div>
           </div>
         ) : total === 0 && period === 'daily' ? (
           <div className="rounded-2xl p-8 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
@@ -226,47 +253,46 @@ export default function RecapPage() {
                 </div>
               ))}
             </motion.div>
+
+            {/* Chart */}
+            <motion.div
+              className="rounded-2xl p-5"
+              style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.14, ease: [0.4, 0, 0.2, 1] }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <p className="moment-label">
+                  {period === 'daily' ? 'Last 7 days' : period === 'weekly' ? 'Day by day' : period === 'monthly' ? 'Week by week' : 'Month by month'}
+                </p>
+                {aggTotal === 0 && period !== 'daily' && (
+                  <p className="text-[10px]" style={{ color: 'var(--tgl)' }}>History builds over time</p>
+                )}
+              </div>
+              <div className="flex items-end gap-2 h-20">
+                {chartBars.map((pct, i) => (
+                  <div key={i} className="flex flex-1 flex-col items-center gap-1.5 h-full">
+                    <div className="flex-1 w-full rounded-lg overflow-hidden flex items-end"
+                      style={{ background: 'var(--gpa)' }}>
+                      <div
+                        className="w-full rounded-lg"
+                        style={{
+                          height: `${Math.max(pct, pct > 0 ? 6 : 0)}%`,
+                          background: pct > 0 ? 'var(--gs)' : 'var(--gpa)',
+                          transition: 'height 0.7s cubic-bezier(0.4,0,0.2,1)',
+                        }}
+                      />
+                    </div>
+                    <span className="text-[9px]" style={{ color: 'var(--tg)' }}>
+                      {chartLabels[i] ?? ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </>
         )}
-
-        {/* Chart */}
-        <motion.div
-          className="rounded-2xl p-5"
-          style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.14, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <p className="moment-label">
-              {period === 'daily' ? 'Last 7 days' : period === 'weekly' ? 'Day by day' : period === 'monthly' ? 'Week by week' : 'Month by month'}
-            </p>
-            {aggTotal === 0 && period !== 'daily' && (
-              <p className="text-[10px]" style={{ color: 'var(--tgl)' }}>History builds over time</p>
-            )}
-          </div>
-          <div className="flex items-end gap-2 h-20">
-            {chartBars.map((pct, i) => (
-              <div key={i} className="flex flex-1 flex-col items-center gap-1.5 h-full">
-                <div className="flex-1 w-full rounded-lg overflow-hidden flex items-end"
-                  style={{ background: 'var(--gpa)' }}>
-                  <div
-                    className="w-full rounded-lg"
-                    style={{
-                      height: `${Math.max(pct, pct > 0 ? 6 : 0)}%`,
-                      background: pct > 0 ? 'var(--gs)' : 'var(--gpa)',
-                      transition: 'height 0.7s cubic-bezier(0.4,0,0.2,1)',
-                    }}
-                  />
-                </div>
-                <span className="text-[9px]" style={{ color: 'var(--tg)' }}>
-                  {chartLabels[i] ?? ''}
-                </span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
       </div>
       <BottomNav />
     </div>

@@ -33,6 +33,7 @@ export async function GET(request) {
       .eq('user_id', user.id)
       .eq('scheduled_date', date)
       .order('order_index', { ascending: true })
+      .limit(50)
 
     if (error) return serverError(error.message)
 
@@ -46,7 +47,7 @@ export async function POST(request) {
   try {
     // Rate limit
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
-    const { success } = await rateLimiter.limit(ip)
+    const { success } = await authRateLimiter.limit(ip)
     if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
     // Auth check
@@ -58,7 +59,7 @@ export async function POST(request) {
     const parsed = taskSchema.safeParse(body)
     if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
-    // Insert
+    // Get next order index
     const { data: existing } = await supabase
       .from('tasks')
       .select('order_index')
@@ -69,6 +70,7 @@ export async function POST(request) {
 
     const nextIndex = (existing?.[0]?.order_index ?? -1) + 1
 
+    // Insert the new task
     const { data, error } = await supabase
       .from('tasks')
       .insert({ ...parsed.data, user_id: user.id, order_index: nextIndex })

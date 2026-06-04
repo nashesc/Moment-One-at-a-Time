@@ -146,13 +146,23 @@ export default function DashboardPage() {
           <MomentumRing done={doneTodayCount} total={totalTodayCount} size={76} showImage />
         </motion.div>
 
-        {/* Loading state */}
+        {/* Loading skeleton */}
         {loading && (
-          <div className="mx-4 md:mx-8 rounded-2xl p-8 text-center"
-            style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-            <div className="w-8 h-8 rounded-full border-2 mx-auto mb-3 animate-spin"
-              style={{ borderColor: 'var(--gpa)', borderTopColor: 'var(--gp)' }} />
-            <p className="text-[14px]" style={{ color: 'var(--tg)' }}>Loading your moments...</p>
+          <div className="mx-4 md:mx-8 flex flex-col gap-3">
+            <div className="rounded-2xl p-6" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <div className="skeleton h-3 w-24 mb-4" />
+              <div className="skeleton h-7 w-full mb-2" />
+              <div className="skeleton h-7 w-3/4 mb-6" />
+              <div className="flex gap-4">
+                <div className="skeleton h-3 w-16" />
+                <div className="skeleton h-3 w-20" />
+              </div>
+            </div>
+            <div className="skeleton h-14 w-full rounded-full" />
+            <div className="flex gap-2">
+              <div className="skeleton h-12 flex-1 rounded-full" />
+              <div className="skeleton h-12 flex-1 rounded-full" />
+            </div>
           </div>
         )}
 
@@ -332,7 +342,7 @@ export default function DashboardPage() {
       <motion.button
           aria-label="Add task"
           onClick={() => setSheetOpen(true)}
-          className="md:hidden fixed bottom-28 right-5 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
+          className="fixed bottom-28 right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
           style={{ background: 'var(--gp)', boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)' }}
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

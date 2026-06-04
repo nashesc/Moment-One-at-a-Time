@@ -51,7 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
       }
     } catch (err) {
-      console.error('Failed to load profile:', err)
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('[Auth] refreshProfile failed:', message)
     }
   }, [])
 
@@ -94,6 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(prev => prev ? { ...prev, ...updates } : prev)
       return {}
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      console.error('[Auth] updateProfile failed:', message)
       return { error: 'Failed to update profile' }
     }
   }, [profile])

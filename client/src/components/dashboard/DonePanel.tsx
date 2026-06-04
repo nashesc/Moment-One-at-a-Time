@@ -23,20 +23,22 @@ export default function DonePanel({ taskTitle, onNext }: DonePanelProps) {
   // Pick quote once on mount — useRef prevents re-pick on re-render
   const quote = useRef(QUOTES[Math.floor(Math.random() * QUOTES.length)]).current
 
+  const onNextRef = useRef(onNext)
+  useEffect(() => { onNextRef.current = onNext }, [onNext])
+
   useEffect(() => {
     const t = setInterval(() => {
       setElapsed(e => {
         const next = e + 1
         if (next >= DURATION) {
           clearInterval(t)
-          onNext()
+          onNextRef.current()  
         }
         return next
       })
     }, 1000)
     return () => clearInterval(t)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // intentionally empty — onNext identity doesn't matter here
+  }, [])
 
   const remaining = DURATION - elapsed
   const progress = (elapsed / DURATION) * 100

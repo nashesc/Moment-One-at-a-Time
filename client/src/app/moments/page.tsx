@@ -9,6 +9,7 @@ import Toggle from '@/components/ui/Toggle'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { useTasks } from '@/context/TaskContext'
 import { useSettings } from '@/context/SettingsContext'
+import { motion } from 'motion/react'
 
 const TABS = ['All', 'Pending', 'Done', 'Stuck'] as const
 type Tab = typeof TABS[number]
@@ -106,12 +107,21 @@ export default function MomentsPage() {
           ))}
         </div>
 
-        {/* Loading state */}
+        {/* Loading skeleton */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-8 h-8 rounded-full border-2 mb-3 animate-spin"
-              style={{ borderColor: 'var(--gpa)', borderTopColor: 'var(--gp)' }} />
-            <p className="text-[14px]" style={{ color: 'var(--tg)' }}>Loading moments...</p>
+          <div className="flex flex-col gap-2 px-5 md:px-8">
+            <div className="skeleton h-3 w-12 mb-1 rounded" />
+            {[0,1,2,3,4].map(i => (
+              <div key={i} className="flex items-center gap-3 rounded-2xl px-4 py-3.5"
+                style={{ background: 'white', border: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                <div className="skeleton w-[18px] h-[18px] rounded-full shrink-0" />
+                <div className="flex-1 flex flex-col gap-1.5">
+                  <div className="skeleton h-3.5" style={{ width: `${50 + (i * 19) % 35}%` }} />
+                  <div className="skeleton h-2.5 w-20" />
+                </div>
+                <div className="skeleton h-5 w-16 rounded-full" />
+              </div>
+            ))}
           </div>
         )}
 
@@ -181,17 +191,22 @@ export default function MomentsPage() {
       </div>
 
       {/* FAB */}
-      <button
+      <motion.button
         aria-label="Add task"
         onClick={() => setSheetOpen(true)}
-        className="fixed bottom-28 right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center transition-all duration-150 z-40 hover:scale-105 active:scale-95"
+        className="fixed bottom-28 right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
         style={{
           background: 'var(--gp)',
-          boxShadow: '0 4px 16px rgba(45,90,39,.35), 0 2px 4px rgba(45,90,39,.2)',
+          boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
         }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
       >
         <Plus size={24} strokeWidth={2} color="white" />
-      </button>
+      </motion.button>
 
       <CreateTaskSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
       <BottomNav />
