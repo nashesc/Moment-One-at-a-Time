@@ -10,12 +10,10 @@ export const rateLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(10, '10 s'),
   analytics: true,
-
 })
 
 export const authRateLimiter = new Ratelimit({
   redis,
   limiter: Ratelimit.slidingWindow(5, '60 s'),
   analytics: true,
-  ephemeralCache: new Map(),
 })

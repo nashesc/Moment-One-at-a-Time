@@ -3,6 +3,7 @@ import { TaskProvider } from '@/context/TaskContext'
 import { AuthProvider } from '@/context/AuthContext'
 import { SettingsProvider } from '@/context/SettingsContext'
 import { Providers } from '@/lib/providers'
+import RippleProvider from '@/components/ui/RippleProvider'
 import '@/app/globals.css'
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
+        <RippleProvider />
         <Providers>
           <SettingsProvider>
             <AuthProvider>

@@ -21,17 +21,98 @@
   --shadow-btn: 0 2px 8px rgba(45,90,39,0.25);
 }
 
+@keyframes momentRipple {
+  0%   { transform: translate(-50%, -50%) scale(0);   opacity: 1; }
+  60%  { transform: translate(-50%, -50%) scale(28);  opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(45);  opacity: 0; }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.025); }
+}
+
 html, body {
   font-family: var(--font-body);
-  background-color: var(--ow);
   color: var(--td);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Warm layered background — subtle green bloom top-left, tan warmth bottom-right */
+  background-color: var(--ow);
+  background-image:
+    radial-gradient(ellipse 60% 50% at 20% 10%, rgba(212,232,207,0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(196,180,154,0.25) 0%, transparent 60%);
+}
+
+/* Very subtle noise texture — gives the off-white a paper/linen feel */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
 }
 
 * { box-sizing: border-box; }
 ::-webkit-scrollbar { display: none; }
 * { scrollbar-width: none; }
 
-/* Safe area for PWA */
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+
+/* Shared utility classes */
+
+/* Card: replaces repeated rounded-2xl bg-white shadow-card */
+.moment-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+/* Section label: replaces text-[11px] uppercase tracking-widest */
+.moment-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tg);
+}
+
+/* Primary button: replaces the repeated green button inline styles */
+.moment-btn-primary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 15px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: var(--gp);
+  box-shadow: var(--shadow-btn);
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  font-family: var(--font-body);
+}
+.moment-btn-primary:hover { opacity: 0.9; }
+.moment-btn-primary:active { opacity: 0.8; transform: scale(0.99); }
+.moment-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Ghost button: replaces "I'm Stuck" / "Skip for now" styles */
+.moment-btn-ghost {
+  flex: 1;
+  padding: 13px 8px;
+  font-size: 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 9999px;
+  color: var(--tg);
+  font-family: var(--font-body);
+  transition: background 0.15s ease;
+}
+.moment-btn-ghost:hover { background: rgba(255,255,255,0.6); }

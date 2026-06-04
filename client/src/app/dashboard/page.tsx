@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { Play, RefreshCw } from 'lucide-react'
 import BottomNav from '@/components/ui/BottomNav'
@@ -13,6 +13,9 @@ import TaskRow from '@/components/tasks/TaskRow'
 import { useTasks, type Task } from '@/context/TaskContext'
 import { useAuth } from '@/context/AuthContext'
 import { useSettings } from '@/context/SettingsContext'
+import { Plus } from 'lucide-react'
+import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
+import { motion } from 'motion/react'
 
 type FocusState = 'idle' | 'focusing' | 'done'
 
@@ -29,6 +32,17 @@ export default function DashboardPage() {
   const [focused,    setFocused]    = useState<Task | null>(null)
   const [focusState, setFocusState] = useState<FocusState>('idle')
   const [showPicker, setShowPicker] = useState(true)
+  const [sheetOpen, setSheetOpen] = useState(false)
+
+  // Auto-select the task if there's only one — no need to show the picker
+  useEffect(() => {
+    if (!loading && showPicker && activeTasks.length === 1 && !focused) {
+      setFocused(activeTasks[0])
+      setFocusState('idle')
+      setShowPicker(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, showPicker, activeTasks.length])
 
   const now      = new Date()
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
@@ -122,10 +136,15 @@ export default function DashboardPage() {
         </div>
 
         {/* Momentum ring */}
-        <div className="mx-4 md:mx-8 rounded-2xl p-5 mb-4"
-          style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+        <motion.div
+          className="mx-4 md:mx-8 rounded-2xl p-5 mb-4"
+          style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+        >
           <MomentumRing done={doneTodayCount} total={totalTodayCount} size={76} showImage />
-        </div>
+        </motion.div>
 
         {/* Loading state */}
         {loading && (
@@ -204,7 +223,12 @@ export default function DashboardPage() {
 
             {currentTask && !allDone && (
               <>
-                <div className="mx-4 md:mx-8 mb-3">
+                <motion.div
+                  className="mx-4 md:mx-8 mb-3"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: 0.05, ease: [0.4, 0, 0.2, 1] }}
+                >
                   <TaskCard
                     title={currentTask.title}
                     description={currentTask.description}
@@ -212,7 +236,7 @@ export default function DashboardPage() {
                     priority={currentTask.priority}
                     isDone={focusState === 'done'}
                   />
-                </div>
+                </motion.div>
 
                 {focusState === 'done' && (
                   <div className="mx-4 md:mx-8 mb-3">
@@ -221,7 +245,12 @@ export default function DashboardPage() {
                 )}
 
                 {focusState !== 'done' && (
-                  <div className="mx-4 md:mx-8 flex flex-col gap-3 mb-2">
+                  <motion.div
+                    className="mx-4 md:mx-8 flex flex-col gap-3 mb-2"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.1, ease: [0.4, 0, 0.2, 1] }}
+                  >
                     <button onClick={handleMainBtn}
                       className="w-full flex items-center justify-center gap-3 rounded-full py-[15px] text-[15px] font-semibold text-white transition-all duration-200 hover:opacity-90"
                       style={{ background: btnBg, boxShadow: 'var(--shadow-btn)', fontFamily: 'var(--font-body)' }}>
@@ -243,7 +272,7 @@ export default function DashboardPage() {
                         Skip for now
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 )}
               </>
             )}
@@ -299,6 +328,22 @@ export default function DashboardPage() {
           </svg>
         </div>
       </aside>
+
+      <motion.button
+          aria-label="Add task"
+          onClick={() => setSheetOpen(true)}
+          className="md:hidden fixed bottom-28 right-5 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
+          style={{ background: 'var(--gp)', boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)' }}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
+        >
+          <Plus size={24} strokeWidth={2} color="white" />
+        </motion.button>
+
+        <CreateTaskSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
 
       <BottomNav />
     </div>

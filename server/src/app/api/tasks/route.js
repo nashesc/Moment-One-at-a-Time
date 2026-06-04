@@ -59,9 +59,19 @@ export async function POST(request) {
     if (!parsed.success) return badRequest(parsed.error.issues[0].message)
 
     // Insert
+    const { data: existing } = await supabase
+      .from('tasks')
+      .select('order_index')
+      .eq('user_id', user.id)
+      .eq('scheduled_date', parsed.data.scheduled_date || new Date().toISOString().split('T')[0])
+      .order('order_index', { ascending: false })
+      .limit(1)
+
+    const nextIndex = (existing?.[0]?.order_index ?? -1) + 1
+
     const { data, error } = await supabase
       .from('tasks')
-      .insert({ ...parsed.data, user_id: user.id })
+      .insert({ ...parsed.data, user_id: user.id, order_index: nextIndex })
       .select()
       .single()
 

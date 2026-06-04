@@ -31,7 +31,6 @@ export async function proxy(request: NextRequest) {
 
   const isAuthRoute    = pathname.startsWith('/login') || pathname.startsWith('/register')
   const isPublicRoute  = isAuthRoute || pathname === '/'
-  // Splash requires auth — it's the post-login landing screen
   const isProtected    = !isPublicRoute
 
   if (!user && isProtected) {
@@ -40,7 +39,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Logged-in users going to /login or /register → send to splash
   if (user && isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/splash'

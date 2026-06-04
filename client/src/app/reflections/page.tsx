@@ -44,6 +44,12 @@ export default function ReflectionsPage() {
       setLoading(true)
       setError(null)
       try {
+        // Guard: skip fetch if no session (avoids burning rate limit on auth pages)
+        const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) { setLoading(false); return }
+
         const data = await getCheckins()
         setCheckins(data)
       } catch {

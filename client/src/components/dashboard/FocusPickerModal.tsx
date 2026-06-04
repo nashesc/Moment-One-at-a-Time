@@ -1,6 +1,7 @@
 'use client'
 
 import { Circle, Clock } from 'lucide-react'
+import { motion } from 'motion/react'
 import type { Task } from '@/context/TaskContext'
 
 const priorityLabel: Record<number, string> = { 1: 'High', 2: 'Medium', 3: 'Low' }
@@ -29,18 +30,27 @@ export default function FocusPickerModal({
         Select a task to focus on.
       </p>
 
-      <div className="flex flex-col gap-2">
+      <motion.div
+        className="flex flex-col gap-2"
+        initial="hidden"
+        animate="visible"
+        variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
+      >
         {tasks.map(task => (
-          <button
+          <motion.button
             key={task.id}
             onClick={() => onSelect(task)}
-            className="w-full flex items-center gap-4 rounded-2xl px-4 py-4 text-left transition-all duration-150 group"
+            className="w-full flex items-center gap-4 rounded-2xl px-4 py-4 text-left"
             style={{
               background: 'white',
               border: '1px solid var(--border)',
               boxShadow: 'var(--shadow-card)',
               cursor: 'pointer',
             }}
+            variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
+            transition={{ duration: 0.25 }}
+            whileTap={{ scale: 0.98 }}
+            whileHover={{ boxShadow: '0 4px 20px rgba(45,90,39,0.15)' }}
           >
             <span className="shrink-0 transition-colors duration-150"
               style={{ color: 'var(--gso)' }}>
@@ -63,9 +73,9 @@ export default function FocusPickerModal({
                 </span>
               </p>
             </div>
-          </button>
+          </motion.button>
         ))}
-      </div>
+      </motion.div>
     </div>
   )
 }

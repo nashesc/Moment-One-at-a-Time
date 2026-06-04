@@ -100,7 +100,9 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   const updateStatus = useCallback((id: string, status: TaskStatus) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
+    if (id.startsWith('temp-')) return
     api.updateTask(id, { status }).catch(console.error)
+
     if (status === 'done' || status === 'stuck') {
       api.createCheckin({
         task_id: id,
