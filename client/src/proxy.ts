@@ -9,13 +9,9 @@ export async function proxy(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
+        getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -25,12 +21,16 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
-  const { pathname } = request.nextUrl
+  // getSession() reads from the cookie — zero network calls, ~5ms
+  // Security: The actual JWT validation happens at the API level (server/auth.js)
+  // The proxy is only responsible for routing/redirects, not auth enforcement
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user ?? null
 
-  const isAuthRoute    = pathname.startsWith('/login') || pathname.startsWith('/register')
-  const isPublicRoute  = isAuthRoute || pathname === '/'
-  const isProtected    = !isPublicRoute
+  const { pathname } = request.nextUrl
+  const isAuthRoute   = pathname.startsWith('/login') || pathname.startsWith('/register')
+  const isPublicRoute = isAuthRoute || pathname === '/'
+  const isProtected   = !isPublicRoute
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()

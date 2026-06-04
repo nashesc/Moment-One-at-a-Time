@@ -40,9 +40,10 @@ export async function getUser(request) {
 
     // Prevent unbounded cache growth — clear oldest entries if over 500
     if (_tokenCache.size > 500) {
-      const firstKey = _tokenCache.keys().next().value
-      _tokenCache.delete(firstKey)
-    }
+      const evictCount = Math.floor(_tokenCache.size * 0.1)
+      const keys = Array.from(_tokenCache.keys()).slice(0, evictCount)
+      keys.forEach(k => _tokenCache.delete(k))
+    } 
 
     return user
   } catch {

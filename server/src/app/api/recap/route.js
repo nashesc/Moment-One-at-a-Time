@@ -1,44 +1,39 @@
-import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/server'
-import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
+import { getUser } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
+import { optionsResponse, json } from '@/lib/cors'
 
-export async function OPTIONS() {
-  return NextResponse.json({}, { status: 200 })
-}
+export async function OPTIONS(request) { return optionsResponse(request) }
 
 export async function GET(request) {
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
     const { success } = await rateLimiter.limit(ip)
-    if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const user = await getUser(request)
-    if (!user) return unauthorized()
+    if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 
     const { searchParams } = new URL(request.url)
     const rawDate = searchParams.get('date')
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
-    if (rawDate && !dateRegex.test(rawDate)) return badRequest('Invalid date format. Use YYYY-MM-DD')
+    if (rawDate && !dateRegex.test(rawDate)) return json({ error: 'Invalid date format. Use YYYY-MM-DD' }, { status: 400 }, request)
     const date = rawDate || new Date().toISOString().split('T')[0]
 
-    // Get all tasks for the day
     const { data: tasks, error } = await supabase
       .from('tasks')
-      .select('*')
+      .select('status')
       .eq('user_id', user.id)
       .eq('scheduled_date', date)
 
-    if (error) return serverError(error.message)
+    if (error) return json({ error: error.message }, { status: 500 }, request)
 
-    // Calculate recap
     const total = tasks.length
     const done = tasks.filter(t => t.status === 'done').length
     const stuck = tasks.filter(t => t.status === 'stuck').length
     const skipped = tasks.filter(t => t.status === 'skipped').length
     const momentum_score = total > 0 ? Math.round((done / total) * 100) : 0
 
-    // Upsert recap
     const { data: recap, error: recapError } = await supabase
       .from('recaps')
       .upsert({
@@ -53,10 +48,9 @@ export async function GET(request) {
       .select()
       .single()
 
-    if (recapError) return serverError(recapError.message)
-
-    return NextResponse.json({ data: recap })
-  } catch (err) {
-    return serverError()
+    if (recapError) return json({ error: recapError.message }, { status: 500 }, request)
+    return json({ data: recap }, {}, request)
+  } catch {
+    return json({ error: 'Internal server error' }, { status: 500 }, request)
   }
 }

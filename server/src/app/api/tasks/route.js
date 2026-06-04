@@ -1,65 +1,55 @@
-import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/server'
 import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
-import { rateLimiter } from '@/lib/ratelimit'
+import { rateLimiter, authRateLimiter } from '@/lib/ratelimit'
 import { taskSchema } from '@/lib/validations'
+import { corsHeaders, optionsResponse, json } from '@/lib/cors'
 
-export async function OPTIONS() {
-  return NextResponse.json({}, { status: 200 })
-}
+export async function OPTIONS(request) { return optionsResponse(request) }
+
 
 export async function GET(request) {
   try {
-    // Rate limit
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
     const { success } = await rateLimiter.limit(ip)
-    if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
-    // Auth check
     const user = await getUser(request)
-    if (!user) return unauthorized()
+    if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 
-    // Get date filter from query params
     const { searchParams } = new URL(request.url)
     const rawDate = searchParams.get('date')
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
-    if (rawDate && !dateRegex.test(rawDate)) return badRequest('Invalid date format. Use YYYY-MM-DD')
+    if (rawDate && !dateRegex.test(rawDate)) return json({ error: 'Invalid date format. Use YYYY-MM-DD' }, { status: 400 })
     const date = rawDate || new Date().toISOString().split('T')[0]
 
-    // Query
     const { data, error } = await supabase
       .from('tasks')
-      .select('*')
+      .select('id, title, description, status, priority, scheduled_date, estimated_minutes, order_index, created_at, updated_at')
       .eq('user_id', user.id)
       .eq('scheduled_date', date)
       .order('order_index', { ascending: true })
       .limit(50)
 
-    if (error) return serverError(error.message)
-
-    return NextResponse.json({ data })
-  } catch (err) {
-    return serverError()
+    if (error) return json({ error: error.message }, { status: 500 }, request)
+    return json({ data }, {}, request)
+  } catch {
+    return json({ error: 'Internal server error' }, { status: 500 }, request)
   }
 }
 
 export async function POST(request) {
   try {
-    // Rate limit
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
     const { success } = await authRateLimiter.limit(ip)
-    if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
-    // Auth check
     const user = await getUser(request)
-    if (!user) return unauthorized()
+    if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 
-    // Validate body
     const body = await request.json()
     const parsed = taskSchema.safeParse(body)
-    if (!parsed.success) return badRequest(parsed.error.issues[0].message)
+    if (!parsed.success) return json({ error: parsed.error.issues[0].message }, { status: 400 }, request)
 
-    // Get next order index
     const { data: existing } = await supabase
       .from('tasks')
       .select('order_index')
@@ -70,17 +60,15 @@ export async function POST(request) {
 
     const nextIndex = (existing?.[0]?.order_index ?? -1) + 1
 
-    // Insert the new task
     const { data, error } = await supabase
       .from('tasks')
       .insert({ ...parsed.data, user_id: user.id, order_index: nextIndex })
       .select()
       .single()
 
-    if (error) return serverError(error.message)
-
-    return NextResponse.json({ data }, { status: 201 })
-  } catch (err) {
-    return serverError()
+    if (error) return json({ error: error.message }, { status: 500 }, request)
+    return json({ data }, { status: 201 }, request)
+  } catch {
+    return json({ error: 'Internal server error' }, { status: 500 }, request)
   }
 }

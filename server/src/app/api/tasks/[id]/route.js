@@ -1,68 +1,54 @@
-import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/server'
-import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
+import { getUser } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { updateTaskSchema } from '@/lib/validations'
+import { optionsResponse, json } from '@/lib/cors'
 
-export async function OPTIONS() {
-  return NextResponse.json({}, { status: 200 })
-}
+export async function OPTIONS(request) { return optionsResponse(request) }
 
 export async function PATCH(request, context) {
   const { id } = await context.params
-
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  if (!uuidRegex.test(id)) return badRequest('Invalid task ID')
+  if (!uuidRegex.test(id)) return json({ error: 'Invalid task ID' }, { status: 400 }, request)
 
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
     const { success } = await rateLimiter.limit(ip)
-    if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const user = await getUser(request)
-    if (!user) return unauthorized()
+    if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 
     const body = await request.json()
     const parsed = updateTaskSchema.safeParse(body)
-    if (!parsed.success) return badRequest(parsed.error.issues[0].message)
+    if (!parsed.success) return json({ error: parsed.error.issues[0].message }, { status: 400 }, request)
 
     const { data, error } = await supabase
       .from('tasks')
       .update({ ...parsed.data, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .select()
-      .single()
+      .eq('id', id).eq('user_id', user.id).select().single()
 
-    if (error) return serverError(error.message)
-
-    return NextResponse.json({ data })
-  } catch (err) {
-    return serverError()
+    if (error) return json({ error: error.message }, { status: 500 }, request)
+    return json({ data }, {}, request)
+  } catch {
+    return json({ error: 'Internal server error' }, { status: 500 }, request)
   }
 }
 
 export async function DELETE(request, context) {
   const { id } = await context.params
-
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
     const { success } = await rateLimiter.limit(ip)
-    if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const user = await getUser(request)
-    if (!user) return unauthorized()
+    if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 
-    const { error } = await supabase
-      .from('tasks')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id)
-
-    if (error) return serverError(error.message)
-
-    return NextResponse.json({ message: 'Task deleted' })
-  } catch (err) {
-    return serverError()
+    const { error } = await supabase.from('tasks').delete().eq('id', id).eq('user_id', user.id)
+    if (error) return json({ error: error.message }, { status: 500 }, request)
+    return json({ message: 'Task deleted' }, {}, request)
+  } catch {
+    return json({ error: 'Internal server error' }, { status: 500 }, request)
   }
 }
