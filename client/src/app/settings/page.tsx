@@ -339,7 +339,13 @@ export default function SettingsPage() {
           </div>
 
           {/* Sign out */}
-          <form action={logout}>
+          <form action={logout} onSubmit={() => {
+            // Clear the API cache synchronously before the server redirect fires
+            import('@/lib/api').then(({ clearApiCache, setCurrentUser }) => {
+              clearApiCache()
+              setCurrentUser(null)
+            })
+          }}>
             <button
               type="submit"
               className="w-full rounded-full py-[14px] text-[14px] font-medium transition-opacity hover:opacity-80"

@@ -353,7 +353,12 @@ export default function DashboardPage() {
           <Plus size={24} strokeWidth={2} color="white" />
         </motion.button>
 
-        <CreateTaskSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+        <CreateTaskSheet open={sheetOpen} onClose={() => {
+          setSheetOpen(false)
+          setFocusState('idle')
+          setFocused(null)
+          setShowPicker(true)
+        }} />
 
       <BottomNav />
     </div>

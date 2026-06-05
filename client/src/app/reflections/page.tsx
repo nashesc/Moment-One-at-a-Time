@@ -40,25 +40,45 @@ export default function ReflectionsPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+    let unsubscribe: (() => void) | null = null
+
     const load = async () => {
       setLoading(true)
       setError(null)
+      setCheckins([])
       try {
-        // Guard: skip fetch if no session (avoids burning rate limit on auth pages)
         const { createClient } = await import('@/lib/supabase/client')
         const supabase = createClient()
         const { data: { session } } = await supabase.auth.getSession()
-        if (!session) { setLoading(false); return }
+        if (!session || cancelled) { setLoading(false); return }
 
         const data = await getCheckins()
-        setCheckins(data)
+        if (!cancelled) setCheckins(data)
       } catch {
-        setError('Could not load reflections. Please try again.')
+        if (!cancelled) setError('Could not load reflections. Please try again.')
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
+
+    const setup = async () => {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN') load()
+        if (event === 'SIGNED_OUT') { setCheckins([]); setLoading(false) }
+      })
+      unsubscribe = () => subscription.unsubscribe()
+    }
+
     load()
+    setup()
+
+    return () => {
+      cancelled = true
+      unsubscribe?.()
+    }
   }, [])
 
   return (

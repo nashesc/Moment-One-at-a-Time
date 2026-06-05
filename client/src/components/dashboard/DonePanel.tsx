@@ -32,7 +32,7 @@ export default function DonePanel({ taskTitle, onNext }: DonePanelProps) {
         const next = e + 1
         if (next >= DURATION) {
           clearInterval(t)
-          onNextRef.current()  
+          setTimeout(() => onNextRef.current(), 0)
         }
         return next
       })

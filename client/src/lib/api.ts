@@ -5,9 +5,20 @@ import type { Task, Checkin, Recap, PushSubscriptionJSON, TaskPriority } from '@
 const _recapCache  = new Map<string, { data: Recap; ts: number }>()
 let _checkinsCache: { data: Checkin[]; ts: number } | null = null
 
+let _currentUserId: string | null = null
+
+export function setCurrentUser(userId: string | null) {
+  if (_currentUserId !== userId) {
+    _recapCache.clear()
+    _checkinsCache = null
+  }
+  _currentUserId = userId
+}
+
 export function clearApiCache() {
   _recapCache.clear()
   _checkinsCache = null
+  _currentUserId = null
 }
 
 const RECAP_TTL    = 5 * 60 * 1000  // 5 min
@@ -19,14 +30,15 @@ async function getToken(): Promise<string | null> {
   try {
     const supabase = createClient()
     const { data } = await supabase.auth.getSession()
-    return data.session?.access_token ?? null
+    const token = data.session?.access_token ?? null
+    return token
   } catch (err) {
     console.error('[API] Failed to get auth token:', err)
     return null
   }
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = await getToken()
 
   const res = await fetch(`${SERVER_URL}${path}`, {

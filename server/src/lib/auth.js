@@ -36,7 +36,7 @@ export async function getUser(request) {
     }
 
     // Cache the result
-    _tokenCache.set(cacheKey, { user, expiresAt: Date.now() + TOKEN_CACHE_TTL })
+    _tokenCache.set(cacheKey, { user, expiresAt: Date.now() + 10_000 })
 
     // Prevent unbounded cache growth — clear oldest entries if over 500
     if (_tokenCache.size > 500) {

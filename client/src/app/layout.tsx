@@ -6,6 +6,17 @@ import { Providers } from '@/lib/providers'
 import RippleProvider from '@/components/ui/RippleProvider'
 import '@/app/globals.css'
 
+if (typeof window !== 'undefined' && !window.crypto?.subtle && window.crypto) {
+  // Next.js exposes Node's webcrypto — bridge it to window.crypto.subtle
+  try {
+    const { webcrypto } = require('crypto')
+    Object.defineProperty(window.crypto, 'subtle', {
+      get: () => webcrypto.subtle,
+      configurable: true,
+    })
+  } catch {}
+}
+
 export const metadata: Metadata = {
   title: 'Moment — One at a Time',
   description: 'Focus on one thing. Then the next.',

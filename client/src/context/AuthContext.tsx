@@ -1,7 +1,8 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { apiFetch } from '@/lib/api'
 
 export interface UserProfile {
   id: string
@@ -22,8 +23,10 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const isUpdatingRef = useRef(false)
 
   const refreshProfile = useCallback(async () => {
+    if (isUpdatingRef.current) return
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -43,7 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           avatar_url: data.avatar_url,
         })
       } else {
-        // Profile row may not exist yet — fall back to auth metadata
         setProfile({
           id: user.id,
           full_name: user.user_metadata?.full_name ?? '',
@@ -64,42 +66,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     run()
 
     const supabase = createClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      refreshProfile()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        refreshProfile()
+      } else if (event === 'SIGNED_OUT') {
+        setProfile(null)
+      }
     })
     return () => subscription.unsubscribe()
   }, [refreshProfile])
 
   const updateProfile = useCallback(async (data: { full_name?: string; email?: string }) => {
     if (!profile) return { error: 'Not authenticated' }
+    isUpdatingRef.current = true
     try {
-      const supabase = createClient()
+      await apiFetch<{ updated: boolean }>('/api/profile', {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      })
 
-      // Update email in Supabase Auth if changed
-      if (data.email && data.email !== profile.email) {
-        const { error: authError } = await supabase.auth.updateUser({ email: data.email })
-        if (authError) return { error: authError.message }
-      }
+      // Optimistically update local state immediately
+      setProfile(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          ...(data.full_name !== undefined && { full_name: data.full_name }),
+          ...(data.email !== undefined && { email: data.email }),
+        }
+      })
 
-      // Update profile table
-      const updates: Record<string, string> = {}
-      if (data.full_name !== undefined) updates.full_name = data.full_name
-      if (data.email !== undefined) updates.email = data.email
+      // Then re-fetch from Supabase to ensure we're in sync with the DB
+      isUpdatingRef.current = false
+      await refreshProfile()
 
-      const { error: dbError } = await supabase
-        .from('profiles')
-        .upsert({ id: profile.id, ...updates })
-
-      if (dbError) return { error: dbError.message }
-
-      setProfile(prev => prev ? { ...prev, ...updates } : prev)
       return {}
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      console.error('[Auth] updateProfile failed:', message)
-      return { error: 'Failed to update profile' }
+      const message = err instanceof Error ? err.message : 'Failed to update profile'
+      return { error: message }
+    } finally {
+      isUpdatingRef.current = false
     }
-  }, [profile])
+  }, [profile, refreshProfile])
 
   return (
     <AuthContext.Provider value={{ profile, loading, updateProfile, refreshProfile }}>

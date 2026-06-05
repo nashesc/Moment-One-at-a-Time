@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server'
 
-const ALLOWED = process.env.ALLOWED_ORIGIN ?? 'http://localhost:3000'
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN ?? 'http://localhost:3000')
+  .split(',')
+  .map(o => o.trim())
 
 function getAllowOrigin(request) {
   const origin = request?.headers?.get('origin') ?? ''
-  // In dev, reflect the origin if it matches our allowed host (ignoring port differences)
-  if (origin === ALLOWED) return origin
-  // Fallback — still return the configured origin
-  return ALLOWED
+  if (ALLOWED_ORIGINS.includes(origin)) return origin
+  return ALLOWED_ORIGINS[0]  // fallback to first (primary) origin
 }
+
 
 export function getCorsHeaders(request) {
   return {

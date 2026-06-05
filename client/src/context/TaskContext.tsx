@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import * as api from '@/lib/api'
+import { clearApiCache, setCurrentUser } from '@/lib/api'
 import type { Task as BackendTask } from '@/types'
 
 export type TaskStatus = 'pending' | 'in_progress' | 'done' | 'stuck' | 'skipped'
@@ -57,15 +58,23 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState<string | null>(null)
   const todayStr              = useRef(new Date().toISOString().split('T')[0])
+  // Track which user's tasks are currently loaded
+  const loadedUserIdRef       = useRef<string | null>(null)
 
   const load = useCallback(async () => {
-    // Check session first — don't fire API calls if not authenticated
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       setTasks([])
       setLoading(false)
+      loadedUserIdRef.current = null
       return
+    }
+
+    if (loadedUserIdRef.current && loadedUserIdRef.current !== session.user.id) {
+      setTasks([])
+      clearApiCache()
+      setCurrentUser(null)
     }
 
     setLoading(true)
@@ -74,12 +83,12 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       const today  = todayStr.current
       const yester = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]
 
-      // 2 API calls total — today + yesterday
       const [todayData, yesterData] = await Promise.all([
         api.getTasks(today),
         api.getTasks(yester).catch(() => [] as BackendTask[]),
       ])
 
+      loadedUserIdRef.current = session.user.id
       setTasks([
         ...todayData.map(t  => toUITask(t, today)),
         ...yesterData.map(t => toUITask(t, today)),
@@ -87,7 +96,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
       if (msg.includes('401')) {
-        // Session expired — force re-auth instead of silently showing nothing
         console.warn('[Tasks] Session expired, redirecting to login')
         window.location.href = '/login'
       } else {
@@ -100,7 +108,33 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+
+    const supabase = createClient()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') return
+      if (event === 'SIGNED_OUT') {
+        setTasks([])
+        setError(null)
+        setLoading(false)
+        loadedUserIdRef.current = null
+        clearApiCache()
+        setCurrentUser(null)
+      } else if (event === 'SIGNED_IN') {
+        const incomingUserId = session?.user?.id ?? null
+        // Only reload if this is actually a different user
+        if (incomingUserId && incomingUserId !== loadedUserIdRef.current) {
+          // Clear stale tasks immediately before fetching the new account's data
+          setTasks([])
+          setError(null)
+          clearApiCache()
+          load()
+        }
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [load])
 
   const updateStatus = useCallback((id: string, status: TaskStatus) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
