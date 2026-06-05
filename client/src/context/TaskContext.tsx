@@ -136,18 +136,23 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [load])
 
-  const updateStatus = useCallback((id: string, status: TaskStatus) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
-    if (id.startsWith('temp-')) return
-    api.updateTask(id, { status }).catch(console.error)
+  const tasksRef = useRef<Task[]>([])
+useEffect(() => { tasksRef.current = tasks }, [tasks])
 
-    if (status === 'done' || status === 'stuck') {
-      api.createCheckin({
-        task_id: id,
-        status: status === 'done' ? 'done' : 'stuck',
-      }).catch(console.error)
-    }
-  }, [])
+const updateStatus = useCallback((id: string, status: TaskStatus) => {
+  setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
+  if (id.startsWith('temp-')) return
+  api.updateTask(id, { status }).catch(console.error)
+
+  if (status === 'done' || status === 'stuck') {
+    const task = tasksRef.current.find(t => t.id === id)
+    api.createCheckin({
+      task_id: id,
+      status: status === 'done' ? 'done' : 'stuck',
+      ...(task?.description ? { notes: task.description } : {}),
+    }).catch(console.error)
+  }
+}, [])
 
   const moveToEnd = useCallback((id: string) => {
     setTasks(prev => {

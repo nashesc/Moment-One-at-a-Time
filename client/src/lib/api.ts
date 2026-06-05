@@ -98,6 +98,7 @@ export function createCheckin(payload: {
   stuck_reason?: string
   notes?: string
 }): Promise<Checkin> {
+  _checkinsCache = null
   return apiFetch<Checkin>('/api/checkins', {
     method: 'POST',
     body: JSON.stringify(payload),
