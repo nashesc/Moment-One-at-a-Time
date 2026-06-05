@@ -44,28 +44,3 @@ export const PRIORITY_COLORS: Record<TaskPriority, string> = {
   2: '#D97706',
   3: '#4a7bc4',
 }
-
-export const COMPLETION_MESSAGES = [
-  "That's one less thing between you and the rest of your day.",
-  "You showed up. That's everything.",
-  "Progress is still progress. Even the small ones.",
-  "One moment at a time — and you just had one.",
-  "Well done. The next step will be easier.",
-  "You didn't have to do that. But you did.",
-]
-
-export function randomCompletionMessage(): string {
-  return COMPLETION_MESSAGES[Math.floor(Math.random() * COMPLETION_MESSAGES.length)]
-}
-
-export const OPENING_QUOTES = [
-  { text: "You do not have to carry the whole mountain today. Just take the next step.", author: null },
-  { text: "You don't have to finish everything today. Just this moment.", author: 'Moment' },
-  { text: "The present moment is the only moment available to us, and it is the door to all moments.", author: 'Thich Nhat Hanh' },
-  { text: "Rest is not idleness. It is the work of coming back to yourself.", author: null },
-  { text: "Small steps forward are still steps forward.", author: null },
-]
-
-export function randomQuote() {
-  return OPENING_QUOTES[Math.floor(Math.random() * OPENING_QUOTES.length)]
-}

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { motion } from 'motion/react'
 
+
 const QUOTES = [
   "That's one less thing between you and the rest of your day.",
   "Progress is still progress. Even the small ones.",

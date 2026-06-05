@@ -1,66 +1,156 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600&display=swap');
-@import "tailwindcss";
-
+/* ─── 1. Fonts ──────────────────────────────────────────────────────────────
+   Loaded via next/font in layout.tsx — these vars are set there and
+   referenced here. No @import needed.                                        */
 :root {
-  --gp: #2D5A27;
-  --gf: #3D7A35;
-  --gs: #5A9E50;
-  --gso: #A8C5A0;
-  --gpa: #D4E8CF;
-  --bp: #1B3A6B;
-  --tan: #C4B49A;
-  --ow: #F5F2EC;
-  --card: #FAFAF7;
-  --td: #1A1A1A;
-  --tg: #6B6B6B;
-  --tgl: #9B9B9B;
-  --border: rgba(0,0,0,0.07);
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body: 'Inter', sans-serif;
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
-  --shadow-btn: 0 2px 8px rgba(45,90,39,0.25);
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-body:    var(--font-inter), system-ui, sans-serif;
+}
+/* ─── 2. Design Tokens — Light Mode ─────────────────────────────────────────
+
+   Naming convention:
+     --gp   = green primary        --bp  = blue primary
+     --gf   = green focus/hover    --gs  = green success/ring
+     --gso  = green soft border    --gpa = green pale accent
+     --td   = text dark            --tg  = text gray
+     --tgl  = text gray light      --ow  = off-white page bg
+     --card = card white            --border = subtle border          */
+:root {
+  /* Green scale */
+  --deep-pine:    #173A2D;
+  --gp:           #2D5A27;   /* primary — buttons, active nav, logo */
+  --gf:           #3D7A35;   /* hover states, secondary headings */
+  --moss:         #4D7C59;   /* section headers, accents */
+  --fern:         #7FA878;   /* decorative, dividers */
+  --gs:           #5A9E50;   /* progress rings, success indicators */
+  --gso:          #A8C5A0;   /* borders, tag backgrounds */
+  --gpa:          #D4E8CF;   /* light backgrounds, skeleton shimmer */
+  --pale-green:   #EEF5EC;   /* very pale — hover overlays */
+  /* Blue scale */
+  --bp:           #1B3A6B;   /* in-progress state, info */
+  --blue-pale:    #E6F1FB;
+  /* Accent */
+  --gold:         #D9C17A;   /* CTAs on dark/forest backgrounds */
+  --tan:          #C4B49A;   /* decorative warm accent */
+  /* Status colours */
+  --status-pending-bg:     #F0EFE8;
+  --status-pending-text:   #888780;
+  --status-progress-bg:    #E6F1FB;
+  --status-progress-text:  #185FA5;
+  --status-done-bg:        #EAF3DE;
+  --status-done-text:      #3B6D11;
+  --status-stuck-bg:       #FAEEDA;
+  --status-stuck-text:     #854F0B;
+  --status-skipped-bg:     #F5F3EF;
+  --status-skipped-text:   #9B9B9B;
+  /* Page & surface */
+  --ow:           #F5F2EC;   /* off-white page background */
+  --card:         #FAFAF7;   /* card background */
+  --card-white:   #FFFFFF;
+  /* Text */
+  --td:           #1A1A1A;   /* primary body text */
+  --tg:           #6B6B6B;   /* secondary / labels */
+  --tgl:          #9B9B9B;   /* timestamps / metadata */
+  /* Borders */
+  --border:       rgba(0, 0, 0, 0.07);
+  --border-focus: var(--gs);
+  /* Shadows */
+  --shadow-card:  0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+  --shadow-btn:   0 2px 8px rgba(45, 90, 39, 0.25);
+  --shadow-fab:   0 4px 20px rgba(45, 90, 39, 0.40), 0 2px 6px rgba(45, 90, 39, 0.20);
+  --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.14), 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-nav:   0 -1px 0 rgba(0, 0, 0, 0.06);
+  /* Radii */
+  --radius-sm:    8px;
+  --radius-md:    12px;
+  --radius-lg:    16px;
+  --radius-xl:    20px;
+  --radius-2xl:   24px;
+  --radius-full:  9999px;
+  /* Spacing scale (multiples of 4px) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  /* Z-index scale */
+  --z-base:    0;
+  --z-card:    1;
+  --z-sticky:  10;
+  --z-overlay: 30;
+  --z-modal:   40;
+  --z-nav:     50;
+  --z-toast:   60;
+  --z-ripple:  9998;
+  /* Transition defaults */
+  --ease-out:  cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast:   150ms;
+  --duration-base:   200ms;
+  --duration-slow:   350ms;
+  --duration-page:   400ms;
 }
 
-@keyframes momentRipple {
-  0%   { transform: translate(-50%, -50%) scale(0);   opacity: 1; }
-  60%  { transform: translate(-50%, -50%) scale(28);  opacity: 0.6; }
-  100% { transform: translate(-50%, -50%) scale(45);  opacity: 0; }
+/* ─── 3. Design Tokens — Dark Mode Scaffold ──────────────────────────────────
+   Not yet wired to a toggle — variables are defined so dark mode can be
+   enabled by adding class="dark" to <html> (Pro feature, coming soon).       */
+.dark {
+  --ow:     #0E1C13;
+  --card:   #152119;
+  --card-white: #1C2B22;
+
+  --td:   #ECEEE9;
+  --tg:   #8A9E8F;
+  --tgl:  #5C7264;
+
+  --border: rgba(255, 255, 255, 0.08);
+
+  --shadow-card:  0 1px 3px rgba(0, 0, 0, 0.30), 0 4px 16px rgba(0, 0, 0, 0.20);
+  --shadow-btn:   0 2px 8px rgba(45, 90, 39, 0.40);
+
+  --status-pending-bg:     rgba(136, 135, 128, 0.12);
+  --status-progress-bg:    rgba(24, 95, 165, 0.15);
+  --status-done-bg:        rgba(59, 109, 17, 0.15);
+  --status-stuck-bg:       rgba(133, 79, 11, 0.15);
+  --status-skipped-bg:     rgba(155, 155, 155, 0.10);
 }
 
-@keyframes breathe {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.025); }
+/* ─── 4. Living Forest — Immersive screen tokens ────────────────────────────
+   Applied to splash, focus mode, music hero via class="lf" on a wrapper.    */
+.lf {
+  --lf-overlay:     rgba(23, 58, 45, 0.45);
+  --lf-glass-bg:    rgba(255, 255, 255, 0.12);
+  --lf-glass-blur:  blur(30px);
+  --lf-glass-border: rgba(255, 255, 255, 0.18);
+  --lf-text:        rgba(255, 255, 255, 0.93);
+  --lf-text-muted:  rgba(255, 255, 255, 0.50);
+  --lf-text-faint:  rgba(255, 255, 255, 0.35);
+  --lf-cta:         var(--gold);
 }
 
-@keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+/* ─── 5. Base Reset & Defaults ───────────────────────────────────────────────*/
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-.skeleton {
-  border-radius: 10px;
-  background: linear-gradient(
-    90deg,
-    var(--gpa) 25%,
-    rgba(255,255,255,0.8) 50%,
-    var(--gpa) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-
-html, body {
-  font-family: var(--font-body);
-  color: var(--td);
+html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Warm layered background — subtle green bloom top-left, tan warmth bottom-right */
+  text-rendering: optimizeLegibility;
+}
+body {
+  font-family: var(--font-body);
+  color: var(--td);
   background-color: var(--ow);
   background-image:
-    radial-gradient(ellipse 60% 50% at 20% 10%, rgba(212,232,207,0.45) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(196,180,154,0.25) 0%, transparent 60%);
+    radial-gradient(ellipse 60% 50% at 20% 10%, rgba(212, 232, 207, 0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(196, 180, 154, 0.25) 0%, transparent 60%);
+  min-height: 100dvh;
 }
-
-/* Very subtle noise texture — gives the off-white a paper/linen feel */
 body::after {
   content: '';
   position: fixed;
@@ -71,64 +161,477 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 150px 150px;
 }
-
-* { box-sizing: border-box; }
-::-webkit-scrollbar { display: none; }
+.dark body {
+  background-color: var(--ow);
+  background-image:
+    radial-gradient(ellipse 60% 50% at 20% 10%, rgba(45, 90, 39, 0.20) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(23, 58, 45, 0.25) 0%, transparent 60%);
+}
 * { scrollbar-width: none; }
-
+*::-webkit-scrollbar { display: none; }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
 
-/* Shared utility classes */
-
-/* Card: replaces repeated rounded-2xl bg-white shadow-card */
-.moment-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
+/* ─── 6. Typography Scale ────────────────────────────────────────────────────*/
+.text-display {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 6vw, 40px);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--td);
+}
+.text-heading-2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--td);
+}
+.text-heading-3 {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--td);
+}
+.text-body-lg {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--td);
+}
+.text-body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--tg);
+}
+.text-caption {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tg);
+}
+.text-quote {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(15px, 3.5vw, 22px);
+  line-height: 1.65;
+  color: var(--gp);
 }
 
-/* Section label: replaces text-[11px] uppercase tracking-widest */
+/* ─── 7. Card Surfaces ───────────────────────────────────────────────────────*/
+.moment-card {
+  background: var(--card-white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+}
+.moment-card--soft {
+  background: var(--card);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-card);
+}
+.moment-card--glass {
+  background: var(--lf-glass-bg);
+  backdrop-filter: var(--lf-glass-blur);
+  -webkit-backdrop-filter: var(--lf-glass-blur);
+  border: 1px solid var(--lf-glass-border);
+  border-radius: var(--radius-2xl);
+}
+
+/* ─── 8. Buttons ─────────────────────────────────────────────────────────────*/
+.moment-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 15px 24px;
+  transition: opacity var(--duration-base) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+}
+.moment-btn:active { transform: scale(0.98); }
+.moment-btn:disabled { opacity: 0.50; cursor: not-allowed; }
+.moment-btn--primary {
+  background: var(--gp);
+  color: #fff;
+  box-shadow: var(--shadow-btn);
+}
+.moment-btn--primary:hover:not(:disabled) { opacity: 0.90; }
+.moment-btn--progress {
+  background: var(--bp);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(27, 58, 107, 0.30);
+}
+.moment-btn--progress:hover:not(:disabled) { opacity: 0.90; }
+.moment-btn--secondary {
+  background: var(--card-white);
+  color: var(--gp);
+  border: 1.5px solid var(--gso);
+  box-shadow: var(--shadow-card);
+}
+.moment-btn--secondary:hover:not(:disabled) { background: var(--gpa); }
+.moment-btn--ghost {
+  background: transparent;
+  color: var(--tg);
+  padding: 13px 8px;
+  font-size: 14px;
+}
+.moment-btn--ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.60); }
+.moment-btn--danger {
+  background: var(--card-white);
+  color: #C0392B;
+  border: 1.5px solid #FBDCDC;
+  box-shadow: var(--shadow-card);
+}
+.moment-btn--danger:hover:not(:disabled) { background: #FEF2F2; }
+.moment-btn--gold {
+  background: var(--gold);
+  color: var(--deep-pine);
+  box-shadow: 0 2px 12px rgba(217, 193, 122, 0.40);
+}
+.moment-btn--gold:hover:not(:disabled) { opacity: 0.90; }
+.moment-btn--full { width: 100%; }
+
+/* ─── 9. Form Inputs ─────────────────────────────────────────────────────────*/
+.moment-input {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--td);
+  background: var(--ow);
+  border: 1.5px solid var(--border);
+  outline: none;
+  transition: border-color var(--duration-base) var(--ease-out);
+}
+.moment-input:focus {
+  border-color: var(--border-focus);
+}
+.moment-input--error {
+  border-color: #C0392B;
+}
+.moment-input::placeholder { color: var(--tgl); }
+.moment-textarea {
+  resize: none;
+}
+
+/* ─── 10. Labels & Badges ────────────────────────────────────────────────────*/
 .moment-label {
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.10em;
   color: var(--tg);
 }
+.moment-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+.moment-badge--pending   { background: var(--status-pending-bg);  color: var(--status-pending-text); }
+.moment-badge--progress  { background: var(--status-progress-bg); color: var(--status-progress-text); }
+.moment-badge--done      { background: var(--status-done-bg);     color: var(--status-done-text); }
+.moment-badge--stuck     { background: var(--status-stuck-bg);    color: var(--status-stuck-text); }
+.moment-badge--skipped   { background: var(--status-skipped-bg);  color: var(--status-skipped-text); }
+.moment-badge--pro {
+  background: linear-gradient(135deg, var(--gold) 0%, #C4A040 100%);
+  color: var(--deep-pine);
+  font-weight: 600;
+  font-size: 10px;
+  padding: 2px 7px;
+}
 
-/* Primary button: replaces the repeated green button inline styles */
-.moment-btn-primary {
+/* ─── 11. List / Task Row ────────────────────────────────────────────────────*/
+.moment-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 14px 16px;
+  background: var(--card-white);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: box-shadow var(--duration-base) var(--ease-out);
   width: 100%;
+  text-align: left;
+}
+.moment-row:hover {
+  box-shadow: 0 4px 20px rgba(45, 90, 39, 0.12);
+}
+
+/* ─── 12. Skeleton / Loading Shimmer ─────────────────────────────────────────*/
+.skeleton {
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    90deg,
+    var(--gpa) 25%,
+    rgba(255, 255, 255, 0.80) 50%,
+    var(--gpa) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* ─── 13. Progress Bar ───────────────────────────────────────────────────────*/
+.moment-progress-track {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--gpa);
+  overflow: hidden;
+}
+.moment-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--gs);
+  transition: width 0.7s var(--ease-out);
+}
+
+/* ─── 14. Divider ────────────────────────────────────────────────────────────*/
+.moment-divider {
+  height: 1px;
+  background: var(--border);
+  width: 100%;
+  border: none;
+}
+
+/* ─── 15. Page Wrappers ──────────────────────────────────────────────────────*/
+.moment-page {
+  display: flex;
+  min-height: 100dvh;
+  background: var(--ow);
+}
+.moment-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 96px;
+}
+@media (min-width: 768px) {
+  .moment-content {
+    padding-bottom: 32px;
+  }
+}
+.moment-page-header {
+  padding: 24px 20px 8px;
+}
+@media (min-width: 768px) {
+  .moment-page-header {
+    padding: 32px 32px 12px;
+  }
+}
+.moment-px { padding-left: 20px; padding-right: 20px; }
+@media (min-width: 768px) { .moment-px { padding-left: 32px; padding-right: 32px; } }
+
+/* ─── 16. Modals & Sheets ────────────────────────────────────────────────────*/
+.moment-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgba(26, 26, 26, 0.40);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.moment-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-modal);
+  background: var(--ow);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  box-shadow: var(--shadow-modal);
+  max-height: 92dvh;
+  overflow-y: auto;
+}
+.moment-sheet__handle {
+  width: 40px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--gso);
+  margin: 12px auto 4px;
+}
+
+/* ─── 17. Navigation ─────────────────────────────────────────────────────────*/
+.moment-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  display: flex;
+  background: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 8px);
+}
+.moment-sidebar {
+  width: 224px;
+  min-height: 100dvh;
+  border-right: 1px solid var(--border);
+  background: var(--ow);
+  display: flex;
+  flex-direction: column;
+  padding: 32px 16px 24px;
+  flex-shrink: 0;
+}
+.moment-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 12px;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--tg);
+  text-decoration: none;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+.moment-nav-item--active {
+  background: var(--gpa);
+  color: var(--gp);
+  font-weight: 500;
+}
+.moment-nav-item:hover:not(.moment-nav-item--active) {
+  background: rgba(212, 232, 207, 0.50);
+  color: var(--gf);
+}
+.moment-fab {
+  position: fixed;
+  bottom: 112px;
+  right: 20px;
+  z-index: var(--z-sticky);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--gp);
+  color: #fff;
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
-  padding: 15px 24px;
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  background: var(--gp);
-  box-shadow: var(--shadow-btn);
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-  font-family: var(--font-body);
+  box-shadow: var(--shadow-fab);
+  transition: transform var(--duration-base) var(--ease-spring),
+              opacity var(--duration-base) var(--ease-out);
 }
-.moment-btn-primary:hover { opacity: 0.9; }
-.moment-btn-primary:active { opacity: 0.8; transform: scale(0.99); }
-.moment-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (min-width: 768px) {
+  .moment-fab {
+    bottom: 32px;
+    right: 32px;
+  }
+}
+.moment-fab:hover  { transform: scale(1.08); }
+.moment-fab:active { transform: scale(0.94); }
 
-/* Ghost button: replaces "I'm Stuck" / "Skip for now" styles */
-.moment-btn-ghost {
-  flex: 1;
-  padding: 13px 8px;
-  font-size: 14px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  border-radius: 9999px;
-  color: var(--tg);
+/* ─── 18. Info / Alert Banners ───────────────────────────────────────────────*/
+.moment-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 12px 16px;
+  border-radius: var(--radius-xl);
   font-family: var(--font-body);
-  transition: background 0.15s ease;
+  font-size: 13px;
+  line-height: 1.5;
 }
-.moment-btn-ghost:hover { background: rgba(255,255,255,0.6); }
+.moment-banner--success {
+  background: var(--status-done-bg);
+  border: 1px solid #C0DD97;
+  color: var(--status-done-text);
+}
+.moment-banner--info {
+  background: var(--status-progress-bg);
+  border: 1px solid #B3D4F5;
+  color: var(--status-progress-text);
+}
+.moment-banner--warning {
+  background: var(--status-stuck-bg);
+  border: 1px solid #EDD59A;
+  color: var(--status-stuck-text);
+}
+.moment-banner--error {
+  background: #FEF2F2;
+  border: 1px solid #FBDCDC;
+  color: #C0392B;
+}
+
+/* ─── 19. Animations & Keyframes ─────────────────────────────────────────────*/
+
+@keyframes momentRipple {
+  0%   { transform: translate(-50%, -50%) scale(0);  opacity: 1; }
+  60%  { transform: translate(-50%, -50%) scale(28); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(45); opacity: 0; }
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.025); }
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes leafFloat {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50%       { transform: translateY(-8px) rotate(4deg); }
+}
+@keyframes gentlePulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.65; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes fillBar {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+.animate-breathe      { animation: breathe 5s ease-in-out infinite; }
+.animate-leaf-float   { animation: leafFloat 3s ease-in-out infinite; }
+.animate-gentle-pulse { animation: gentlePulse 2.5s ease-in-out infinite; }
+.animate-fade-up      { animation: fadeUp var(--duration-slow) var(--ease-out) both; }
+.animate-fade-in      { animation: fadeIn var(--duration-slow) var(--ease-out) both; }
+.animate-scale-in     { animation: scaleIn 0.30s var(--ease-out) both; }
+.animate-shimmer      { animation: shimmer 1.4s ease-in-out infinite; }
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 70ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 140ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 210ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 280ms; }
+
+
+@import "tailwindcss";

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { OPENING_QUOTES } from '@/lib/utils'
+import { OPENING_QUOTES } from '@/assets/data/quotes'
 
 export default function SplashPage() {
   // Start with null — renders nothing on server, picks quote on client only
