@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import * as api from '@/lib/api'
-import { clearApiCache, setCurrentUser } from '@/lib/api'
+import { clearApiCache, setCurrentUser, clearRecapCacheForDate } from '@/lib/api'
 import type { Task as BackendTask } from '@/types'
 
 export type TaskStatus = 'pending' | 'in_progress' | 'done' | 'stuck' | 'skipped'
@@ -143,6 +143,9 @@ const updateStatus = useCallback((id: string, status: TaskStatus) => {
   setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
   if (id.startsWith('temp-')) return
   api.updateTask(id, { status }).catch(console.error)
+
+  // Clear recap cache so /recap shows fresh data immediately
+  clearRecapCacheForDate(todayStr.current)
 
   if (status === 'done' || status === 'stuck') {
     const task = tasksRef.current.find(t => t.id === id)

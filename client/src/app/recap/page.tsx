@@ -55,28 +55,27 @@ function getDatesForPeriod(period: Period): string[] {
   if (period === 'daily') return [today.toISOString().split('T')[0]]
   if (period === 'weekly') return getLastNDays(7)
   if (period === 'monthly') {
-    // One day per week for the last 4 weeks
-    return Array.from({ length: 4 }, (_, i) => {
-      const d = new Date()
-      d.setDate(d.getDate() - i * 7)
-      return d.toISOString().split('T')[0]
-    }).reverse()
+    // Every day from start of current month to today
+    const days: string[] = []
+    const cursor = new Date(today.getFullYear(), today.getMonth(), 1)
+    while (cursor <= today) {
+      days.push(cursor.toISOString().split('T')[0])
+      cursor.setDate(cursor.getDate() + 1)
+    }
+    return days
   }
-  // yearly: first of each of the last 12 months
-  return Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(today.getFullYear(), today.getMonth() - (11 - i), 1)
-    return d.toISOString().split('T')[0]
+  // Yearly: first day of each month in current year up to this month
+  return Array.from({ length: today.getMonth() + 1 }, (_, i) => {
+    if (i === today.getMonth()) return today.toISOString().split('T')[0]
+    return new Date(today.getFullYear(), i, 1).toISOString().split('T')[0]
   })
 }
 
-function getChartLabels(period: Period): string[] {
-  const now = new Date()
-  if (period === 'daily')   return ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-  if (period === 'weekly')  return getLastNDays(7).map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
-  if (period === 'monthly') return ['4w ago', '3w ago', '2w ago', 'This wk']
-  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].slice(
-    (now.getMonth() + 1) % 12
-  ).concat(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].slice(0, (now.getMonth() + 1) % 12))
+function getChartLabels(period: Period, dates: string[]): string[] {
+  if (period === 'daily')   return getLastNDays(7).map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
+  if (period === 'weekly')  return dates.map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
+  if (period === 'monthly') return dates.map(d => new Date(d + 'T12:00').toLocaleDateString('en', { day: 'numeric' }))
+  return dates.map(d => new Date(d + 'T12:00').toLocaleDateString('en', { month: 'short' }))
 }
 
 export default function RecapPage() {
@@ -117,7 +116,7 @@ export default function RecapPage() {
   const quote = QUOTES[done % QUOTES.length]
 
   // Build chart bars
-  const chartLabels = getChartLabels(period)
+  const chartLabels = getChartLabels(period, getDatesForPeriod(period))
   const chartBars   = period === 'daily'
     // daily: use last 7 days context bars (today real, others from available recaps)
     ? getLastNDays(7).map(d => {
