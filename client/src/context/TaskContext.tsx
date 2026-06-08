@@ -143,8 +143,6 @@ const updateStatus = useCallback((id: string, status: TaskStatus) => {
   setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
   if (id.startsWith('temp-')) return
   api.updateTask(id, { status }).catch(console.error)
-
-  // Clear recap cache so /recap shows fresh data immediately
   clearRecapCacheForDate(todayStr.current)
 
   if (status === 'done' || status === 'stuck') {

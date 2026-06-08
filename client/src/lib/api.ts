@@ -135,6 +135,25 @@ export function getRecap(date?: string): Promise<Recap> {
   })
 }
 
+export interface RecapRangeItem {
+  period: string  // 'YYYY-MM-DD' or 'YYYY-MM'
+  total: number
+  done: number
+  stuck: number
+  skipped: number
+  momentum_score: number
+}
+
+export function getRecapRange(
+  from: string,
+  to: string,
+  groupBy: 'day' | 'month'
+): Promise<RecapRangeItem[]> {
+  return apiFetch<RecapRangeItem[]>(
+    `/api/recap/range?from=${from}&to=${to}&groupBy=${groupBy}`
+  )
+}
+
 export function savePushSubscription(subscription: PushSubscriptionJSON): Promise<{ message: string }> {
   return apiFetch('/api/push', {
     method: 'POST',

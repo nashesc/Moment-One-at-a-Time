@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import MomentumRing from '@/components/ui/MomentumRing'
-import { getRecap } from '@/lib/api'
+import { getRecap, getRecapRange, type RecapRangeItem } from '@/lib/api'
 import { useTasks } from '@/context/TaskContext'
 import type { Recap } from '@/types'
 import { motion } from 'motion/react'
@@ -26,7 +26,6 @@ const QUOTES = [
   "One step at a time — that's all it takes.",
 ]
 
-// Returns the last N days as ISO strings, oldest first
 function getLastNDays(n: number): string[] {
   return Array.from({ length: n }, (_, i) => {
     const d = new Date()
@@ -35,7 +34,6 @@ function getLastNDays(n: number): string[] {
   })
 }
 
-// Fetch multiple recaps safely — batched to stay under rate limit
 async function fetchRecaps(dates: string[]): Promise<(Recap | null)[]> {
   const BATCH = 7
   const results: (Recap | null)[] = []
@@ -50,61 +48,57 @@ async function fetchRecaps(dates: string[]): Promise<(Recap | null)[]> {
   return results
 }
 
-function getDatesForPeriod(period: Period): string[] {
-  const today = new Date()
-  if (period === 'daily') return [today.toISOString().split('T')[0]]
-  if (period === 'weekly') return getLastNDays(7)
-  if (period === 'monthly') {
-    // Every day from start of current month to today
-    const days: string[] = []
-    const cursor = new Date(today.getFullYear(), today.getMonth(), 1)
-    while (cursor <= today) {
-      days.push(cursor.toISOString().split('T')[0])
-      cursor.setDate(cursor.getDate() + 1)
-    }
-    return days
-  }
-  // Yearly: first day of each month in current year up to this month
-  return Array.from({ length: today.getMonth() + 1 }, (_, i) => {
-    if (i === today.getMonth()) return today.toISOString().split('T')[0]
-    return new Date(today.getFullYear(), i, 1).toISOString().split('T')[0]
-  })
-}
-
-function getChartLabels(period: Period, dates: string[]): string[] {
-  if (period === 'daily')   return getLastNDays(7).map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
-  if (period === 'weekly')  return dates.map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
-  if (period === 'monthly') return dates.map(d => new Date(d + 'T12:00').toLocaleDateString('en', { day: 'numeric' }))
-  return dates.map(d => new Date(d + 'T12:00').toLocaleDateString('en', { month: 'short' }))
-}
-
 export default function RecapPage() {
   const { doneTodayCount, totalTodayCount, todayTasks } = useTasks()
-  const [period, setPeriod] = useState<Period>('daily')
-  const [recaps, setRecaps] = useState<(Recap | null)[]>([])
-  const [loading, setLoading] = useState(true)
+  const [period, setPeriod]       = useState<Period>('daily')
+  const [recaps, setRecaps]       = useState<(Recap | null)[]>([])
+  const [rangeData, setRangeData] = useState<RecapRangeItem[]>([])
+  const [loading, setLoading]     = useState(true)
 
-  const loadRecaps = useCallback(async (p: Period) => {
+  const loadData = useCallback(async (p: Period) => {
     setLoading(true)
     try {
-      const dates = getDatesForPeriod(p)
-      const data  = await fetchRecaps(dates)
-      setRecaps(data)
+      const today = new Date().toISOString().split('T')[0]
+
+      if (p === 'daily' || p === 'weekly') {
+        const dates = p === 'daily' ? [today] : getLastNDays(7)
+        const data  = await fetchRecaps(dates)
+        setRecaps(data)
+        setRangeData([])
+      } else {
+        const now  = new Date()
+        const from = p === 'monthly'
+          ? new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+          : new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0]
+        const groupBy = p === 'yearly' ? 'month' : 'day'
+        const data = await getRecapRange(from, today, groupBy)
+        setRangeData(data)
+        setRecaps([])
+      }
     } finally {
       setLoading(false)
     }
   }, [])
 
-  useEffect(() => { loadRecaps(period) }, [period, loadRecaps])
+  useEffect(() => { loadData(period) }, [period, loadData])
 
-  // Aggregate across all recaps for the period
-  const aggDone       = recaps.reduce((s, r) => s + (r?.tasks_done    ?? 0), 0)
-  const aggTotal      = recaps.reduce((s, r) => s + (r?.tasks_total   ?? 0), 0)
-  const aggStuck      = recaps.reduce((s, r) => s + (r?.tasks_stuck   ?? 0), 0)
-  const aggSkipped    = recaps.reduce((s, r) => s + (r?.tasks_skipped ?? 0), 0)
+  const isRange = period === 'monthly' || period === 'yearly'
+
+  // Aggregate stats
+  const aggDone       = isRange
+    ? rangeData.reduce((s, r) => s + r.done, 0)
+    : recaps.reduce((s, r) => s + (r?.tasks_done ?? 0), 0)
+  const aggTotal      = isRange
+    ? rangeData.reduce((s, r) => s + r.total, 0)
+    : recaps.reduce((s, r) => s + (r?.tasks_total ?? 0), 0)
+  const aggStuck      = isRange
+    ? rangeData.reduce((s, r) => s + r.stuck, 0)
+    : recaps.reduce((s, r) => s + (r?.tasks_stuck ?? 0), 0)
+  const aggSkipped    = isRange
+    ? rangeData.reduce((s, r) => s + r.skipped, 0)
+    : recaps.reduce((s, r) => s + (r?.tasks_skipped ?? 0), 0)
   const aggInProgress = Math.max(0, aggTotal - aggDone - aggStuck - aggSkipped)
 
-  // For daily, fall back to live context if API returned nothing
   const done       = period === 'daily' ? (recaps[0]?.tasks_done    ?? doneTodayCount)  : aggDone
   const total      = period === 'daily' ? (recaps[0]?.tasks_total   ?? totalTodayCount) : aggTotal
   const stuck      = period === 'daily' ? (recaps[0]?.tasks_stuck   ?? todayTasks.filter(t => t.status === 'stuck').length)   : aggStuck
@@ -115,31 +109,33 @@ export default function RecapPage() {
 
   const quote = QUOTES[done % QUOTES.length]
 
-  // Build chart bars
-  const chartLabels = getChartLabels(period, getDatesForPeriod(period))
-  const chartBars   = period === 'daily'
-    // daily: use last 7 days context bars (today real, others from available recaps)
-    ? getLastNDays(7).map(d => {
-        if (d === new Date().toISOString().split('T')[0]) {
-          return total > 0 ? Math.round((done / total) * 100) : 0
-        }
-        return 0
-      })
-    : recaps.map(r => r && r.tasks_total > 0 ? Math.round((r.tasks_done / r.tasks_total) * 100) : 0)
+  // Chart
+  const chartBars: number[] = (() => {
+    if (period === 'daily') {
+      return getLastNDays(7).map(d =>
+        d === new Date().toISOString().split('T')[0] && total > 0
+          ? Math.round((done / total) * 100)
+          : 0
+      )
+    }
+    if (period === 'weekly') {
+      return recaps.map(r =>
+        r && r.tasks_total > 0 ? Math.round((r.tasks_done / r.tasks_total) * 100) : 0
+      )
+    }
+    return rangeData.map(r => r.momentum_score)
+  })()
 
-  const periodTitle = {
-    daily:   'Daily recap',
-    weekly:  'Weekly recap',
-    monthly: 'Monthly recap',
-    yearly:  'Yearly recap',
-  }[period]
+  const chartLabels: string[] = (() => {
+    if (period === 'daily')   return getLastNDays(7).map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
+    if (period === 'weekly')  return getLastNDays(7).map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
+    if (period === 'monthly') return rangeData.map(r => new Date(r.period + 'T12:00').toLocaleDateString('en', { day: 'numeric' }))
+    return rangeData.map(r => new Date(r.period + '-01T12:00').toLocaleDateString('en', { month: 'short' }))
+  })()
 
-  const periodSubtitle = {
-    daily:   'How today felt.',
-    weekly:  'Your momentum this week.',
-    monthly: 'Your month at a glance.',
-    yearly:  'A year of moments.',
-  }[period]
+  const periodTitle    = { daily: 'Daily recap',   weekly: 'Weekly recap', monthly: 'Monthly recap', yearly: 'Yearly recap'   }[period]
+  const periodSubtitle = { daily: 'How today felt.', weekly: 'Your momentum this week.', monthly: 'Your month at a glance.', yearly: 'A year of moments.' }[period]
+  const chartHeading   = { daily: 'Last 7 days', weekly: 'Day by day', monthly: 'Day by day', yearly: 'Month by month' }[period]
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
@@ -156,9 +152,7 @@ export default function RecapPage() {
         {/* Period selector */}
         <div className="flex gap-2 pb-4 overflow-x-auto">
           {(['daily', 'weekly', 'monthly', 'yearly'] as Period[]).map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
+            <button key={p} onClick={() => setPeriod(p)}
               className="whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-medium transition-all duration-150"
               style={{
                 background: period === p ? 'var(--gp)' : 'white',
@@ -176,7 +170,6 @@ export default function RecapPage() {
 
         {loading ? (
           <div className="flex flex-col gap-4">
-            {/* Ring + quote skeleton */}
             <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
               <div className="flex items-center gap-4">
                 <div className="skeleton rounded-full shrink-0" style={{ width: 90, height: 90 }} />
@@ -187,7 +180,6 @@ export default function RecapPage() {
               </div>
               <div className="skeleton h-4 w-2/3 mx-auto mt-5" />
             </div>
-            {/* Stats grid skeleton */}
             <div className="grid grid-cols-2 gap-3">
               {[0,1,2,3].map(i => (
                 <div key={i} className="rounded-2xl p-4 flex flex-col items-center gap-2"
@@ -197,7 +189,6 @@ export default function RecapPage() {
                 </div>
               ))}
             </div>
-            {/* Chart skeleton */}
             <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
               <div className="skeleton h-3 w-24 mb-4" />
               <div className="flex items-end gap-2 h-20">
@@ -211,20 +202,14 @@ export default function RecapPage() {
           <div className="rounded-2xl p-8 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
             <p className="text-4xl mb-4">🌱</p>
             <p className="text-[16px] font-medium" style={{ color: 'var(--td)' }}>No tasks today yet</p>
-            <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>
-              Add moments in the dashboard to track your day.
-            </p>
+            <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>Add moments in the dashboard to track your day.</p>
           </div>
         ) : (
           <>
-            {/* Ring + quote */}
-            <motion.div
-              className="rounded-2xl p-5 mb-4"
+            <motion.div className="rounded-2xl p-5 mb-4"
               style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-            >
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}>
               <MomentumRing done={done} total={Math.max(total, 1)} size={90} showImage />
               <p className="mt-4 text-[15px] text-center italic"
                 style={{ fontFamily: 'var(--font-display)', color: 'var(--gp)' }}>
@@ -232,13 +217,9 @@ export default function RecapPage() {
               </p>
             </motion.div>
 
-            {/* Stats */}
-            <motion.div
-              className="grid grid-cols-2 gap-3 mb-4"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.07, ease: [0.4, 0, 0.2, 1] }}
-            >
+            <motion.div className="grid grid-cols-2 gap-3 mb-4"
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.07, ease: [0.4, 0, 0.2, 1] }}>
               {[
                 { n: done,       label: 'Completed',   color: '#3B6D11' },
                 { n: inProgress, label: 'In Progress', color: '#185FA5' },
@@ -253,19 +234,13 @@ export default function RecapPage() {
               ))}
             </motion.div>
 
-            {/* Chart */}
-            <motion.div
-              className="rounded-2xl p-5"
+            <motion.div className="rounded-2xl p-5"
               style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.14, ease: [0.4, 0, 0.2, 1] }}
-            >
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.14, ease: [0.4, 0, 0.2, 1] }}>
               <div className="flex items-center justify-between mb-4">
-                <p className="moment-label">
-                  {period === 'daily' ? 'Last 7 days' : period === 'weekly' ? 'Day by day' : period === 'monthly' ? 'Week by week' : 'Month by month'}
-                </p>
-                {aggTotal === 0 && period !== 'daily' && (
+                <p className="moment-label">{chartHeading}</p>
+                {total === 0 && period !== 'daily' && (
                   <p className="text-[10px]" style={{ color: 'var(--tgl)' }}>History builds over time</p>
                 )}
               </div>
@@ -274,8 +249,7 @@ export default function RecapPage() {
                   <div key={i} className="flex flex-1 flex-col items-center gap-1.5 h-full">
                     <div className="flex-1 w-full rounded-lg overflow-hidden flex items-end"
                       style={{ background: 'var(--gpa)' }}>
-                      <div
-                        className="w-full rounded-lg"
+                      <div className="w-full rounded-lg"
                         style={{
                           height: `${Math.max(pct, pct > 0 ? 6 : 0)}%`,
                           background: pct > 0 ? 'var(--gs)' : 'var(--gpa)',
