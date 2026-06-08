@@ -40,8 +40,9 @@ export default function MomentsPage() {
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
 
-      <div className="flex flex-col flex-1 min-w-0 pb-36 md:pb-16">
-
+      <div className="flex flex-col flex-1 min-w-0 md:pb-16"
+        style={{ paddingBottom: currentTrack ? 200 : 152 }}
+      >
         {/* Header */}
         <div className="px-5 md:px-8 pt-6 pb-1 flex items-center justify-between">
           <div>

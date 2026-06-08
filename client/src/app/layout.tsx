@@ -1,3 +1,5 @@
+// client/src/app/layout.tsx
+
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, Inter } from 'next/font/google'
 import { TaskProvider } from '@/context/TaskContext'
@@ -8,6 +10,8 @@ import RippleProvider from '@/components/ui/RippleProvider'
 import { MusicProvider } from '@/context/MusicContext'
 import { PlanProvider } from '@/context/PlanContext'
 import MiniPlayer from '@/components/music/MiniPlayer'
+import TrialBanner from '@/components/ui/TrialBanner'
+import TrialExpiryModal from '@/components/ui/TrialExpiryModal'
 import '@/app/globals.css'
 
 const playfair = Playfair_Display({
@@ -49,8 +53,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SettingsProvider>
               <AuthProvider>
                 <TaskProvider>
+                  <TrialBanner />
                   {children}
                   <MiniPlayer />
+                  <TrialExpiryModal />
                 </TaskProvider>
               </AuthProvider>
             </SettingsProvider>

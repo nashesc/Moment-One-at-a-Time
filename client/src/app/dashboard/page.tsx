@@ -312,7 +312,7 @@ export default function DashboardPage() {
           </>
         )}
 
-        <div className="h-24 md:hidden" />
+        <div className="md:hidden" style={{ height: currentTrack ? 200 : 152 }} />
       </div>
 
       {/* Desktop right panel */}

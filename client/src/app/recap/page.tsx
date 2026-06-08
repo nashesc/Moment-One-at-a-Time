@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Plus } from 'lucide-react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import MomentumRing from '@/components/ui/MomentumRing'
@@ -10,6 +10,8 @@ import { getRecap, getRecapRange, getCheckins, type RecapRangeItem } from '@/lib
 import { useTasks } from '@/context/TaskContext'
 import type { Recap, Checkin } from '@/types'
 import { motion } from 'motion/react'
+import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
+import { useMusic } from '@/context/MusicContext'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -184,6 +186,8 @@ export default function RecapPage() {
   const [recaps, setRecaps]       = useState<(Recap | null)[]>([])
   const [rangeData, setRangeData] = useState<RecapRangeItem[]>([])
   const [loading, setLoading]     = useState(true)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const { currentTrack } = useMusic()
 
   const loadData = useCallback(async (p: Period) => {
     setLoading(true)
@@ -250,8 +254,9 @@ export default function RecapPage() {
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
-      <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 px-5 md:px-8">
-
+      <div className="flex flex-col flex-1 min-w-0 md:pb-8 px-5 md:px-8"
+        style={{ paddingBottom: currentTrack ? 200 : 152 }}
+      >
         {/* Page header */}
         <div className="pt-6 pb-3">
           <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
@@ -404,6 +409,28 @@ export default function RecapPage() {
           </>
         )}
       </div>
+
+      <motion.button
+        aria-label="Add task"
+        onClick={() => setSheetOpen(true)}
+        className="fixed right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
+        style={{
+          background: 'var(--gp)',
+          boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
+          bottom: currentTrack ? 140 : 112,
+          transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
+      >
+        <Plus size={24} strokeWidth={2} color="white" />
+      </motion.button>
+
+      <CreateTaskSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+
       <BottomNav />
     </div>
   )

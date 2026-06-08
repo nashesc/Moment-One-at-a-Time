@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
+import ProGateModal from '@/components/ui/ProGateModal'
 import { useMusic, type PlayMode } from '@/context/MusicContext'
 import { usePlan } from '@/context/PlanContext'
 import { TRACKS, getTracksByCategory, type TrackCategory } from '@/assets/data/tracks'
@@ -43,6 +44,18 @@ function formatTimer(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
+// Pro gate context — feature name + description per trigger
+const PRO_GATES: Record<string, { name: string; description: string }> = {
+  favorites: {
+    name: 'Favorites',
+    description: 'Save tracks you love and access them in one place — available with Pro.',
+  },
+  library: {
+    name: 'Full Music Library',
+    description: 'Unlock 100+ tracks across Focus, Nature, and Ambient. Pro gets you everything.',
+  },
+}
+
 export default function MusicPage() {
   const {
     currentTrack, isPlaying, volume, playMode, timer,
@@ -55,6 +68,15 @@ export default function MusicPage() {
   const [activeTab, setActiveTab] = useState<Tab>('focus')
   const [showTimer, setShowTimer] = useState(false)
   const [showVolume, setShowVolume] = useState(false)
+
+  // Pro gate modal state
+  const [gateOpen, setGateOpen] = useState(false)
+  const [gateKey, setGateKey] = useState<keyof typeof PRO_GATES>('library')
+
+  function openGate(key: keyof typeof PRO_GATES) {
+    setGateKey(key)
+    setGateOpen(true)
+  }
 
   const tabTracks = activeTab === 'favorites'
     ? TRACKS.filter(t => favorites.includes(t.id))
@@ -122,10 +144,12 @@ export default function MusicPage() {
               </div>
               <div className="flex items-center gap-2 ml-3 shrink-0">
                 <button
-                  onClick={() => toggleFavorite(currentTrack.id)}
+                  onClick={() => {
+                    if (!isPro) { openGate('favorites'); return }
+                    toggleFavorite(currentTrack.id)
+                  }}
                   className="w-9 h-9 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: isPro ? 'pointer' : 'not-allowed' }}
-                  disabled={!isPro}
+                  style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer' }}
                   aria-label="Toggle favorite"
                 >
                   <Heart
@@ -315,14 +339,17 @@ export default function MusicPage() {
             return (
               <button
                 key={tab.id}
-                onClick={() => !isDisabled && setActiveTab(tab.id)}
+                onClick={() => {
+                  if (isDisabled) { openGate('favorites'); return }
+                  setActiveTab(tab.id)
+                }}
                 className="whitespace-nowrap rounded-full px-4 py-1.5 text-[13px] font-medium flex items-center gap-1.5 transition-all duration-150"
                 style={{
                   background: activeTab === tab.id ? 'var(--gp)' : 'white',
                   color:      activeTab === tab.id ? 'white' : isDisabled ? 'var(--tgl)' : 'var(--tg)',
                   border:     activeTab === tab.id ? 'none' : '1px solid var(--border)',
                   boxShadow:  activeTab === tab.id ? 'var(--shadow-btn)' : 'var(--shadow-card)',
-                  cursor:     isDisabled ? 'not-allowed' : 'pointer',
+                  cursor:     'pointer',
                   fontFamily: 'var(--font-body)',
                   opacity:    isDisabled ? 0.6 : 1,
                 }}
@@ -355,13 +382,16 @@ export default function MusicPage() {
             return (
               <motion.button
                 key={track.id}
-                onClick={() => !isLocked && play(track)}
+                onClick={() => {
+                  if (isLocked) { openGate('library'); return }
+                  play(track)
+                }}
                 className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
                 style={{
                   background: isActive ? 'var(--gpa)' : 'white',
                   border:     isActive ? '1.5px solid var(--gs)' : '1px solid var(--border)',
                   boxShadow:  'var(--shadow-card)',
-                  cursor:     isLocked ? 'not-allowed' : 'pointer',
+                  cursor:     'pointer',
                   opacity:    isLocked ? 0.6 : 1,
                 }}
                 initial={{ opacity: 0, y: 8 }}
@@ -418,6 +448,14 @@ export default function MusicPage() {
           })}
         </div>
       </div>
+
+      {/* Pro gate modal */}
+      <ProGateModal
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        featureName={PRO_GATES[gateKey].name}
+        description={PRO_GATES[gateKey].description}
+      />
 
       <BottomNav />
     </div>

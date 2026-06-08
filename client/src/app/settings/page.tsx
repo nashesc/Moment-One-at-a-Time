@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, X, Pencil, Bell, Clock } from 'lucide-react'
+import { Check, X, Pencil, Bell, Clock, Sparkles } from 'lucide-react'
+import Link from 'next/link'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import Toggle from '@/components/ui/Toggle'
 import { logout } from '@/lib/supabase/actions'
 import { useSettings } from '@/context/SettingsContext'
 import { useAuth } from '@/context/AuthContext'
+import { usePlan } from '@/context/PlanContext'
 
 function EditableField({
   label,
@@ -198,6 +200,7 @@ function TimePickerRow({ value, onChange }: { value: string; onChange: (v: strin
 export default function SettingsPage() {
   const { prefs, setPref, requestPushPermission, pushSupported } = useSettings()
   const { profile, updateProfile } = useAuth()
+  const { plan, isPro, isTrialActive, trialDaysLeft, currentPeriodEnd } = usePlan()
   const [pushLoading, setPushLoading] = useState(false)
   const [pushMessage, setPushMessage] = useState('')
 
@@ -209,7 +212,6 @@ export default function SettingsPage() {
       setPushLoading(false)
       if (!granted) {
         setPushMessage('Permission denied. Please allow notifications in your browser settings.')
-        // toggle will revert in context since we call setPref(false) on failure
       }
     } else {
       setPref('pushNotifications', false)
@@ -338,9 +340,77 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Plan — always visible */}
+          <div>
+            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Plan</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+
+              {/* Current plan row */}
+              <div
+                className="flex items-center justify-between px-5 py-4"
+                style={{ borderBottom: plan !== 'pro' || isTrialActive ? '1px solid var(--border)' : 'none' }}
+              >
+                <div className="flex items-center gap-2">
+                  <p className="text-[14px] font-medium" style={{ color: 'var(--td)' }}>
+                    {isTrialActive ? 'Pro Trial' : plan === 'pro' ? 'Pro' : 'Free'}
+                  </p>
+                  {isTrialActive && (
+                    <span
+                      className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                      style={{
+                        background: trialDaysLeft <= 3 ? '#FAEEDA' : 'var(--gpa)',
+                        color: trialDaysLeft <= 3 ? '#854F0B' : 'var(--gp)',
+                      }}
+                    >
+                      {trialDaysLeft}d left
+                    </span>
+                  )}
+                  {plan === 'pro' && !isTrialActive && (
+                    <span
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      style={{
+                        background: 'linear-gradient(135deg, var(--gold) 0%, #C4A040 100%)',
+                        color: 'var(--deep-pine)',
+                      }}
+                    >
+                      Pro
+                    </span>
+                  )}
+                </div>
+                {plan === 'pro' && !isTrialActive && currentPeriodEnd && (
+                  <p className="text-[12px]" style={{ color: 'var(--tg)' }}>
+                    Renews {new Date(currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </p>
+                )}
+              </div>
+
+              {/* Upgrade CTA — shown when not on paid Pro */}
+              {(plan !== 'pro' || isTrialActive) && (
+                <div className="px-5 py-4">
+                  <p className="text-[12px] mb-3" style={{ color: 'var(--tg)' }}>
+                    {isTrialActive
+                      ? `Trial ends in ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'}. Lock in Pro before it expires.`
+                      : 'Unlock unlimited tasks, full history, 100+ music tracks, and more.'}
+                  </p>
+                  <Link
+                    href="/upgrade"
+                    className="flex items-center justify-center gap-2 w-full rounded-full py-3 text-[14px] font-semibold text-white"
+                    style={{
+                      background: 'var(--gp)',
+                      boxShadow: 'var(--shadow-btn)',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <Sparkles size={14} />
+                    Upgrade to Pro
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Sign out */}
           <form action={logout} onSubmit={() => {
-            // Clear the API cache synchronously before the server redirect fires
             import('@/lib/api').then(({ clearApiCache, setCurrentUser }) => {
               clearApiCache()
               setCurrentUser(null)
