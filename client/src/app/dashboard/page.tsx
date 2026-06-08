@@ -20,7 +20,7 @@ import { motion } from 'motion/react'
 type FocusState = 'idle' | 'focusing' | 'done'
 
 export default function DashboardPage() {
-  const { todayTasks, updateStatus, moveToEnd, doneTodayCount, totalTodayCount, loading, error, refresh } = useTasks()
+  const { todayTasks, updateStatus, moveToEnd, doneTodayCount, totalTodayCount, loading, error, refresh, isOffline } = useTasks()
   const { profile } = useAuth()
   const { prefs } = useSettings()
 
@@ -51,8 +51,6 @@ export default function DashboardPage() {
 
   const allDone = todayTasks.length > 0 && todayTasks.every(t => t.status === 'done' || t.status === 'skipped')
   const currentTask = focused ?? activeTasks[0] ?? null
-
-  const { isOffline } = useTasks()
 
   function handlePickerSelect(task: Task) {
     setFocused(task)
@@ -103,17 +101,15 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
-
-      {isOffline && (
-        <div className="mx-4 md:mx-8 rounded-2xl px-4 py-3 mb-3 text-[13px]"
-          style={{ background: '#FAEEDA', border: '1px solid #EDD59A', color: '#854F0B' }}>
-          You're offline — changes will sync when you reconnect.
-        </div>
-      )}
-
       <DesktopSidebar />
 
       <div className="flex flex-col flex-1 min-w-0 relative">
+        {isOffline && (
+          <div className="mx-4 md:mx-8 rounded-2xl px-4 py-3 mb-3 text-[13px]"
+            style={{ background: '#FAEEDA', border: '1px solid #EDD59A', color: '#854F0B' }}>
+            You're offline — changes will sync when you reconnect.
+          </div>
+        )}
 
         {/* Mobile header */}
         <div className="md:hidden flex items-start justify-between px-5 pt-5 pb-2">
@@ -361,7 +357,7 @@ export default function DashboardPage() {
           whileTap={{ scale: 0.92 }}
         >
           <Plus size={24} strokeWidth={2} color="white" />
-        </motion.button>
+      </motion.button>
 
         <CreateTaskSheet open={sheetOpen} onClose={() => {
           setSheetOpen(false)
