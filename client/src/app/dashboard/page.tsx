@@ -17,6 +17,15 @@ import { Plus } from 'lucide-react'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { motion } from 'motion/react'
 
+const { isOffline } = useTasks()
+
+{isOffline && (
+  <div className="mx-4 md:mx-8 rounded-2xl px-4 py-3 mb-3 text-[13px]"
+    style={{ background: '#FAEEDA', border: '1px solid #EDD59A', color: '#854F0B' }}>
+    You're offline — changes will sync when you reconnect.
+  </div>
+)}
+
 type FocusState = 'idle' | 'focusing' | 'done'
 
 export default function DashboardPage() {

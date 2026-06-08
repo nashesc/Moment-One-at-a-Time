@@ -1,14 +1,26 @@
-const CACHE_NAME = 'moment-v1'
-const STATIC_ASSETS = ['/', '/dashboard', '/manifest.json']
+const CACHE_NAME = 'moment-v2'
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
-  )
+const APP_SHELL = [
+  '/dashboard',
+  '/moments',
+  '/recap',
+  '/reflections',
+  '/settings',
+  '/splash',
+  '/manifest.json',
+]
+
+async function precache() {
+  const cache = await caches.open(CACHE_NAME)
+  await Promise.allSettled(APP_SHELL.map(url => cache.add(url)))
+}
+
+self.addEventListener('install', event => {
+  event.waitUntil(precache())
   self.skipWaiting()
 })
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
@@ -17,39 +29,69 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return
-  if (event.request.url.includes('/api/')) return
+self.addEventListener('fetch', event => {
+  const { request } = event
+  if (request.method !== 'GET') return
 
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      const network = fetch(event.request).then(res => {
-        if (res.ok) {
-          const clone = res.clone()
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone))
-        }
-        return res
+  const url = new URL(request.url)
+
+  // Don't intercept external API calls — app handles offline data via IndexedDB
+  if (url.host !== self.location.host) return
+
+  // Next.js static chunks are content-hashed — safe to cache forever
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        if (cached) return cached
+        return fetch(request).then(res => {
+          if (res.ok) caches.open(CACHE_NAME).then(c => c.put(request, res.clone()))
+          return res
+        })
       })
-      return cached || network
+    )
+    return
+  }
+
+  // Navigation requests — network-first, cache as fallback
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(res => {
+          if (res.ok) caches.open(CACHE_NAME).then(c => c.put(request, res.clone()))
+          return res
+        })
+        .catch(async () => {
+          const cached = await caches.match(request)
+          return cached || caches.match('/dashboard')
+        })
+    )
+    return
+  }
+
+  // Everything else — stale-while-revalidate
+  event.respondWith(
+    caches.open(CACHE_NAME).then(async cache => {
+      const cached = await cache.match(request)
+      const fresh = fetch(request).then(res => {
+        if (res.ok) cache.put(request, res.clone())
+        return res
+      }).catch(() => cached)
+      return cached || fresh
     })
   )
 })
 
-self.addEventListener('push', (event) => {
+self.addEventListener('push', event => {
   const data = event.data?.json() ?? {}
-  const title = data.title ?? 'Moment'
-  const options = {
+  event.waitUntil(self.registration.showNotification(data.title ?? 'Moment', {
     body: data.body ?? 'Time to focus on your next moment.',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     data: { url: data.url ?? '/dashboard' },
-  }
-  event.waitUntil(self.registration.showNotification(title, options))
+  }))
 })
 
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', event => {
   event.notification.close()
-  event.waitUntil(
-    clients.openWindow(event.notification.data?.url ?? '/dashboard')
-  )
+  event.waitUntil(clients.openWindow(event.notification.data?.url ?? '/dashboard'))
 })
