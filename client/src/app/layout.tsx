@@ -5,6 +5,9 @@ import { AuthProvider } from '@/context/AuthContext'
 import { SettingsProvider } from '@/context/SettingsContext'
 import { Providers } from '@/lib/providers'
 import RippleProvider from '@/components/ui/RippleProvider'
+import { MusicProvider } from '@/context/MusicContext'
+import { PlanProvider } from '@/context/PlanContext'
+import MiniPlayer from '@/components/music/MiniPlayer'
 import '@/app/globals.css'
 
 const playfair = Playfair_Display({
@@ -41,15 +44,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <body>
         <RippleProvider />
-        <Providers>
-          <SettingsProvider>
-            <AuthProvider>
-              <TaskProvider>
-                {children}
-              </TaskProvider>
-            </AuthProvider>
-          </SettingsProvider>
-        </Providers>
+        <PlanProvider>
+          <MusicProvider>
+            <SettingsProvider>
+              <AuthProvider>
+                <TaskProvider>
+                  {children}
+                  <MiniPlayer />
+                </TaskProvider>
+              </AuthProvider>
+            </SettingsProvider>
+          </MusicProvider>
+        </PlanProvider>
       </body>
     </html>
   )

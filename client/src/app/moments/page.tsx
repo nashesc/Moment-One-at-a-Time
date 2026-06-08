@@ -10,6 +10,7 @@ import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { useTasks } from '@/context/TaskContext'
 import { useSettings } from '@/context/SettingsContext'
 import { motion } from 'motion/react'
+import { useMusic } from '@/context/MusicContext'
 
 const TABS = ['All', 'Pending', 'Done', 'Stuck'] as const
 type Tab = typeof TABS[number]
@@ -19,6 +20,7 @@ export default function MomentsPage() {
   const { prefs, setPref } = useSettings()
   const [tab, setTab]         = useState<Tab>('All')
   const [sheetOpen, setSheetOpen] = useState(false)
+  const { currentTrack } = useMusic()
 
   const todayAll     = tasks.filter(t => t.date === 'Today')
   const yesterdayAll = tasks.filter(t => t.date === 'Yesterday')
@@ -194,10 +196,12 @@ export default function MomentsPage() {
       <motion.button
         aria-label="Add task"
         onClick={() => setSheetOpen(true)}
-        className="fixed bottom-28 right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
+        className="fixed right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
         style={{
           background: 'var(--gp)',
           boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
+          bottom: currentTrack ? 140 : 112,
+          transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

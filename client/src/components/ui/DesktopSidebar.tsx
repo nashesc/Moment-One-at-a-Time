@@ -2,15 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, LayoutList, BarChart2, Leaf, Settings } from 'lucide-react'
+import { Home, LayoutList, BarChart2, Music, Settings, Leaf } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 
 const NAV = [
-  { href: '/dashboard',    label: 'Today',        Icon: Home        },
-  { href: '/moments',      label: 'Moments',      Icon: LayoutList  },
-  { href: '/recap',        label: 'Recap',        Icon: BarChart2   },
-  { href: '/reflections',  label: 'Reflections',  Icon: Leaf        },
-  { href: '/settings',     label: 'Settings',     Icon: Settings    },
+  { href: '/dashboard',   label: 'Today',    Icon: Home       },
+  { href: '/moments',     label: 'Moments',  Icon: LayoutList },
+  { href: '/recap',       label: 'Recap',    Icon: BarChart2  },
+  { href: '/music',       label: 'Music',    Icon: Music      },
+  { href: '/settings',    label: 'Settings', Icon: Settings   },
 ]
 
 export default function DesktopSidebar() {
@@ -20,6 +20,12 @@ export default function DesktopSidebar() {
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : '?'
+
+  // Mark Recap as active when on /reflections too
+  const isActive = (href: string) => {
+    if (href === '/recap') return path === '/recap' || path === '/reflections'
+    return path === href
+  }
 
   return (
     <aside
@@ -45,7 +51,7 @@ export default function DesktopSidebar() {
       {/* Nav items */}
       <nav className="flex flex-col gap-1">
         {NAV.map(({ href, label, Icon }) => {
-          const active = path === href
+          const active = isActive(href)
           return (
             <Link
               key={href}

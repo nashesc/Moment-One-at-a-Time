@@ -2,18 +2,24 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, LayoutList, BarChart2, Leaf, Settings } from 'lucide-react'
+import { Home, LayoutList, BarChart2, Music, Settings } from 'lucide-react'
 
 const NAV = [
-  { href: '/dashboard',    label: 'Today',        Icon: Home        },
-  { href: '/moments',      label: 'Moments',      Icon: LayoutList  },
-  { href: '/recap',        label: 'Recap',        Icon: BarChart2   },
-  { href: '/reflections',  label: 'Reflections',  Icon: Leaf        },
-  { href: '/settings',     label: 'Settings',     Icon: Settings    },
+  { href: '/dashboard',   label: 'Today',    Icon: Home       },
+  { href: '/moments',     label: 'Moments',  Icon: LayoutList },
+  { href: '/recap',       label: 'Recap',    Icon: BarChart2  },
+  { href: '/music',       label: 'Music',    Icon: Music      },
+  { href: '/settings',    label: 'Settings', Icon: Settings   },
 ]
 
 export default function BottomNav() {
   const path = usePathname()
+
+  // Mark Recap as active when on /reflections too
+  const isActive = (href: string) => {
+    if (href === '/recap') return path === '/recap' || path === '/reflections'
+    return path === href
+  }
 
   return (
     <nav
@@ -21,7 +27,7 @@ export default function BottomNav() {
       style={{ borderColor: 'var(--border)', paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}
     >
       {NAV.map(({ href, label, Icon }) => {
-        const active = path === href
+        const active = isActive(href)
         return (
           <Link
             key={href}

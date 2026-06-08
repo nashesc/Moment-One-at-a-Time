@@ -16,6 +16,7 @@ import { useSettings } from '@/context/SettingsContext'
 import { Plus } from 'lucide-react'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { motion } from 'motion/react'
+import { useMusic } from '@/context/MusicContext'
 
 type FocusState = 'idle' | 'focusing' | 'done'
 
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const { todayTasks, updateStatus, moveToEnd, doneTodayCount, totalTodayCount, loading, error, refresh, isOffline } = useTasks()
   const { profile } = useAuth()
   const { prefs } = useSettings()
+  const { currentTrack } = useMusic()
 
   const activeTasks = useMemo(
     () => todayTasks.filter(t => t.status !== 'done' && t.status !== 'skipped'),
@@ -105,7 +107,7 @@ export default function DashboardPage() {
 
       <div className="flex flex-col flex-1 min-w-0 relative">
         {isOffline && (
-          <div className="mx-4 md:mx-8 rounded-2xl px-4 py-3 mb-3 text-[13px]"
+          <div className="mx-4 md:mx-8 rounded-2xl px-4 py-3 mt-3 text-[13px]"
             style={{ background: '#FAEEDA', border: '1px solid #EDD59A', color: '#854F0B' }}>
             You're offline — changes will sync when you reconnect.
           </div>
@@ -348,8 +350,13 @@ export default function DashboardPage() {
       <motion.button
           aria-label="Add task"
           onClick={() => setSheetOpen(true)}
-          className="fixed bottom-28 right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
-          style={{ background: 'var(--gp)', boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)' }}
+          className="fixed right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
+          style={{
+            background: 'var(--gp)',
+            boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
+            bottom: currentTrack ? 140 : 112,
+            transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
