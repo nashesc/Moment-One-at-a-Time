@@ -57,27 +57,29 @@ export default function UpgradePage() {
 
   // ─── Init Paddle ────────────────────────────────────────────────────────
   const initPaddle = useCallback(() => {
-   if (!window.Paddle) return
+    if (!window.Paddle) return
+    console.log('Paddle env:', IS_SANDBOX)
+    console.log('Token prefix:', process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN?.slice(0, 10))
 
-   if (IS_SANDBOX) {
-      window.Paddle.Environment.set('sandbox')
-   }
+    if (IS_SANDBOX) {
+        window.Paddle.Environment.set('sandbox')
+    }
 
-   window.Paddle.Initialize({
-      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
-      eventCallback: (event: any) => {
-         if (event.name === 'checkout.completed') {
-         setSuccess(true)
-         setCheckoutOpen(false)
-         refresh()
-         }
-         if (event.name === 'checkout.loaded') {
-         setLoading(false)
-         }
-      },
-   })
-   setPaddleReady(true)
-   }, [refresh])
+    window.Paddle.Initialize({
+        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+        eventCallback: (event: any) => {
+          if (event.name === 'checkout.completed') {
+          setSuccess(true)
+          setCheckoutOpen(false)
+          refresh()
+          }
+          if (event.name === 'checkout.loaded') {
+          setLoading(false)
+          }
+        },
+    })
+    setPaddleReady(true)
+    }, [refresh])
 
   // ─── Open checkout ──────────────────────────────────────────────────────
   const openCheckout = useCallback((p: PlanType) => {
@@ -99,10 +101,10 @@ export default function UpgradePage() {
           theme:               'light',
         },
         items: [{ priceId: p === 'monthly' ? MONTHLY_PRICE_ID : ANNUAL_PRICE_ID, quantity: 1 }],
-        customer:   { email: profile?.email ?? '' },
-        customData: { user_id: profile?.id ?? '' },
+        // customer:   { email: profile?.email ?? '' },
+        // customData: { user_id: profile?.id ?? '' },
         // EARLY50 applies to monthly only
-        ...(p === 'monthly' ? { discountCode: DISCOUNT_CODE } : {}),
+        // ...(p === 'monthly' ? { discountCode: DISCOUNT_CODE } : {}),
       })
     }, 120)
   }, [paddleReady, profile])
