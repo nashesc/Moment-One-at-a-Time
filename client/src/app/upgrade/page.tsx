@@ -11,6 +11,7 @@ import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import { usePlan } from '@/context/PlanContext'
 import { useAuth } from '@/context/AuthContext'
+import { apiFetch } from '@/lib/api'
 
 declare global {
   interface Window { Paddle: any }
@@ -69,9 +70,23 @@ export default function UpgradePage() {
         token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
         eventCallback: (event: any) => {
           if (event.name === 'checkout.completed') {
-          setSuccess(true)
-          setCheckoutOpen(false)
-          refresh()
+            setCheckoutOpen(false)
+            
+            // Poll until webhook updates the plan, max 30s
+            let attempts = 0
+            const poll = setInterval(async () => {
+              attempts++
+              await refresh()
+              // isPro won't be updated yet in this closure, so re-fetch directly
+              const res = await apiFetch<{ isPro: boolean }>('/api/plan')
+              if (res.isPro) {
+                clearInterval(poll)
+                setSuccess(true)
+              } else if (attempts >= 15) {
+                clearInterval(poll)
+                setSuccess(true) // show success anyway, plan will reflect on next load
+              }
+            }, 2000)
           }
           if (event.name === 'checkout.loaded') {
           setLoading(false)
@@ -101,10 +116,10 @@ export default function UpgradePage() {
           theme:               'light',
         },
         items: [{ priceId: p === 'monthly' ? MONTHLY_PRICE_ID : ANNUAL_PRICE_ID, quantity: 1 }],
-        // customer:   { email: profile?.email ?? '' },
-        // customData: { user_id: profile?.id ?? '' },
+        customer:   { email: profile?.email ?? '' },
+        customData: { user_id: profile?.id ?? '' },
         // EARLY50 applies to monthly only
-        // ...(p === 'monthly' ? { discountCode: DISCOUNT_CODE } : {}),
+        ...(p === 'monthly' ? { discountCode: DISCOUNT_CODE } : {}),
       })
     }, 120)
   }, [paddleReady, profile])

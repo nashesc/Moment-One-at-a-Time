@@ -28,8 +28,9 @@ export async function proxy(request: NextRequest) {
   const user = session?.user ?? null
 
   const { pathname } = request.nextUrl
-  const isAuthRoute   = pathname.startsWith('/login') || pathname.startsWith('/register')
-  const isPublicRoute = isAuthRoute || pathname === '/'
+  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
+  const isLegalRoute = pathname.startsWith('/terms') || pathname.startsWith('/privacy') || pathname.startsWith('/refund')
+  const isPublicRoute = isAuthRoute || isLegalRoute || pathname === '/'
   const isProtected   = !isPublicRoute
 
   if (!user && isProtected) {
