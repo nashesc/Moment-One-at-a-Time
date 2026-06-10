@@ -67,10 +67,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     [isPro]
   )
 
-  const audioRef        = useRef<HTMLAudioElement | null>(null)
+  const audioRef         = useRef<HTMLAudioElement | null>(null)
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const fadeIntervalRef  = useRef<ReturnType<typeof setInterval> | null>(null)
-  
+  const timerValueRef    = useRef<number | null>(null)
 
   // ─── Init audio element once ───────────────────────────────────────────────
   useEffect(() => {
@@ -107,27 +107,31 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   }, [volume])
 
   // ─── Timer countdown ──────────────────────────────────────────────────────
+  // Keep ref in sync so the interval always reads the latest value
+  // without needing timer as a dependency (which would restart the
+  // interval on every tick and break pause/resume).
+  useEffect(() => { timerValueRef.current = timer }, [timer])
+
   useEffect(() => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
-    if (timer === null || !isPlaying) return
+    if (!isPlaying) return
 
     timerIntervalRef.current = setInterval(() => {
-      setTimerState(prev => {
-        if (prev === null) return null
-        if (prev <= 1) {
-          clearInterval(timerIntervalRef.current!)
-          fadeOut()
-          return null
-        }
-        return prev - 1
-      })
+      if (timerValueRef.current === null) return
+      if (timerValueRef.current <= 1) {
+        clearInterval(timerIntervalRef.current!)
+        timerIntervalRef.current = null
+        setTimerState(null)
+        fadeOut()
+        return
+      }
+      setTimerState(prev => (prev === null ? null : prev - 1))
     }, 1000)
 
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timer, isPlaying])
+  }, [isPlaying])
 
   // ─── Track end handler (needs access to latest state via ref) ─────────────
   const playModeRef   = useRef(playMode)
@@ -148,8 +152,11 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     const pool    = allowedTracks(track.category)
     const idx     = pool.findIndex(t => t.id === track.id)
+    const shufflePool = pool.filter(t => t.id !== track.id)
     const nextTrk = mode === 'shuffle'
-      ? pool.filter(t => t.id !== track.id)[Math.floor(Math.random() * (pool.length - 1))]
+      ? shufflePool.length > 0
+        ? shufflePool[Math.floor(Math.random() * shufflePool.length)]
+        : pool[0]  // fallback to first track if pool is empty
       : pool[(idx + 1) % pool.length]
     if (nextTrk) loadTrack(nextTrk)
   }, [])
@@ -204,8 +211,11 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     if (!track) return
     const pool = allowedTracks(track.category)
     const idx  = pool.findIndex(t => t.id === track.id)
+    const shufflePool = pool.filter(t => t.id !== track.id)
     const nextTrack = playMode === 'shuffle'
-      ? pool.filter(t => t.id !== track.id)[Math.floor(Math.random() * (pool.length - 1))]
+      ? shufflePool.length > 0
+        ? shufflePool[Math.floor(Math.random() * shufflePool.length)]
+        : track  // only one track — replay it
       : pool[(idx + 1) % pool.length]
     if (nextTrack) loadTrack(nextTrack)
   }, [playMode, loadTrack, allowedTracks])

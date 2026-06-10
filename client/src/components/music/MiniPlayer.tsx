@@ -49,7 +49,7 @@ export default function MiniPlayer() {
 
             {/* Track info — tapping navigates to /music */}
             <button
-              onClick={() => router.push('/music')}
+              onClick={() => router.push(`/music?tab=${currentTrack.category}`)}
               className="flex-1 min-w-0 text-left"
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >

@@ -7,17 +7,18 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN ?? 'http://localhost:3000')
 function getAllowOrigin(request) {
   const origin = request?.headers?.get('origin') ?? ''
   if (ALLOWED_ORIGINS.includes(origin)) return origin
-  return ALLOWED_ORIGINS[0]  // fallback to first (primary) origin
+  return null  // unknown origin gets no header — browser blocks it
 }
 
-
 export function getCorsHeaders(request) {
-  return {
-    'Access-Control-Allow-Origin': getAllowOrigin(request),
+  const allowOrigin = getAllowOrigin(request)
+  const headers = {
     'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
   }
+  if (allowOrigin) headers['Access-Control-Allow-Origin'] = allowOrigin
+  return headers
 }
 
 export function optionsResponse(request) {

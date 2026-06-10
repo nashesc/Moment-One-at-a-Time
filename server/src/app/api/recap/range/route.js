@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase/server'
 import { getUser } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { optionsResponse, json } from '@/lib/cors'
+import { getUserPlan } from '@/lib/getUserPlan'
 
 export async function OPTIONS(request) { return optionsResponse(request) }
 
@@ -13,6 +14,9 @@ export async function GET(request) {
 
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
+
+    const plan = await getUserPlan(user.id)
+    if (!plan.isPro) return json({ error: 'Pro subscription required' }, { status: 403 }, request)
 
     const { searchParams } = new URL(request.url)
     const from    = searchParams.get('from')

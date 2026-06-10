@@ -2,7 +2,7 @@
 
 // client/src/app/upgrade/page.tsx
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Script from 'next/script'
 import Link from 'next/link'
 import { Check, X, Leaf, Sparkles } from 'lucide-react'
@@ -55,6 +55,11 @@ export default function UpgradePage() {
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('annual')
   const [success,      setSuccess]      = useState(false)
   const [loading,      setLoading]      = useState(false)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    return () => { if (pollRef.current) clearInterval(pollRef.current) }
+  }, [])
 
   // ─── Init Paddle ────────────────────────────────────────────────────────
   const initPaddle = useCallback(() => {
@@ -71,20 +76,17 @@ export default function UpgradePage() {
         eventCallback: (event: any) => {
           if (event.name === 'checkout.completed') {
             setCheckoutOpen(false)
-            
-            // Poll until webhook updates the plan, max 30s
+
             let attempts = 0
-            const poll = setInterval(async () => {
+            if (pollRef.current) clearInterval(pollRef.current)
+            pollRef.current = setInterval(async () => {
               attempts++
               await refresh()
-              // isPro won't be updated yet in this closure, so re-fetch directly
               const res = await apiFetch<{ isPro: boolean }>('/api/plan')
-              if (res.isPro) {
-                clearInterval(poll)
+              if (res.isPro || attempts >= 15) {
+                clearInterval(pollRef.current!)
+                pollRef.current = null
                 setSuccess(true)
-              } else if (attempts >= 15) {
-                clearInterval(poll)
-                setSuccess(true) // show success anyway, plan will reflect on next load
               }
             }, 2000)
           }

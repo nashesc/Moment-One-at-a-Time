@@ -12,9 +12,10 @@ import type { Recap, Checkin } from '@/types'
 import { motion } from 'motion/react'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { useMusic } from '@/context/MusicContext'
+import { usePlan } from '@/context/PlanContext'
+import Link from 'next/link'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
 type View   = 'recap' | 'reflections'
 type Period = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
@@ -188,8 +189,14 @@ export default function RecapPage() {
   const [loading, setLoading]     = useState(true)
   const [sheetOpen, setSheetOpen] = useState(false)
   const { currentTrack } = useMusic()
+  const { isPro } = usePlan()
 
   const loadData = useCallback(async (p: Period) => {
+    if ((p === 'monthly' || p === 'yearly') && !isPro) {
+    setLoading(false)
+    return
+  }
+
     setLoading(true)
     try {
       const today = new Date().toISOString().split('T')[0]
@@ -212,7 +219,7 @@ export default function RecapPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [isPro])
 
   useEffect(() => {
     if (view === 'recap') loadData(period)
@@ -316,7 +323,42 @@ export default function RecapPage() {
               ))}
             </div>
 
-            {loading ? (
+            {(period === 'monthly' || period === 'yearly') && !isPro ? (
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                <div className="p-6 filter blur-sm pointer-events-none select-none opacity-60">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-[90px] h-[90px] rounded-full" style={{ background: 'var(--gpa)' }} />
+                    <div className="flex flex-col gap-2 flex-1">
+                      <div className="h-4 rounded w-3/4" style={{ background: 'var(--gpa)' }} />
+                      <div className="h-3 rounded w-1/2" style={{ background: 'var(--gpa)' }} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[0,1,2,3].map(i => (
+                      <div key={i} className="rounded-2xl p-4 text-center" style={{ background: 'var(--card)' }}>
+                        <div className="h-8 w-10 rounded mx-auto mb-2" style={{ background: 'var(--gpa)' }} />
+                        <div className="h-3 w-16 rounded mx-auto" style={{ background: 'var(--gpa)' }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="px-6 pb-6 pt-2 text-center border-t" style={{ borderColor: 'var(--border)' }}>
+                  <p className="text-[15px] font-semibold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+                    {period === 'monthly' ? 'Monthly trends' : 'Yearly overview'} require Pro
+                  </p>
+                  <p className="text-[13px] mb-4" style={{ color: 'var(--tg)' }}>
+                    Unlock your full momentum history.
+                  </p>
+                  <Link
+                    href="/upgrade"
+                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[14px] font-semibold text-white"
+                    style={{ background: 'var(--gp)', boxShadow: 'var(--shadow-btn)', textDecoration: 'none' }}
+                  >
+                    Upgrade to Pro
+                  </Link>
+                </div>
+              </div>
+            ) : loading ? (
               <div className="flex flex-col gap-4">
                 <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
                   <div className="flex items-center gap-4">

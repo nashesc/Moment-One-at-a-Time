@@ -19,6 +19,9 @@ export async function DELETE(request, context) {
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 
+    const plan = await getUserPlan(user.id)
+    if (!plan.isPro) return json({ error: 'Pro subscription required' }, { status: 403 }, request)
+
     const { error } = await supabase
       .from('track_favorites')
       .delete()

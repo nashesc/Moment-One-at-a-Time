@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
 import { rateLimiter, authRateLimiter } from '@/lib/ratelimit'
+import { getUserPlan } from '@/lib/getUserPlan'
 import { taskSchema } from '@/lib/validations'
 import { corsHeaders, optionsResponse, json } from '@/lib/cors'
 
@@ -21,6 +22,12 @@ export async function GET(request) {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
     if (rawDate && !dateRegex.test(rawDate)) return json({ error: 'Invalid date format. Use YYYY-MM-DD' }, { status: 400 })
     const date = rawDate || new Date().toISOString().split('T')[0]
+
+    const plan = await getUserPlan(user.id)
+    const today = new Date().toISOString().split('T')[0]
+    if (!plan.isPro && date !== today) {
+      return json({ error: 'Task history requires Pro' }, { status: 403 }, request)
+    }
 
     const { data, error } = await supabase
       .from('tasks')
@@ -49,6 +56,19 @@ export async function POST(request) {
     const body = await request.json()
     const parsed = taskSchema.safeParse(body)
     if (!parsed.success) return json({ error: parsed.error.issues[0].message }, { status: 400 }, request)
+
+    const plan = await getUserPlan(user.id)
+    if (!plan.isPro) {
+      const taskDate = parsed.data.scheduled_date || new Date().toISOString().split('T')[0]
+      const { count } = await supabase
+        .from('tasks')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('scheduled_date', taskDate)
+      if ((count ?? 0) >= 7) {
+        return json({ error: 'Free plan is limited to 7 tasks per day' }, { status: 403 }, request)
+      }
+    }
 
     const { data: existing } = await supabase
       .from('tasks')

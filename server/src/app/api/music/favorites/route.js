@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
+import { getUserPlan } from '@/lib/getUserPlan'
 import { optionsResponse, json } from '@/lib/cors'
 import { z } from 'zod'
 
@@ -20,6 +21,9 @@ export async function GET(request) {
 
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
+
+    const plan = await getUserPlan(user.id)
+    if (!plan.isPro) return json({ error: 'Pro subscription required' }, { status: 403 }, request)
 
     const { data, error } = await supabase
       .from('track_favorites')
@@ -42,6 +46,9 @@ export async function POST(request) {
 
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
+
+    const plan = await getUserPlan(user.id)
+    if (!plan.isPro) return json({ error: 'Pro subscription required' }, { status: 403 }, request)
 
     const body = await request.json()
     const parsed = addFavoriteSchema.safeParse(body)

@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
+import { getUserPlan } from '@/lib/getUserPlan'
 import { pushSubscriptionSchema } from '@/lib/validations'
 import { sendPushNotification } from '@/lib/push'
 import { optionsResponse, json } from '@/lib/cors'
@@ -15,6 +16,9 @@ export async function POST(request) {
 
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
+
+    const plan = await getUserPlan(user.id)
+    if (!plan.isPro) return json({ error: 'Pro subscription required' }, { status: 403 }, request)
 
     const body = await request.json()
     const parsed = pushSubscriptionSchema.safeParse(body)

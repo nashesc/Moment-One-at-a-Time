@@ -4,7 +4,8 @@ import { useState } from 'react'
 import {
   Play, Pause, SkipBack, SkipForward,
   Volume2, Repeat, Shuffle, List,
-  Heart, Lock, Timer,
+  Heart, Lock, Timer, LayoutGrid, 
+  Zap, Leaf, Wind,
 } from 'lucide-react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
@@ -13,15 +14,18 @@ import { useMusic, type PlayMode } from '@/context/MusicContext'
 import { usePlan } from '@/context/PlanContext'
 import { TRACKS, getTracksByCategory, type TrackCategory } from '@/assets/data/tracks'
 import { motion } from 'motion/react'
+import { useSearchParams } from 'next/navigation'
 
-type Tab = TrackCategory | 'favorites'
+type Tab = TrackCategory | 'favorites' | 'all'
 
-const TABS: { id: Tab; label: string; emoji: string }[] = [
-  { id: 'focus',     label: 'Focus',     emoji: '🎯' },
-  { id: 'nature',    label: 'Nature',    emoji: '🌿' },
-  { id: 'ambient',   label: 'Ambient',   emoji: '🌌' },
-  { id: 'favorites', label: 'Favorites', emoji: '♥' },
+const TABS: { id: Tab; label: string; Icon: React.ComponentType; proOnly?: boolean }[] = [
+  { id: 'all',       label: 'All',       Icon: LayoutGrid,  proOnly: true },
+  { id: 'focus',     label: 'Focus',     Icon: Zap  },
+  { id: 'nature',    label: 'Nature',    Icon: Leaf  },
+  { id: 'ambient',   label: 'Ambient',   Icon: Wind  },
+  { id: 'favorites', label: 'Favorites', Icon: Heart,  proOnly: true },
 ]
+
 
 const TIMER_OPTIONS: { label: string; seconds: number | null }[] = [
   { label: '∞',    seconds: null },
@@ -65,7 +69,14 @@ export default function MusicPage() {
   } = useMusic()
 
   const { isPro } = usePlan()
-  const [activeTab, setActiveTab] = useState<Tab>('focus')
+
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'focus' || tab === 'nature' || tab === 'ambient') return tab
+    return 'focus'
+  })
+
   const [showTimer, setShowTimer] = useState(false)
   const [showVolume, setShowVolume] = useState(false)
 
@@ -78,9 +89,22 @@ export default function MusicPage() {
     setGateOpen(true)
   }
 
-  const tabTracks = activeTab === 'favorites'
-    ? TRACKS.filter(t => favorites.includes(t.id))
-    : getTracksByCategory(activeTab as TrackCategory)
+  const tabTracks = (() => {
+  if (activeTab === 'favorites') {
+    return [...TRACKS.filter(t => favorites.includes(t.id))].sort((a, b) => a.title.localeCompare(b.title))
+  }
+  const pool = activeTab === 'all'
+    ? [...TRACKS]
+    : [...getTracksByCategory(activeTab as TrackCategory)]
+
+  if (isPro) {
+    return pool.sort((a, b) => a.title.localeCompare(b.title))
+  }
+
+  const free   = pool.filter(t => !t.isPro).sort((a, b) => a.title.localeCompare(b.title))
+  const locked = pool.filter(t => t.isPro).sort((a, b) => a.title.localeCompare(b.title))
+  return [...free, ...locked]
+})()
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
@@ -354,7 +378,7 @@ export default function MusicPage() {
                   opacity:    isDisabled ? 0.6 : 1,
                 }}
               >
-                <span>{tab.emoji}</span>
+                <span><tab.Icon size={14} /></span>
                 {tab.label}
                 {isDisabled && <Lock size={11} />}
               </button>

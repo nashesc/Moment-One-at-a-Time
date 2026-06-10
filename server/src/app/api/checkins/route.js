@@ -3,6 +3,7 @@ import { getUser } from '@/lib/auth'
 import { rateLimiter, authRateLimiter } from '@/lib/ratelimit'
 import { checkinSchema } from '@/lib/validations'
 import { optionsResponse, json } from '@/lib/cors'
+import { getUserPlan } from '@/lib/getUserPlan'
 
 export async function OPTIONS(request) { return optionsResponse(request) }
 
@@ -61,12 +62,15 @@ export async function GET(request) {
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 
+    const plan = await getUserPlan(user.id)
+    const limit = plan.isPro ? 20 : 15
+
     const { data, error } = await supabase
       .from('checkins')
       .select('*, tasks(title)')
       .eq('user_id', user.id)
       .order('checked_at', { ascending: false })
-      .limit(20)
+      .limit(limit)
 
     if (error) return json({ error: error.message }, { status: 500 }, request)
     return json({ data }, {}, request)
