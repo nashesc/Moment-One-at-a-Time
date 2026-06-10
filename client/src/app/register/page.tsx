@@ -2,13 +2,26 @@
 
 import Link from 'next/link'
 import { Leaf } from 'lucide-react'
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { register } from '@/lib/supabase/actions'
 
 const initialState = { error: '' }
 
 export default function RegisterPage() {
   const [state, formAction, pending] = useActionState(register, initialState)
+  const [passwordError, setPasswordError] = useState('')
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const form = e.currentTarget
+    const password = (form.elements.namedItem('password') as HTMLInputElement).value
+    const confirm  = (form.elements.namedItem('confirm_password') as HTMLInputElement).value
+    if (password !== confirm) {
+      e.preventDefault()
+      setPasswordError('Passwords do not match.')
+    } else {
+      setPasswordError('')
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--ow)' }}>
@@ -53,11 +66,12 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form action={formAction} className="flex flex-col gap-4">
+          <form action={formAction} onSubmit={handleSubmit} className="flex flex-col gap-4">
             {[
-              { name: 'full_name', label: 'Full name', type: 'text',     placeholder: 'Maria Santos',    autoComplete: 'name' },
-              { name: 'email',     label: 'Email',     type: 'email',    placeholder: 'you@example.com', autoComplete: 'email' },
-              { name: 'password',  label: 'Password',  type: 'password', placeholder: '••••••••',        autoComplete: 'new-password' },
+              { name: 'full_name',        label: 'Full name',       type: 'text',     placeholder: 'Enter your name',    autoComplete: 'name' },
+              { name: 'email',            label: 'Email',           type: 'email',    placeholder: 'Enter your email', autoComplete: 'email' },
+              { name: 'password',         label: 'Password',        type: 'password', placeholder: 'Enter your password',        autoComplete: 'new-password' },
+              { name: 'confirm_password', label: 'Confirm password',type: 'password', placeholder: 'Confirm your password',        autoComplete: 'new-password' },
             ].map(f => (
               <div key={f.name}>
                 <label
@@ -85,6 +99,15 @@ export default function RegisterPage() {
                 />
               </div>
             ))}
+
+            {passwordError && (
+              <div
+                className="rounded-xl px-4 py-3 text-[13px]"
+                style={{ background: '#FEF2F2', color: '#C0392B', border: '1px solid #FBDCDC' }}
+              >
+                {passwordError}
+              </div>
+            )}
 
             <button
               type="submit"

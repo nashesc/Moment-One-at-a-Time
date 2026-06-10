@@ -32,6 +32,8 @@ export async function proxy(request: NextRequest) {
     || pathname.startsWith('/refund')
     || pathname.startsWith('/upgrade')
     || pathname.startsWith('/splash')
+    || pathname.startsWith('/forgot-password')
+    || pathname.startsWith('/reset-password')
   const isProtected = !isPublicRoute
 
   if (!user && isProtected) {

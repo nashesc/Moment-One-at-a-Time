@@ -65,7 +65,7 @@ export default function LoginPage() {
               <input
                 name="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="Enter your email"
                 required
                 autoComplete="email"
                 defaultValue=""
@@ -91,7 +91,7 @@ export default function LoginPage() {
               <input
                 name="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 required
                 autoComplete="current-password"
                 defaultValue=""
@@ -121,6 +121,16 @@ export default function LoginPage() {
               {pending ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
+
+          <p className="mt-4 text-center text-[13px]">
+            <Link
+              href="/forgot-password"
+              className="font-medium"
+              style={{ color: 'var(--tg)', textDecoration: 'none' }}
+            >
+              Forgot password?
+            </Link>
+          </p>
 
           <p className="mt-5 text-center text-[13px]" style={{ color: 'var(--tg)' }}>
             No account?{' '}
