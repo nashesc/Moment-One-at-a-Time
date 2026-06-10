@@ -6,6 +6,7 @@ import {
   Volume2, Repeat, Shuffle, List,
   Heart, Lock, Timer, LayoutGrid, 
   Zap, Leaf, Wind,
+  type LucideIcon
 } from 'lucide-react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
@@ -18,7 +19,12 @@ import { useSearchParams } from 'next/navigation'
 
 type Tab = TrackCategory | 'favorites' | 'all'
 
-const TABS: { id: Tab; label: string; Icon: React.ComponentType; proOnly?: boolean }[] = [
+const TABS: {
+  id: Tab
+  label: string
+  Icon: LucideIcon
+  proOnly?: boolean
+}[] = [
   { id: 'all',       label: 'All',       Icon: LayoutGrid,  proOnly: true },
   { id: 'focus',     label: 'Focus',     Icon: Zap  },
   { id: 'nature',    label: 'Nature',    Icon: Leaf  },
