@@ -29,9 +29,14 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
-  const isLegalRoute = pathname.startsWith('/terms') || pathname.startsWith('/privacy') || pathname.startsWith('/refund')
-  const isPublicRoute = isAuthRoute || isLegalRoute || pathname === '/'
-  const isProtected   = !isPublicRoute
+  const isPublicRoute = isAuthRoute
+    || pathname === '/'
+    || pathname.startsWith('/terms')
+    || pathname.startsWith('/privacy')
+    || pathname.startsWith('/refund')
+    || pathname.startsWith('/upgrade')
+    || pathname.startsWith('/splash')
+  const isProtected = !isPublicRoute
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
