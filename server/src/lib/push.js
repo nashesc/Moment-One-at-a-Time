@@ -1,7 +1,7 @@
 import webpush from 'web-push'
 
 webpush.setVapidDetails(
-  'mailto:jonasm.escanilla@gmail.com',
+  `mailto:${process.env.VAPID_CONTACT_EMAIL}`,
   process.env.VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
 )

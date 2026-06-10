@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -20,7 +21,7 @@ export async function getUser(request) {
     if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer' || !parts[1]) return null
 
     const token = parts[1]
-    const cacheKey = token.slice(0, 40) // use prefix as cache key
+    const cacheKey = createHash('sha256').update(token).digest('hex')
 
     // Return cached user if still fresh
     const cached = _tokenCache.get(cacheKey)
@@ -36,7 +37,7 @@ export async function getUser(request) {
     }
 
     // Cache the result
-    _tokenCache.set(cacheKey, { user, expiresAt: Date.now() + 10_000 })
+    _tokenCache.set(cacheKey, { user, expiresAt: Date.now() + TOKEN_CACHE_TTL })
 
     // Prevent unbounded cache growth — clear oldest entries if over 500
     if (_tokenCache.size > 500) {
