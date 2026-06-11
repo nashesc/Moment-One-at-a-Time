@@ -76,10 +76,8 @@ export default function MusicPage() {
 
   const { isPro } = usePlan()
 
-  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<Tab>(() => {
-    const tab = searchParams.get('tab')
-    if (tab === 'focus' || tab === 'nature' || tab === 'ambient') return tab
+    if (currentTrack?.category) return currentTrack.category
     return 'focus'
   })
 
