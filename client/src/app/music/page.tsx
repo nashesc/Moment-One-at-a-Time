@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Play, Pause, SkipBack, SkipForward,
   Volume2, Repeat, Shuffle, List,
@@ -71,7 +71,7 @@ export default function MusicPage() {
     currentTrack, isPlaying, volume, playMode, timer,
     favorites, isLoading, currentTime, duration,
     play, pause, resume, next, prev,
-    setVolume, setPlayMode, setTimer, toggleFavorite, seek,
+    setVolume, setPlayMode, setTimer, toggleFavorite, seek, setActivePool,
   } = useMusic()
 
   const { isPro } = usePlan()
@@ -94,21 +94,35 @@ export default function MusicPage() {
   }
 
   const tabTracks = (() => {
-  if (activeTab === 'favorites') {
-    return [...TRACKS.filter(t => favorites.includes(t.id))].sort((a, b) => a.title.localeCompare(b.title))
-  }
-  const pool = activeTab === 'all'
-    ? [...TRACKS]
-    : [...getTracksByCategory(activeTab as TrackCategory)]
+    if (activeTab === 'favorites') {
+      return [...TRACKS.filter(t => favorites.includes(t.id))].sort((a, b) => a.title.localeCompare(b.title))
+    }
+    const pool = activeTab === 'all'
+      ? [...TRACKS]
+      : [...getTracksByCategory(activeTab as TrackCategory)]
 
-  if (isPro) {
-    return pool.sort((a, b) => a.title.localeCompare(b.title))
-  }
+    if (isPro) {
+      return pool.sort((a, b) => a.title.localeCompare(b.title))
+    }
 
-  const free   = pool.filter(t => !t.isPro).sort((a, b) => a.title.localeCompare(b.title))
-  const locked = pool.filter(t => t.isPro).sort((a, b) => a.title.localeCompare(b.title))
-  return [...free, ...locked]
-})()
+    const free   = pool.filter(t => !t.isPro).sort((a, b) => a.title.localeCompare(b.title))
+    const locked = pool.filter(t => t.isPro).sort((a, b) => a.title.localeCompare(b.title))
+    return [...free, ...locked]
+  })()
+
+  useEffect(() => {
+    if (activeTab === 'all') {
+      const pool = isPro ? [...TRACKS] : TRACKS.filter(t => !t.isPro)
+      setActivePool(pool.sort((a, b) => a.title.localeCompare(b.title)))
+    } else if (activeTab === 'favorites') {
+      setActivePool(TRACKS.filter(t => favorites.includes(t.id)))
+    } else {
+      const pool = isPro
+        ? getTracksByCategory(activeTab as TrackCategory)
+        : getTracksByCategory(activeTab as TrackCategory).filter(t => !t.isPro)
+      setActivePool([...pool].sort((a, b) => a.title.localeCompare(b.title)))
+    }
+  }, [activeTab, isPro, favorites])
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 

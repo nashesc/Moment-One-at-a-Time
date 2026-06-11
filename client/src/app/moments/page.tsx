@@ -32,8 +32,8 @@ export default function MomentsPage() {
     return list
   }
 
-  const todayFiltered     = filterByTab(todayAll)
-  const yesterdayFiltered = filterByTab(yesterdayAll)
+  const todayFiltered     = filterByTab(todayAll).slice().reverse()
+  const yesterdayFiltered = filterByTab(yesterdayAll).slice().reverse()
   const momentumPct       = totalTodayCount === 0 ? 0 : Math.round((doneTodayCount / totalTodayCount) * 100)
 
   return (

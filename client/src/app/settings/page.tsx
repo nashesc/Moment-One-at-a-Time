@@ -10,6 +10,7 @@ import { logout } from '@/lib/supabase/actions'
 import { useSettings } from '@/context/SettingsContext'
 import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/context/PlanContext'
+import { useMusic } from '@/context/MusicContext'
 
 function EditableField({
   label,
@@ -55,7 +56,8 @@ function EditableField({
   }
 
   return (
-    <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+    <div className="flex items-center justify-between px-5 py-4" 
+      style={{ borderBottom: '1px solid var(--border)' }}>
       <div className="flex-1 min-w-0">
         <p className="text-[11px] uppercase tracking-widest mb-1" style={{ color: 'var(--tg)' }}>{label}</p>
         {editing ? (
@@ -203,6 +205,7 @@ export default function SettingsPage() {
   const { plan, isPro, isTrialActive, trialDaysLeft, currentPeriodEnd } = usePlan()
   const [pushLoading, setPushLoading] = useState(false)
   const [pushMessage, setPushMessage] = useState('')
+  const { currentTrack } = useMusic()
 
   async function handlePushToggle(enabled: boolean) {
     if (enabled) {
@@ -221,7 +224,8 @@ export default function SettingsPage() {
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
-      <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 px-5 md:px-8">
+      <div className="flex flex-col flex-1 min-w-0 px-5 md:px-8"
+        style={{ paddingBottom: currentTrack ? 200 : 96 }}>
 
         <div className="pt-6 pb-4">
           <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>

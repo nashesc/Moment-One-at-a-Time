@@ -32,16 +32,16 @@ const DISCOUNT_CODE    = 'EARLY50'
 
 // ─── Feature list ────────────────────────────────────────────────────────────
 const FEATURES = [
-  { label: 'Tasks per day',            free: '7 max',       pro: 'Unlimited'         },
-  { label: 'Task history',             free: 'Today only',  pro: 'All time'          },
-  { label: 'Recap periods',            free: 'Daily only',  pro: 'Daily · Weekly · Monthly · Yearly' },
-  { label: 'Reflections history',      free: 'Last 5',      pro: 'Full history'      },
-  { label: 'Focus music library',      free: '9 tracks',    pro: '100+ tracks'       },
-  { label: 'Music favorites',          free: false,         pro: true                },
-  { label: 'Push notifications',       free: false,         pro: true                },
-  { label: 'Dark mode',                free: false,         pro: 'Coming soon'       },
-  { label: 'Data export (CSV)',         free: false,         pro: true                },
-  { label: 'Full opening quote library',free: false,        pro: true                },
+  { label: 'Tasks per day',            free: '7 max',             pro: 'Unlimited'         },
+  { label: 'Task history',             free: 'Today & Yesterday', pro: 'All time'          },
+  { label: 'Recap periods',            free: 'Daily & Weekly',    pro: 'Daily · Weekly · Monthly · Yearly' },
+  { label: 'Reflections history',      free: 'Last 15',           pro: 'Full history'      },
+  { label: 'Focus music library',      free: '21 tracks',         pro: '100+ tracks'       },
+  { label: 'Music favorites',          free: false,               pro: true                },
+  { label: 'Push notifications',       free: false,               pro: true                },
+  { label: 'Dark mode',                free: false,               pro: 'Coming soon'       },
+  { label: 'Data export (CSV)',         free: false,              pro: true                },
+  { label: 'Full opening quote library',free: false,              pro: true                },
 ]
 
 type PlanType = 'monthly' | 'annual'

@@ -43,6 +43,7 @@ interface MusicContextValue {
   setTimer: (seconds: number | null) => void
   toggleFavorite: (trackId: string) => void
   seek: (seconds: number) => void
+  setActivePool: (tracks: Track[]) => void
 }
 
 const MusicContext = createContext<MusicContextValue | null>(null)
@@ -56,8 +57,16 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [timer, setTimerState]          = useState<number | null>(null)
   const [favorites, setFavorites]       = useState<string[]>([])
   const [isLoading, setIsLoading]       = useState(false)
+  const [activePool, setActivePoolState] = useState<Track[]>([])
+  const activePoolRef = useRef<Track[]>([])
   const [currentTime, setCurrentTime]   = useState(0)
   const [duration, setDuration]         = useState(0)
+  
+  useEffect(() => { activePoolRef.current = activePool }, [activePool])
+
+  const setActivePool = useCallback((tracks: Track[]) => {
+    setActivePoolState(tracks)
+  }, [])
 
   const allowedTracks = useCallback(
     (category?: TrackCategory) => {
@@ -150,15 +159,15 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    const pool    = allowedTracks(track.category)
-    const idx     = pool.findIndex(t => t.id === track.id)
+    const pool = activePoolRef.current.length > 0 ? activePoolRef.current : allowedTracks(track.category)
+    const idx  = pool.findIndex(t => t.id === track.id)
     const shufflePool = pool.filter(t => t.id !== track.id)
-    const nextTrk = mode === 'shuffle'
+    const nextTrack = playMode === 'shuffle'
       ? shufflePool.length > 0
         ? shufflePool[Math.floor(Math.random() * shufflePool.length)]
         : pool[0]  // fallback to first track if pool is empty
       : pool[(idx + 1) % pool.length]
-    if (nextTrk) loadTrack(nextTrk)
+    if (nextTrack) loadTrack(nextTrack)
   }, [])
 
   // ─── Core playback ────────────────────────────────────────────────────────
@@ -209,7 +218,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const next = useCallback(() => {
     const track = currentTrackRef.current
     if (!track) return
-    const pool = allowedTracks(track.category)
+    const pool = activePoolRef.current.length > 0 ? activePoolRef.current : allowedTracks(track.category)
     const idx  = pool.findIndex(t => t.id === track.id)
     const shufflePool = pool.filter(t => t.id !== track.id)
     const nextTrack = playMode === 'shuffle'
@@ -223,17 +232,21 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const prev = useCallback(() => {
     const track = currentTrackRef.current
     if (!track) return
-    // If more than 3s in, restart current track instead of going back
     const audio = audioRef.current
     if (audio && audio.currentTime > 3) {
       audio.currentTime = 0
       return
     }
-    const pool = allowedTracks(track.category)
+    const pool = activePoolRef.current.length > 0 ? activePoolRef.current : allowedTracks(track.category)
     const idx  = pool.findIndex(t => t.id === track.id)
-    const prevTrack = pool[(idx - 1 + pool.length) % pool.length]
+    const shufflePool = pool.filter(t => t.id !== track.id)
+    const prevTrack = playMode === 'shuffle'
+      ? shufflePool.length > 0
+        ? shufflePool[Math.floor(Math.random() * shufflePool.length)]
+        : track
+      : pool[(idx - 1 + pool.length) % pool.length]
     if (prevTrack) loadTrack(prevTrack)
-  }, [loadTrack])
+  }, [playMode, loadTrack, allowedTracks])
 
   const seek = useCallback((seconds: number) => {
     const audio = audioRef.current
@@ -294,7 +307,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       currentTrack, isPlaying, volume, playMode, timer,
       favorites, isLoading, currentTime, duration,
       play, pause, resume, stop, next, prev,
-      setVolume, setPlayMode, setTimer, toggleFavorite, seek,
+      setVolume, setPlayMode, setTimer, toggleFavorite, seek, setActivePool,
     }}>
       {children}
     </MusicContext.Provider>

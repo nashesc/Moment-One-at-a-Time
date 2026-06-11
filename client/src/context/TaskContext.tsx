@@ -217,6 +217,18 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     }
   }, [flushSyncQueue, load])
 
+  useEffect(() => {
+    const checkMidnight = setInterval(() => {
+      const newDate = new Date().toISOString().split('T')[0]
+      if (newDate !== todayStr.current) {
+        todayStr.current = newDate
+        load()
+      }
+    }, 60_000)
+
+    return () => clearInterval(checkMidnight)
+  }, [load])
+
   const tasksRef = useRef<Task[]>([])
   useEffect(() => { tasksRef.current = tasks }, [tasks])
 

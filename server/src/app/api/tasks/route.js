@@ -25,7 +25,11 @@ export async function GET(request) {
 
     const plan = await getUserPlan(user.id)
     const today = new Date().toISOString().split('T')[0]
-    if (!plan.isPro && date !== today) {
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayStr = yesterday.toISOString().split('T')[0]
+
+    if (!plan.isPro && date !== today && date !== yesterdayStr) {
       return json({ error: 'Task history requires Pro' }, { status: 403 }, request)
     }
 

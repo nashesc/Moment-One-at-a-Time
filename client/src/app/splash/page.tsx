@@ -11,13 +11,29 @@ export default function SplashPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Safe to use Math.random() here — only runs on client, no SSR mismatch
-    const picked = OPENING_QUOTES[Math.floor(Math.random() * OPENING_QUOTES.length)]
-    setQuote(picked)
-    // Slight delay so the fade-in feels intentional
-    const t = setTimeout(() => setVisible(true), 50)
-    return () => clearTimeout(t)
-  }, [])
+    const init = async () => {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { router.replace('/dashboard'); return }
+
+      try {
+        const stored = localStorage.getItem(`moment_preferences_${session.user.id}`)
+        if (stored) {
+          const prefs = JSON.parse(stored)
+          if (prefs.showOpeningQuote === false) {
+            router.replace('/dashboard')
+            return
+          }
+        }
+      } catch {}
+
+      const picked = OPENING_QUOTES[Math.floor(Math.random() * OPENING_QUOTES.length)]
+      setQuote(picked)
+      setTimeout(() => setVisible(true), 50)
+    }
+    init()
+  }, [router])
 
   const handleContinue = useCallback(() => {
     router.push('/dashboard')
