@@ -10,7 +10,7 @@ import TaskCard from '@/components/dashboard/TaskCard'
 import DonePanel from '@/components/dashboard/DonePanel'
 import FocusPickerModal from '@/components/dashboard/FocusPickerModal'
 import TaskRow from '@/components/tasks/TaskRow'
-import { useTasks, type Task } from '@/context/TaskContext'
+import { useTasks, useActivateTasks, type Task } from '@/context/TaskContext'
 import { useAuth } from '@/context/AuthContext'
 import { useSettings } from '@/context/SettingsContext'
 import { Plus } from 'lucide-react'
@@ -21,6 +21,7 @@ import { useMusic } from '@/context/MusicContext'
 type FocusState = 'idle' | 'focusing' | 'done'
 
 export default function DashboardPage() {
+  useActivateTasks()
   const { todayTasks, updateStatus, moveToEnd, doneTodayCount, totalTodayCount, loading, error, refresh, isOffline } = useTasks()
   const { profile } = useAuth()
   const { prefs } = useSettings()
@@ -354,7 +355,9 @@ export default function DashboardPage() {
           style={{
             background: 'var(--gp)',
             boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
-            bottom: currentTrack ? 140 : 112,
+            bottom: currentTrack
+              ? 'calc(140px + env(safe-area-inset-bottom, 0px))'
+              : 'calc(112px + env(safe-area-inset-bottom, 0px))',
             transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
           initial={{ scale: 0, opacity: 0 }}

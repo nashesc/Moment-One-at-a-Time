@@ -261,7 +261,9 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between px-5 py-4">
                 <span className="text-[14px]" style={{ color: 'var(--tg)' }}>Member since</span>
                 <span className="text-[13px]" style={{ color: 'var(--tgl)' }}>
-                  {new Date().getFullYear()}
+                  {profile?.created_at
+                    ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                    : '—'}
                 </span>
               </div>
             </div>

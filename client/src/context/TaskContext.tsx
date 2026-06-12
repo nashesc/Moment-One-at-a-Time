@@ -39,6 +39,7 @@ interface TaskContextValue {
   doneTodayCount: number
   totalTodayCount: number
   refresh: () => Promise<void>
+  setActive: (active: boolean) => void
 }
 
 const TaskContext = createContext<TaskContextValue | null>(null)
@@ -57,9 +58,10 @@ function toUITask(t: BackendTask, todayStr: string): Task {
 
 export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [tasks, setTasks]       = useState<Task[]>([])
-  const [loading, setLoading]   = useState(true)
+  const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const [isOffline, setIsOffline] = useState(false)
+  const [isActive, setIsActive]   = useState(false) 
   const todayStr                = useRef(new Date().toISOString().split('T')[0])
   const loadedUserIdRef         = useRef<string | null>(null)
 
@@ -172,6 +174,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
+    if (!isActive) return
     load()
 
     const supabase = createClient()
@@ -193,12 +196,24 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           setTasks([])
           setError(null)
           clearApiCache()
-          load()
+          if (isActive) load()  // ← only reload if a task page is mounted
         }
       }
     })
     return () => subscription.unsubscribe()
-  }, [load])
+  }, [isActive, load])
+
+  useEffect(() => {
+    if (!isActive) return  // ← don't poll on music/settings pages
+    const checkMidnight = setInterval(() => {
+      const newDate = new Date().toISOString().split('T')[0]
+      if (newDate !== todayStr.current) {
+        todayStr.current = newDate
+        load()
+      }
+    }, 60_000)
+    return () => clearInterval(checkMidnight)
+  }, [load, isActive])
 
   // Re-sync and reload when connection is restored
   useEffect(() => {
@@ -352,6 +367,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       tasks, loading, error, isOffline,
       updateStatus, moveToEnd, addTask, refresh: load,
       todayTasks, doneTodayCount, totalTodayCount,
+      setActive: setIsActive,  // ← expose it
     }}>
       {children}
     </TaskContext.Provider>
@@ -362,4 +378,12 @@ export function useTasks() {
   const ctx = useContext(TaskContext)
   if (!ctx) throw new Error('useTasks must be used inside TaskProvider')
   return ctx
+}
+
+export function useActivateTasks() {
+  const { setActive } = useTasks()
+  useEffect(() => {
+    setActive(true)
+    return () => setActive(false)
+  }, [setActive])
 }

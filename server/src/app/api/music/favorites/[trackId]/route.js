@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
+import { getUserPlan } from '@/lib/getUserPlan'
 import { optionsResponse, json } from '@/lib/cors'
 
 export async function OPTIONS(request) { return optionsResponse(request) }

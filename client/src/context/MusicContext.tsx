@@ -81,6 +81,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const fadeIntervalRef  = useRef<ReturnType<typeof setInterval> | null>(null)
   const timerValueRef    = useRef<number | null>(null)
 
+  const handleTrackEndRef = useRef<() => void>(() => {})
   // ─── Init audio element once ───────────────────────────────────────────────
   useEffect(() => {
     const audio = new Audio()
@@ -91,7 +92,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     audio.addEventListener('durationchange', () => setDuration(audio.duration || 0))
     audio.addEventListener('loadstart', () => setIsLoading(true))
     audio.addEventListener('canplay', () => setIsLoading(false))
-    audio.addEventListener('ended', () => handleTrackEnd())
+    audio.addEventListener('ended', () => handleTrackEndRef.current())
     audio.addEventListener('error', () => setIsLoading(false))
 
     audioRef.current = audio
@@ -105,10 +106,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
   // ─── Load favorites on mount ───────────────────────────────────────────────
   useEffect(() => {
+    if (!isPro) return
     apiFetch<{ track_id: string }[]>('/api/music/favorites')
       .then(data => setFavorites(data.map(f => f.track_id)))
-      .catch(() => {}) // silently fail — not critical
-  }, [])
+      .catch(() => {})
+  }, [isPro])
+
 
   // ─── Sync volume to audio element ─────────────────────────────────────────
   useEffect(() => {
@@ -148,28 +151,6 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { playModeRef.current = playMode },     [playMode])
   useEffect(() => { currentTrackRef.current = currentTrack }, [currentTrack])
 
-  const handleTrackEnd = useCallback(() => {
-    const mode  = playModeRef.current
-    const track = currentTrackRef.current
-    if (!track) return
-
-    if (mode === 'repeat') {
-      const audio = audioRef.current
-      if (audio) { audio.currentTime = 0; audio.play().catch(() => {}) }
-      return
-    }
-
-    const pool = activePoolRef.current.length > 0 ? activePoolRef.current : allowedTracks(track.category)
-    const idx  = pool.findIndex(t => t.id === track.id)
-    const shufflePool = pool.filter(t => t.id !== track.id)
-    const nextTrack = playMode === 'shuffle'
-      ? shufflePool.length > 0
-        ? shufflePool[Math.floor(Math.random() * shufflePool.length)]
-        : pool[0]  // fallback to first track if pool is empty
-      : pool[(idx + 1) % pool.length]
-    if (nextTrack) loadTrack(nextTrack)
-  }, [])
-
   // ─── Core playback ────────────────────────────────────────────────────────
   const loadTrack = useCallback((track: Track) => {
     const audio = audioRef.current
@@ -187,6 +168,33 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       .then(() => setIsPlaying(true))
       .catch(() => setIsPlaying(false))
   }, [])
+
+  const handleTrackEnd = useCallback(() => {
+  const mode  = playModeRef.current
+  const track = currentTrackRef.current
+  if (!track) return
+
+  if (mode === 'repeat') {
+    const audio = audioRef.current
+    if (audio) { audio.currentTime = 0; audio.play().catch(() => {}) }
+    return
+  }
+
+  const pool = activePoolRef.current.length > 0
+    ? activePoolRef.current
+    : allowedTracks(track.category)
+  const idx = pool.findIndex(t => t.id === track.id)
+  const shufflePool = pool.filter(t => t.id !== track.id)
+  const nextTrack = mode === 'shuffle'   // ✓ uses mode (from ref), not playMode (from state)
+    ? shufflePool.length > 0
+      ? shufflePool[Math.floor(Math.random() * shufflePool.length)]
+      : pool[0]
+    : pool[(idx + 1) % pool.length]
+  if (nextTrack) loadTrack(nextTrack)
+}, [allowedTracks, loadTrack])  // ✓ honest deps — both are stable useCallbacks
+
+// ✓ Sync effect placed immediately after handleTrackEnd
+useEffect(() => { handleTrackEndRef.current = handleTrackEnd }, [handleTrackEnd])
 
   const play = useCallback((track: Track) => {
     loadTrack(track)

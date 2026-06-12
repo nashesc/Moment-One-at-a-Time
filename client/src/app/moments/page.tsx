@@ -7,7 +7,7 @@ import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import TaskRow from '@/components/tasks/TaskRow'
 import Toggle from '@/components/ui/Toggle'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
-import { useTasks } from '@/context/TaskContext'
+import { useTasks, useActivateTasks } from '@/context/TaskContext'
 import { useSettings } from '@/context/SettingsContext'
 import { motion } from 'motion/react'
 import { useMusic } from '@/context/MusicContext'
@@ -16,6 +16,7 @@ const TABS = ['All', 'Pending', 'Done', 'Stuck'] as const
 type Tab = typeof TABS[number]
 
 export default function MomentsPage() {
+  useActivateTasks()
   const { tasks, doneTodayCount, totalTodayCount, loading, error, refresh } = useTasks()
   const { prefs, setPref } = useSettings()
   const [tab, setTab]         = useState<Tab>('All')

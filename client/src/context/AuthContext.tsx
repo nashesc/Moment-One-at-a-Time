@@ -9,6 +9,7 @@ export interface UserProfile {
   full_name: string
   email: string
   avatar_url?: string
+  created_at?: string
 }
 
 interface AuthContextValue {
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url')
+        .select('id, full_name, email, avatar_url, created_at')
         .eq('id', user.id)
         .single()
 
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           full_name: data.full_name ?? user.user_metadata?.full_name ?? '',
           email: data.email ?? user.email ?? '',
           avatar_url: data.avatar_url,
+          created_at: data.created_at,
         })
       } else {
         setProfile({

@@ -7,7 +7,7 @@ import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import MomentumRing from '@/components/ui/MomentumRing'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { getRecap, getRecapRange, getCheckins, type RecapRangeItem } from '@/lib/api'
-import { useTasks } from '@/context/TaskContext'
+import { useTasks, useActivateTasks } from '@/context/TaskContext'
 import type { Recap, Checkin } from '@/types'
 import { motion } from 'motion/react'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
@@ -181,6 +181,7 @@ function ReflectionsView() {
 // ─── Main page ───────────────────────────────────────────────────────────────
 
 export default function RecapPage() {
+  useActivateTasks()
   const { doneTodayCount, totalTodayCount, todayTasks } = useTasks()
   const [view, setView]           = useState<View>('recap')
   const [period, setPeriod]       = useState<Period>('daily')

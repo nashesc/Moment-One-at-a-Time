@@ -31,7 +31,10 @@ export async function PATCH(request) {
         email: parsed.data.email,
         email_confirm: true,
       })
-      if (authError) return json({ error: authError.message }, { status: 400 }, request)
+      if (authError) {
+        // Don't leak the real error — it may reveal whether the email is taken
+        return json({ error: 'Could not update email. Please try again.' }, { status: 400 }, request)
+      }
     }
 
     if (parsed.data.full_name !== undefined) {

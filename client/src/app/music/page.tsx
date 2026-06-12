@@ -438,7 +438,7 @@ export default function MusicPage() {
                 }}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: isLocked ? 0.6 : 1, y: 0 }}
-                transition={{ duration: 0.2, delay: i * 0.02 }}
+                transition={{ duration: 0.15, delay: Math.min(i * 0.02, 0.2) }}
                 whileTap={isLocked ? undefined : { scale: 0.98 }}
               >
                 {/* Play indicator or number */}

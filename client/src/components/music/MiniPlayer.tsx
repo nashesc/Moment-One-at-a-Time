@@ -28,7 +28,7 @@ export default function MiniPlayer() {
       {currentTrack && (
         <motion.div
           className="md:hidden fixed left-0 right-0 z-40"
-          style={{ bottom: 70 }}
+          style={{ bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0,  opacity: .96 }}
           exit={{ y: 80, opacity: 0 }}

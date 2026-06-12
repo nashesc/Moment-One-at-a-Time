@@ -51,6 +51,7 @@ export default function UpgradePage() {
   const { profile } = useAuth()
 
   const [paddleReady,  setPaddleReady]  = useState(false)
+  const [paddleFailed, setPaddleFailed] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('annual')
   const [success,      setSuccess]      = useState(false)
@@ -61,9 +62,11 @@ export default function UpgradePage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [])
 
+  const paddleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // ─── Init Paddle ────────────────────────────────────────────────────────
   const initPaddle = useCallback(() => {
     if (!window.Paddle) return
+    if (paddleTimeoutRef.current) clearTimeout(paddleTimeoutRef.current)
     console.log('Paddle env:', IS_SANDBOX)
     console.log('Token prefix:', process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN?.slice(0, 10))
 
@@ -97,6 +100,13 @@ export default function UpgradePage() {
     })
     setPaddleReady(true)
     }, [refresh])
+
+    useEffect(() => {
+      paddleTimeoutRef.current = setTimeout(() => {
+        if (!paddleReady) setPaddleFailed(true)
+      }, 8000)
+      return () => { if (paddleTimeoutRef.current) clearTimeout(paddleTimeoutRef.current) }
+    }, [paddleReady])
 
   // ─── Open checkout ──────────────────────────────────────────────────────
   const openCheckout = useCallback((p: PlanType) => {
@@ -229,7 +239,7 @@ export default function UpgradePage() {
           )}
 
           {/* Pricing cards */}
-          {!isPro && !checkoutOpen && (
+          {(!isPro || isTrialActive) && !checkoutOpen && (
             <div className="mx-5 md:mx-8 mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
 
               {/* Monthly */}
@@ -244,7 +254,7 @@ export default function UpgradePage() {
                   opacity: paddleReady ? 1 : 0.6,
                 }}
                 whileTap={{ scale: 0.98 }}
-                disabled={!paddleReady}
+                disabled={!paddleReady || paddleFailed}
               >
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -267,7 +277,11 @@ export default function UpgradePage() {
                   className="w-full rounded-full py-2.5 text-center text-[14px] font-semibold text-white mt-2"
                   style={{ background: 'var(--gp)' }}
                 >
-                  {paddleReady ? 'Subscribe Monthly' : 'Loading...'}
+                  {paddleFailed
+                    ? 'Checkout unavailable'
+                    : paddleReady
+                    ? 'Subscribe Monthly'
+                    : 'Loading...'}
                 </div>
               </motion.button>
 
@@ -283,7 +297,7 @@ export default function UpgradePage() {
                   opacity: paddleReady ? 1 : 0.6,
                 }}
                 whileTap={{ scale: 0.98 }}
-                disabled={!paddleReady}
+                disabled={!paddleReady || paddleFailed}
               >
                 <div className="absolute top-3 right-3">
                   <span
@@ -309,6 +323,15 @@ export default function UpgradePage() {
                 </div>
               </motion.button>
             </div>
+          )}
+
+          {paddleFailed && (
+            <p className="mx-5 md:mx-8 mt-3 text-[13px] text-center" style={{ color: '#C0392B' }}>
+              Checkout couldn't load. Try refreshing, or contact{' '}
+              <a href="mailto:support@moment-app.com" style={{ color: '#C0392B' }}>
+                support@moment-app.com
+              </a>.
+            </p>
           )}
 
           {/* Paddle inline checkout */}

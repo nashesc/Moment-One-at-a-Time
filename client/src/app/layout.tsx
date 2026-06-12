@@ -7,6 +7,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import { SettingsProvider } from '@/context/SettingsContext'
 import { Providers } from '@/lib/providers'
 import RippleProvider from '@/components/ui/RippleProvider'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { MusicProvider } from '@/context/MusicContext'
 import { PlanProvider } from '@/context/PlanContext'
 import MiniPlayer from '@/components/music/MiniPlayer'
@@ -47,21 +48,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <body>
-        <RippleProvider />
-        <PlanProvider>
-          <MusicProvider>
-            <SettingsProvider>
-              <AuthProvider>
-                <TaskProvider>
-                  <TrialBanner />
-                  {children}
-                  <MiniPlayer />
-                  <TrialExpiryModal />
-                </TaskProvider>
-              </AuthProvider>
-            </SettingsProvider>
-          </MusicProvider>
-        </PlanProvider>
+        <ErrorBoundary>
+          <RippleProvider />
+          <PlanProvider>
+            <MusicProvider>
+              <SettingsProvider>
+                <AuthProvider>
+                  <TaskProvider>
+                    <TrialBanner />
+                    {children}
+                    <MiniPlayer />
+                    <TrialExpiryModal />
+                  </TaskProvider>
+                </AuthProvider>
+              </SettingsProvider>
+            </MusicProvider>
+          </PlanProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

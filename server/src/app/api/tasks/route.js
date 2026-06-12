@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
-import { rateLimiter, authRateLimiter } from '@/lib/ratelimit'
+import { rateLimiter } from '@/lib/ratelimit'
 import { getUserPlan } from '@/lib/getUserPlan'
 import { taskSchema } from '@/lib/validations'
 import { corsHeaders, optionsResponse, json } from '@/lib/cors'
@@ -22,7 +22,7 @@ export async function GET(request) {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
     if (rawDate && !dateRegex.test(rawDate)) return json({ error: 'Invalid date format. Use YYYY-MM-DD' }, { status: 400 })
     const date = rawDate || new Date().toISOString().split('T')[0]
-
+f
     const plan = await getUserPlan(user.id)
     const today = new Date().toISOString().split('T')[0]
     const yesterday = new Date()
@@ -51,7 +51,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
-    const { success } = await authRateLimiter.limit(ip)
+    const { success } = await rateLimiter.limit(ip)  // ← swap to rateLimiter
     if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const user = await getUser(request)
