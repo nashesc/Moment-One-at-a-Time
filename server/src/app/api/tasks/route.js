@@ -3,7 +3,7 @@ import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { getUserPlan } from '@/lib/getUserPlan'
 import { taskSchema } from '@/lib/validations'
-import { corsHeaders, optionsResponse, json } from '@/lib/cors'
+import { optionsResponse, json } from '@/lib/cors'
 
 export async function OPTIONS(request) { return optionsResponse(request) }
 
@@ -22,7 +22,7 @@ export async function GET(request) {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
     if (rawDate && !dateRegex.test(rawDate)) return json({ error: 'Invalid date format. Use YYYY-MM-DD' }, { status: 400 })
     const date = rawDate || new Date().toISOString().split('T')[0]
-f
+
     const plan = await getUserPlan(user.id)
     const today = new Date().toISOString().split('T')[0]
     const yesterday = new Date()

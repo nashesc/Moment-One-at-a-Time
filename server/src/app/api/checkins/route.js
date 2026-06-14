@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser } from '@/lib/auth'
-import { rateLimiter, authRateLimiter } from '@/lib/ratelimit'
+import { rateLimiter } from '@/lib/ratelimit'
 import { checkinSchema } from '@/lib/validations'
 import { optionsResponse, json } from '@/lib/cors'
 import { getUserPlan } from '@/lib/getUserPlan'
@@ -10,7 +10,7 @@ export async function OPTIONS(request) { return optionsResponse(request) }
 export async function POST(request) {
   try {
     const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
-    const { success } = await authRateLimiter.limit(ip)
+    const { success } = await rateLimiter.limit(ip)
     if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const user = await getUser(request)

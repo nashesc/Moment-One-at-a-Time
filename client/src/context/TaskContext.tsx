@@ -204,7 +204,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   }, [isActive, load])
 
   useEffect(() => {
-    if (!isActive) return  // ← don't poll on music/settings pages
+    if (!isActive) return
     const checkMidnight = setInterval(() => {
       const newDate = new Date().toISOString().split('T')[0]
       if (newDate !== todayStr.current) {
@@ -231,18 +231,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('offline', handleOffline)
     }
   }, [flushSyncQueue, load])
-
-  useEffect(() => {
-    const checkMidnight = setInterval(() => {
-      const newDate = new Date().toISOString().split('T')[0]
-      if (newDate !== todayStr.current) {
-        todayStr.current = newDate
-        load()
-      }
-    }, 60_000)
-
-    return () => clearInterval(checkMidnight)
-  }, [load])
 
   const tasksRef = useRef<Task[]>([])
   useEffect(() => { tasksRef.current = tasks }, [tasks])
