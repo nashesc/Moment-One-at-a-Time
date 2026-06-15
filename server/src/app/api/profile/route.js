@@ -3,6 +3,7 @@ import { getUser } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { optionsResponse, json } from '@/lib/cors'
 import { z } from 'zod'
+import { getClientIp } from '@/lib/getClientIp'
 
 export async function OPTIONS(request) { return optionsResponse(request) }
 
@@ -15,7 +16,7 @@ const profileUpdateSchema = z.object({
 
 export async function PATCH(request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
+    const ip = getClientIp(request)
     const { success } = await rateLimiter.limit(ip)
     if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 

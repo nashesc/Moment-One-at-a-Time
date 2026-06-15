@@ -61,8 +61,9 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
   // Backend always returns { data: T } — unwrap it
   const json = await res.json()
-  return (json.data ?? json) as T
-}
+  // Only fall back to raw json if 'data' key is genuinely absent
+  return (Object.prototype.hasOwnProperty.call(json, 'data') ? json.data : json) as T
+  }
 
 export function getTasks(date?: string): Promise<Task[]> {
   const q = date ? `?date=${date}` : ''

@@ -34,13 +34,12 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { setData(DEFAULTS); setLoading(false); return }
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setData(DEFAULTS); setLoading(false); return }
 
       const plan = await apiFetch<PlanData>('/api/plan')
       setData(plan)
     } catch {
-      // silently fall back to free — don't block the app
       setData(DEFAULTS)
     } finally {
       setLoading(false)

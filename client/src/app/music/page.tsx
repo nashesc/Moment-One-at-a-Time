@@ -111,18 +111,23 @@ export default function MusicPage() {
   })()
 
   useEffect(() => {
+    if (activeTab === 'favorites') return  // handled below
     if (activeTab === 'all') {
       const pool = isPro ? [...TRACKS] : TRACKS.filter(t => !t.isPro)
       setActivePool(pool.sort((a, b) => a.title.localeCompare(b.title)))
-    } else if (activeTab === 'favorites') {
-      setActivePool(TRACKS.filter(t => favorites.includes(t.id)))
     } else {
       const pool = isPro
         ? getTracksByCategory(activeTab as TrackCategory)
         : getTracksByCategory(activeTab as TrackCategory).filter(t => !t.isPro)
       setActivePool([...pool].sort((a, b) => a.title.localeCompare(b.title)))
     }
-  }, [activeTab, isPro, favorites])
+  }, [activeTab, isPro])
+
+  useEffect(() => {
+    if (activeTab !== 'favorites') return
+    setActivePool(TRACKS.filter(t => favorites.includes(t.id)))
+  }, [activeTab, favorites])
+
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 

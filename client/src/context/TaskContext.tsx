@@ -223,10 +223,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   // Re-sync and reload when connection is restored
   useEffect(() => {
-    const handleOnline = async () => {
+    const handleOnline = () => {
       setIsOffline(false)
-      await flushSyncQueue()
-      await load()
+      flushSyncQueue()
+        .then(() => load())
+        .catch(err => console.error('[Tasks] Reconnect sync failed:', err))
     }
     const handleOffline = () => setIsOffline(true)
 
@@ -250,7 +251,6 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     clearRecapCacheForDate(todayStr.current)
 
     if (navigator.onLine) {
-      api.updateTask(id, { status }).catch(console.error)
       if (status === 'done' || status === 'stuck') {
         const task = tasksRef.current.find(t => t.id === id)
         api.createCheckin({
@@ -258,15 +258,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           status: status === 'done' ? 'done' : 'stuck',
           ...(task?.description ? { notes: task.description } : {}),
         }).catch(console.error)
+      } else {
+        api.updateTask(id, { status }).catch(console.error)
       }
     } else {
       // Queue for sync when back online
-      db.syncQueue.add({
-        type: 'updateTask',
-        payload: { id, updates: { status } },
-        createdAt: Date.now(),
-        retries: 0,
-      }).catch(() => {})
       if (status === 'done' || status === 'stuck') {
         const task = tasksRef.current.find(t => t.id === id)
         db.syncQueue.add({
@@ -276,6 +272,13 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
             status: status === 'done' ? 'done' : 'stuck',
             ...(task?.description ? { notes: task.description } : {}),
           },
+          createdAt: Date.now(),
+          retries: 0,
+        }).catch(() => {})
+      } else {
+        db.syncQueue.add({
+          type: 'updateTask',
+          payload: { id, updates: { status } },
           createdAt: Date.now(),
           retries: 0,
         }).catch(() => {})

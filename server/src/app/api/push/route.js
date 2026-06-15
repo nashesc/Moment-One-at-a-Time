@@ -5,12 +5,13 @@ import { getUserPlan } from '@/lib/getUserPlan'
 import { pushSubscriptionSchema } from '@/lib/validations'
 import { sendPushNotification } from '@/lib/push'
 import { optionsResponse, json } from '@/lib/cors'
+import { getClientIp } from '@/lib/getClientIp'
 
 export async function OPTIONS(request) { return optionsResponse(request) }
 
 export async function POST(request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
+    const ip = getClientIp(request)
     const { success } = await rateLimiter.limit(ip)
     if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
@@ -37,6 +38,10 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
+    const ip = getClientIp(request)
+    const { success } = await rateLimiter.limit(ip)
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
+
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 

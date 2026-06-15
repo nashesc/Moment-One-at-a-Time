@@ -4,12 +4,13 @@ import { rateLimiter } from '@/lib/ratelimit'
 import { checkinSchema } from '@/lib/validations'
 import { optionsResponse, json } from '@/lib/cors'
 import { getUserPlan } from '@/lib/getUserPlan'
+import { getClientIp } from '@/lib/getClientIp'
 
 export async function OPTIONS(request) { return optionsResponse(request) }
 
 export async function POST(request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
+    const ip = getClientIp(request)
     const { success } = await rateLimiter.limit(ip)
     if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
@@ -55,7 +56,7 @@ export async function POST(request) {
 
 export async function GET(request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
+    const ip = getClientIp(request)
     const { success } = await rateLimiter.limit(ip)
     if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 

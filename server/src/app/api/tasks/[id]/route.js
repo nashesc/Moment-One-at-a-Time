@@ -3,6 +3,7 @@ import { getUser } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { updateTaskSchema } from '@/lib/validations'
 import { optionsResponse, json } from '@/lib/cors'
+import { getClientIp } from '@/lib/getClientIp'
 
 export async function OPTIONS(request) { return optionsResponse(request) }
 
@@ -12,7 +13,7 @@ export async function PATCH(request, context) {
   if (!uuidRegex.test(id)) return json({ error: 'Invalid task ID' }, { status: 400 }, request)
 
   try {
-    const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
+    const ip = getClientIp(request)
     const { success } = await rateLimiter.limit(ip)
     if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
@@ -38,7 +39,7 @@ export async function PATCH(request, context) {
 export async function DELETE(request, context) {
   const { id } = await context.params
   try {
-    const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
+    const ip = getClientIp(request)
     const { success } = await rateLimiter.limit(ip)
     if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 

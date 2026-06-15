@@ -7,6 +7,7 @@ import StatusBadge from '@/components/ui/StatusBadge'
 import { MessageSquare } from 'lucide-react'
 import { getCheckins } from '@/lib/api'
 import type { Checkin } from '@/types'
+import { createClient } from '@/lib/supabase/client'
 
 function formatCheckinTime(dateStr: string): string {
   const d = new Date(dateStr)
@@ -41,17 +42,15 @@ export default function ReflectionsPage() {
 
   useEffect(() => {
     let cancelled = false
-    let unsubscribe: (() => void) | null = null
+    const supabase = createClient()
 
     const load = async () => {
       setLoading(true)
       setError(null)
       setCheckins([])
       try {
-        const { createClient } = await import('@/lib/supabase/client')
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session || cancelled) { setLoading(false); return }
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user || cancelled) { setLoading(false); return }
 
         const data = await getCheckins()
         if (!cancelled) setCheckins(data)
@@ -62,24 +61,20 @@ export default function ReflectionsPage() {
       }
     }
 
-    const setup = async () => {
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === 'SIGNED_IN') load()
-        if (event === 'SIGNED_OUT') { setCheckins([]); setLoading(false) }
-      })
-      unsubscribe = () => subscription.unsubscribe()
-    }
+    // Assigned synchronously — cleanup always has the reference
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') load()
+      if (event === 'SIGNED_OUT') { setCheckins([]); setLoading(false) }
+    })
 
     load()
-    setup()
 
     return () => {
       cancelled = true
-      unsubscribe?.()
+      subscription.unsubscribe()
     }
   }, [])
+
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>

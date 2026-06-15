@@ -32,4 +32,17 @@ class MomentDB extends Dexie {
   }
 }
 
-export const db = new MomentDB()
+let _instance: MomentDB | null = null
+
+export const db = new Proxy({} as MomentDB, {
+  get(_target, prop: string | symbol) {
+    if (!_instance) {
+      if (typeof window === 'undefined') {
+        throw new Error('MomentDB: IndexedDB is not available outside browser context')
+      }
+      _instance = new MomentDB()
+    }
+    const value = (_instance as any)[prop]
+    return typeof value === 'function' ? value.bind(_instance) : value
+  },
+})
