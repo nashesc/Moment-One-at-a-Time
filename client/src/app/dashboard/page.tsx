@@ -240,6 +240,31 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {!currentTask && !allDone && !showPicker && todayTasks.length > 0 && (
+              <div
+                className="mx-4 md:mx-8 rounded-2xl p-6 text-center"
+                style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
+              >
+                <p className="text-3xl mb-3">🌿</p>
+                <p className="text-[16px] font-medium mb-2" style={{ color: 'var(--td)' }}>
+                  Your tasks are ready when you are.
+                </p>
+                <button
+                  onClick={() => setShowPicker(true)}
+                  className="text-[13px] px-4 py-2 rounded-full mt-1"
+                  style={{
+                    background: 'var(--gpa)',
+                    color: 'var(--gp)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                >
+                  Pick a task to focus on
+                </button>
+              </div>
+            )}
+
             {currentTask && !allDone && (
               <>
                 <motion.div
@@ -299,7 +324,11 @@ export default function DashboardPage() {
             {/* Focus picker — mobile fixed overlay */}
             {showPicker && !allDone && activeTasks.length > 0 && todayTasks.length > 0 && (
               <div className="md:hidden fixed inset-0 z-30">
-                <FocusPickerModal tasks={activeTasks} onSelect={handlePickerSelect} />
+                <FocusPickerModal
+                  tasks={activeTasks}
+                  onSelect={handlePickerSelect}
+                  onDismiss={() => setShowPicker(false)}
+                />
               </div>
             )}
 
@@ -307,13 +336,24 @@ export default function DashboardPage() {
             {showPicker && !allDone && activeTasks.length > 0 && todayTasks.length > 0 && (
               <div className="hidden md:block mx-8 mt-2 mb-4 rounded-3xl overflow-hidden border"
                 style={{ borderColor: 'var(--border)' }}>
-                <FocusPickerModal tasks={activeTasks} onSelect={handlePickerSelect} />
+                <FocusPickerModal
+                  tasks={activeTasks}
+                  onSelect={handlePickerSelect}
+                  onDismiss={() => setShowPicker(false)}
+                />
               </div>
             )}
           </>
         )}
 
         <div className="md:hidden" style={{ height: currentTrack ? 200 : 152 }} />
+        <div
+          className="hidden md:block"
+          style={{
+            height: currentTrack ? 72 : 0,
+            transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        />
       </div>
 
       {/* Desktop right panel */}

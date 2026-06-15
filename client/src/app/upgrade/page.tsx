@@ -1,8 +1,6 @@
 'use client'
-
-// client/src/app/upgrade/page.tsx
-
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Script from 'next/script'
 import Link from 'next/link'
 import { Check, X, Leaf, Sparkles } from 'lucide-react'
@@ -49,6 +47,7 @@ type PlanType = 'monthly' | 'annual'
 export default function UpgradePage() {
   const { isPro, isTrialActive, trialDaysLeft, plan, refresh } = usePlan()
   const { profile } = useAuth()
+  const router = useRouter()
 
   const [paddleReady,  setPaddleReady]  = useState(false)
   const [paddleFailed, setPaddleFailed] = useState(false)
@@ -112,6 +111,11 @@ export default function UpgradePage() {
   const openCheckout = useCallback((p: PlanType) => {
     if (!window.Paddle || !paddleReady) return
 
+    if (!profile?.email) {
+      router.push('/login?redirect=/upgrade')
+      return
+    }
+
     setSelectedPlan(p)
     setCheckoutOpen(true)
     setLoading(true)
@@ -134,7 +138,7 @@ export default function UpgradePage() {
         ...(p === 'monthly' ? { discountCode: DISCOUNT_CODE } : {}),
       })
     }, 120)
-  }, [paddleReady, profile])
+  }, [paddleReady, profile, router])
 
   // ─── Success screen ─────────────────────────────────────────────────────
   if (success) {

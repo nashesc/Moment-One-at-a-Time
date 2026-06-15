@@ -15,7 +15,7 @@ export default function SplashPage() {
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.replace('/dashboard'); return }
+      if (!session) { router.replace('/login'); return }
 
       try {
         const stored = localStorage.getItem(`moment_preferences_${session.user.id}`)

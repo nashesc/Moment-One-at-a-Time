@@ -27,8 +27,7 @@ export default function MiniPlayer() {
     <AnimatePresence>
       {currentTrack && (
         <motion.div
-          className="md:hidden fixed left-0 right-0 z-40"
-          style={{ bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}
+          className="fixed left-0 right-0 z-40 md:left-56 moment-miniplayer"
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0,  opacity: .96 }}
           exit={{ y: 80, opacity: 0 }}

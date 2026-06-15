@@ -480,8 +480,8 @@ export default function MusicPage() {
                   >
                     <Heart
                       size={14}
-                      color={isFav ? '#C0392B' : 'var(--tgl)'}
-                      fill={isFav ? '#C0392B' : 'none'}
+                      color={isFav ? '#D9C17A' : 'var(--tgl)'}
+                      fill={isFav ? '#D9C17A' : 'none'}
                     />
                   </button>
                 )}

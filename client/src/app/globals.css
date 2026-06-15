@@ -1,3 +1,4 @@
+@import "tailwindcss";
 /* ─── 1. Fonts ──────────────────────────────────────────────────────────────
    Loaded via next/font in layout.tsx — these vars are set there and
    referenced here. No @import needed.                                        */
@@ -423,7 +424,7 @@ body::after {
   flex: 1;
   min-width: 0;
   padding-bottom: 96px;
-}
+}   
 @media (min-width: 768px) {
   .moment-content {
     padding-bottom: 32px;
@@ -633,5 +634,12 @@ body::after {
 .stagger-children > *:nth-child(4) { animation-delay: 210ms; }
 .stagger-children > *:nth-child(5) { animation-delay: 280ms; }
 
-
-@import "tailwindcss";
+/* ─── MiniPlayer responsive positioning ─────────────────────────────────────*/
+.moment-miniplayer {
+  bottom: calc(70px + env(safe-area-inset-bottom, 0px)); /* above mobile bottom nav */
+}
+@media (min-width: 768px) {
+  .moment-miniplayer {
+    bottom: 0; /* no bottom nav on desktop */
+  }
+}

@@ -101,20 +101,22 @@ async function handleActivated(data) {
     return
   }
 
-  // If user_id came from client-supplied custom_data, verify the customer
-  // email actually belongs to that account. Prevents a crafted checkout
-  // from activating Pro on an arbitrary user_id.
-  if (data.custom_data?.user_id && data.customer?.email) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('id', userId)
-      .single()
-    if (!profile || profile.email.toLowerCase() !== data.customer.email.toLowerCase()) {
-      console.error('[Paddle] Email/user_id mismatch — rejecting. sub_id:', data.id)
-      return
-    }
+  if (data.custom_data?.user_id) {
+  // No email = can't verify = reject. Never trust client-supplied user_id without proof.
+  if (!data.customer?.email) {
+    console.error('[Paddle] Rejecting — custom_data.user_id present but no customer email to verify against. sub_id:', data.id)
+    return
   }
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', userId)
+    .single()
+  if (!profile || profile.email.toLowerCase() !== data.customer.email.toLowerCase()) {
+    console.error('[Paddle] Email/user_id mismatch — rejecting. sub_id:', data.id)
+    return
+  }
+}
 
   const { error } = await supabase
     .from('user_plans')

@@ -64,14 +64,19 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [isActive, setIsActive]   = useState(false) 
   const todayStr                = useRef(new Date().toISOString().split('T')[0])
   const loadedUserIdRef         = useRef<string | null>(null)
+  const isLoadingRef    = useRef(false)
 
   const load = useCallback(async () => {
+    if (isLoadingRef.current) return    
+    isLoadingRef.current = true
+    
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       setTasks([])
       setLoading(false)
       loadedUserIdRef.current = null
+      isLoadingRef.current = false
       return
     }
 
@@ -137,6 +142,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       }
     } finally {
       setLoading(false)
+      isLoadingRef.current = false
     }
   }, [])
 

@@ -10,22 +10,40 @@ const priorityDot:   Record<number, string> = { 1: '#5A9E50', 2: '#C4A35A', 3: '
 export default function FocusPickerModal({
   tasks,
   onSelect,
+  onDismiss,
 }: {
   tasks: Task[]
   onSelect: (t: Task) => void
+  onDismiss?: () => void
 }) {
   return (
-    // No absolute positioning — parent controls placement (fixed on mobile, block on desktop)
     <div
       className="w-full h-full flex flex-col px-5 pt-8 pb-6 overflow-y-auto"
       style={{ background: 'rgba(245,242,236,0.97)', backdropFilter: 'blur(8px)' }}
     >
-      <h2
-        className="text-[22px] font-bold mb-1"
-        style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}
-      >
-        Choose your next moment
-      </h2>
+      <div className="flex items-start justify-between mb-1">
+        <h2
+          className="text-[22px] font-bold"
+          style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}
+        >
+          Choose your next moment
+        </h2>
+        {onDismiss && (
+          <button
+            onClick={onDismiss}
+            className="text-[13px] px-3 py-1.5 rounded-full shrink-0 ml-3"
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--border)',
+              color: 'var(--tg)',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-body)',
+            }}
+          >
+            Not now
+          </button>
+        )}
+      </div>
       <p className="text-[13px] mb-6" style={{ color: 'var(--tg)' }}>
         Select a task to focus on.
       </p>
