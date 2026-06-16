@@ -235,7 +235,7 @@ export default function SettingsPage() {
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
-      <div className="flex flex-col flex-1 min-w-0 px-5 md:px-8"
+      <div className="flex flex-col flex-1 min-w-0 px-5 md:px-8 moment-col moment-col--center w-full"
         style={{ paddingBottom: currentTrack ? 200 : 96 }}>
 
         <div className="pt-6 pb-4">

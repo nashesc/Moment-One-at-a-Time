@@ -184,7 +184,7 @@ export default function UpgradePage() {
       <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
         <DesktopSidebar />
 
-        <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8">
+        <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 mx-auto w-full" style={{ maxWidth: 960 }}>
 
           {/* Header */}
           <div className="px-5 md:px-8 pt-6 pb-2">

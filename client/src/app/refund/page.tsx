@@ -13,7 +13,7 @@ export default function RefundPage() {
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
 
-      <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 px-5 md:px-8 max-w-2xl">
+      <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 px-5 md:px-8 max-w-2xl moment-col moment-col--center w-full">
         {/* Header */}
         <div className="pt-8 pb-6 border-b" style={{ borderColor: 'var(--border)' }}>
           <div className="flex items-center gap-2 mb-4">

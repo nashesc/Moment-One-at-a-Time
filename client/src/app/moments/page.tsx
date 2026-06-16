@@ -41,7 +41,7 @@ export default function MomentsPage() {
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
 
-      <div className="flex flex-col flex-1 min-w-0 md:pb-16"
+      <div className="flex flex-col flex-1 min-w-0 md:pb-16 moment-col moment-col--center w-full"
         style={{ paddingBottom: currentTrack ? 200 : 152 }}
       >
         {/* Header */}

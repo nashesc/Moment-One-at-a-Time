@@ -79,7 +79,7 @@ export default function ReflectionsPage() {
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
       <DesktopSidebar />
-      <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 px-5 md:px-8">
+      <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 px-5 md:px-8 moment-col moment-col--center w-full">
 
         <div className="pt-6 pb-2">
           <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
