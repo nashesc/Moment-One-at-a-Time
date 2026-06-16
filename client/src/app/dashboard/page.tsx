@@ -265,7 +265,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {currentTask && !allDone && (
+            {currentTask && (!allDone || focusState === 'done') && (
               <>
                 <motion.div
                   className="mx-4 md:mx-8 mb-3"

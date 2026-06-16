@@ -45,13 +45,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           full_name: data.full_name ?? user.user_metadata?.full_name ?? '',
           email: data.email ?? user.email ?? '',
           avatar_url: data.avatar_url,
-          created_at: data.created_at,
+          created_at: data.created_at ?? user.created_at,
         })
       } else {
         setProfile({
           id: user.id,
           full_name: user.user_metadata?.full_name ?? '',
           email: user.email ?? '',
+          created_at: user.created_at,
         })
       }
     } catch (err) {

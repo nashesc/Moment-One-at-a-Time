@@ -205,19 +205,30 @@ export default function SettingsPage() {
   const { plan, isPro, isTrialActive, trialDaysLeft, currentPeriodEnd } = usePlan()
   const [pushLoading, setPushLoading] = useState(false)
   const [pushMessage, setPushMessage] = useState('')
+  const [pushSuccess, setPushSuccess] = useState(false)
   const { currentTrack } = useMusic()
 
   async function handlePushToggle(enabled: boolean) {
     if (enabled) {
       setPushLoading(true)
       setPushMessage('')
-      const granted = await requestPushPermission()
-      setPushLoading(false)
-      if (!granted) {
-        setPushMessage('Permission denied. Please allow notifications in your browser settings.')
+      setPushSuccess(false)
+      try {
+        const granted = await requestPushPermission()
+        if (granted) {
+          setPushSuccess(true)
+        } else {
+          setPushMessage('Could not enable notifications. Check your browser settings.')
+        }
+      } catch {
+        setPushMessage('Something went wrong. Please try again.')
+      } finally {
+        setPushLoading(false)
       }
     } else {
       setPref('pushNotifications', false)
+      setPushSuccess(false)
+      setPushMessage('')
     }
   }
 
@@ -311,6 +322,9 @@ export default function SettingsPage() {
                   </p>
                   {pushMessage && (
                     <p className="text-[11px] mt-1 ml-[22px]" style={{ color: '#C0392B' }}>{pushMessage}</p>
+                  )}
+                  {pushSuccess && (
+                    <p className="text-[11px] mt-1 ml-[22px]" style={{ color: 'var(--gp)' }}>Notifications enabled.</p>
                   )}
                 </div>
                 <div className="shrink-0">

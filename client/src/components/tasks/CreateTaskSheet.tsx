@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Clock, Flag } from 'lucide-react'
 import { useTasks } from '@/context/TaskContext'
+import ProGateModal from '@/components/ui/ProGateModal'
 
 interface CreateTaskSheetProps {
   open: boolean
@@ -26,6 +27,7 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
   const [minutes, setMinutes]   = useState(30)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]       = useState('')
+  const [showProGate, setShowProGate] = useState(false)
   const isSubmittingRef = useRef(false)
   const titleRef = useRef<HTMLInputElement>(null)
 
@@ -59,8 +61,13 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
         estimatedMinutes: minutes,
       })
       onClose()
-    } catch {
-      setError('Failed to create task. Please try again.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      if (msg.toLowerCase().includes('limited to 7') || msg.toLowerCase().includes('free plan')) {
+        setShowProGate(true)
+      } else {
+        setError('Failed to create task. Please try again.')
+      }
     } finally {
       setSubmitting(false)
       isSubmittingRef.current = false
@@ -68,7 +75,14 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
   }
 
   return (
-    <AnimatePresence>
+    <>
+      <ProGateModal
+        open={showProGate}
+        onClose={() => setShowProGate(false)}
+        featureName="More Tasks Today"
+        description="You've reached the 7-task daily limit on the free plan. Upgrade to Pro for unlimited tasks."
+      />
+      <AnimatePresence>
       {open && (
         <>
           {/* Backdrop */}
@@ -245,5 +259,6 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
         </>
       )}
     </AnimatePresence>
+    </>
   )
 }
