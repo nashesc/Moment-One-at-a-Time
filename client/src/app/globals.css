@@ -446,23 +446,20 @@ body::after {
    Mobile: full width. Desktop: capped + centered.                           */
 .moment-col {
   width: 100%;
-  max-width: 760px;
+  max-width: 640px;
 }
 @media (min-width: 1024px) {
-  .moment-col { max-width: 820px; }
+  .moment-col { max-width: 680px; }
 }
-/* Centered variant for pages without a right panel (recap, settings, legal) */
 .moment-col--center {
   margin-left: auto;
   margin-right: auto;
 }
-/* Two-pane wrapper for pages WITH a right panel (music) */
 .moment-with-panel {
   display: flex;
   flex: 1;
   min-width: 0;
 }
-/* Right panel base — hidden on smaller desktops, shows >= xl */
 .moment-rail {
   display: none;
 }
@@ -470,7 +467,7 @@ body::after {
   .moment-rail {
     display: flex;
     flex-direction: column;
-    width: 340px;
+    width: 320px;
     flex-shrink: 0;
     border-left: 1px solid var(--border);
     background: var(--ow);
@@ -519,8 +516,8 @@ body::after {
   z-index: var(--z-nav);
   display: flex;
   background: rgba(255, 255, 255, 0.90);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom, 8px);
 }
@@ -680,6 +677,6 @@ body::after {
 }
 @media (min-width: 768px) {
   .moment-miniplayer {
-    bottom: 0; /* no bottom nav on desktop */
+    bottom: 16px;
   }
 }

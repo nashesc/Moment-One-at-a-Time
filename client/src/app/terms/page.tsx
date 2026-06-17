@@ -7,7 +7,6 @@ import DesktopSidebar from '@/components/ui/DesktopSidebar'
 
 const LAST_UPDATED = 'June 9, 2026'
 const CONTACT_EMAIL = 'support@moment-app.com'
-const APP_URL = 'https://moment-one-at-a-time.vercel.app'
 
 export default function TermsPage() {
   return (

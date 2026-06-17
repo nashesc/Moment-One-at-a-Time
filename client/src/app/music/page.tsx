@@ -304,6 +304,7 @@ export default function MusicPage() {
                         style={{ width: `${volume * 100}%`, background: 'var(--gold)' }} />
                       <input type="range" min={0} max={1} step={0.01} value={volume}
                         onChange={e => setVolume(parseFloat(e.target.value))}
+                        aria-label="Volume"
                         className="absolute inset-0 w-full opacity-0 cursor-pointer" style={{ height: '100%' }} />
                     </div>
                   </div>
@@ -358,89 +359,95 @@ export default function MusicPage() {
         </div>
 
         {/* RIGHT PANEL — Library + Explore (xl screens only) */}
-        <aside className="moment-rail px-5 pt-8">
-          <div className="flex items-center gap-2 mb-1">
-            <Library size={16} color="var(--gp)" />
-            <p className="text-[14px] font-semibold"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
-              Library
+        <aside className="moment-rail">
+          <div className="px-6 pt-8 pb-5">
+            <div className="flex items-center gap-2 mb-1">
+              <Library size={15} color="var(--gp)" />
+              <p className="text-[11px] uppercase tracking-widest font-semibold" style={{ color: 'var(--tg)' }}>
+                Library
+              </p>
+            </div>
+            <p className="text-[19px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+              Browse by category
             </p>
           </div>
-          <p className="text-[12px] mb-5" style={{ color: 'var(--tg)' }}>
-            Browse everything, by category.
-          </p>
 
-          {CATEGORY_META.map(({ id, label, Icon }) => {
-            const tracks = getTracksByCategory(id)
-            const visible = isPro
-              ? [...tracks].sort((a, b) => a.title.localeCompare(b.title))
-              : [
-                  ...tracks.filter(t => !t.isPro).sort((a, b) => a.title.localeCompare(b.title)),
-                  ...tracks.filter(t => t.isPro).sort((a, b) => a.title.localeCompare(b.title)),
-                ]
-            return (
-              <div key={id} className="mb-5">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide"
-                    style={{ color: 'var(--moss)' }}>
-                    <Icon size={13} /> {label}
-                  </span>
-                  <span className="text-[11px]" style={{ color: 'var(--tgl)' }}>{tracks.length}</span>
+          <div className="px-6 flex flex-col gap-4">
+            {CATEGORY_META.map(({ id, label, Icon }) => {
+              const tracks = getTracksByCategory(id)
+              const visible = isPro
+                ? [...tracks].sort((a, b) => a.title.localeCompare(b.title))
+                : [
+                    ...tracks.filter(t => !t.isPro).sort((a, b) => a.title.localeCompare(b.title)),
+                    ...tracks.filter(t => t.isPro).sort((a, b) => a.title.localeCompare(b.title)),
+                  ]
+              return (
+                <div key={id} className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                  <div className="flex items-center justify-between px-4 pt-4 pb-2.5">
+                    <span className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide"
+                      style={{ color: 'var(--moss)' }}>
+                      <Icon size={13} /> {label}
+                    </span>
+                    <span className="text-[11px]" style={{ color: 'var(--tgl)' }}>{tracks.length}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5 pb-2">
+                    {visible.map(track => {
+                      const locked = track.isPro && !isPro
+                      const active = currentTrack?.id === track.id
+                      return (
+                        <button key={track.id}
+                          onClick={() => handleTrackClick(track)}
+                          className="w-full flex items-center gap-2.5 mx-2 rounded-xl px-2.5 py-2 text-left transition-colors"
+                          style={{
+                            background: active ? 'var(--gpa)' : 'transparent',
+                            border: 'none', cursor: 'pointer', opacity: locked ? 0.55 : 1,
+                            width: 'calc(100% - 16px)',
+                          }}
+                        >
+                          <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+                            style={{ background: active ? 'var(--gp)' : 'var(--pale-green)' }}>
+                            {locked ? <Lock size={11} color="var(--tg)" />
+                              : active && isPlaying ? <Pause size={11} fill="white" color="white" />
+                              : <Play size={11} fill={active ? 'white' : 'var(--gp)'} color={active ? 'white' : 'var(--gp)'} />}
+                          </span>
+                          <span className="text-[13px] truncate flex-1"
+                            style={{ color: active ? 'var(--gp)' : 'var(--td)', fontWeight: active ? 500 : 400 }}>
+                            {track.title}
+                          </span>
+                          {locked && <span className="text-[10px] shrink-0" style={{ color: 'var(--tgl)' }}>Pro</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-1">
-                  {visible.map(track => {
-                    const locked = track.isPro && !isPro
-                    const active = currentTrack?.id === track.id
-                    return (
-                      <button key={track.id}
-                        onClick={() => handleTrackClick(track)}
-                        className="w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors"
-                        style={{
-                          background: active ? 'var(--gpa)' : 'transparent',
-                          border: 'none', cursor: 'pointer', opacity: locked ? 0.55 : 1,
-                        }}
-                      >
-                        <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
-                          style={{ background: active ? 'var(--gp)' : 'var(--pale-green)' }}>
-                          {locked ? <Lock size={11} color="var(--tg)" />
-                            : active && isPlaying ? <Pause size={11} fill="white" color="white" />
-                            : <Play size={11} fill={active ? 'white' : 'var(--gp)'} color={active ? 'white' : 'var(--gp)'} />}
-                        </span>
-                        <span className="text-[13px] truncate flex-1"
-                          style={{ color: active ? 'var(--gp)' : 'var(--td)', fontWeight: active ? 500 : 400 }}>
-                          {track.title}
-                        </span>
-                        {locked && <span className="text-[10px] shrink-0" style={{ color: 'var(--tgl)' }}>Pro</span>}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
 
           {/* Explore */}
-          <div className="mt-2 mb-8">
+          <div className="px-6 pt-4 pb-8">
             <div className="flex items-center gap-2 mb-3">
-              <Compass size={15} color="var(--gp)" />
-              <p className="text-[13px] font-semibold" style={{ color: 'var(--td)' }}>Explore</p>
+              <Compass size={14} color="var(--gp)" />
+              <p className="text-[12px] uppercase tracking-widest font-semibold" style={{ color: 'var(--tg)' }}>Explore</p>
             </div>
-            <button
-              onClick={() => (isPro ? setActiveTab('favorites') : openGate('favorites'))}
-              className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 mb-2 text-left"
-              style={{ background: 'white', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', cursor: 'pointer' }}>
-              <Heart size={14} color="#D9C17A" fill="#D9C17A" />
-              <span className="text-[13px]" style={{ color: 'var(--td)' }}>Your Favorites</span>
-              {!isPro && <Lock size={11} className="ml-auto" color="var(--tgl)" />}
-            </button>
-            <button
-              onClick={() => setActiveTab('all')}
-              className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left"
-              style={{ background: 'white', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)', cursor: 'pointer' }}>
-              <LayoutGrid size={14} color="var(--gp)" />
-              <span className="text-[13px]" style={{ color: 'var(--td)' }}>All Tracks</span>
-              {!isPro && <Lock size={11} className="ml-auto" color="var(--tgl)" />}
-            </button>
+            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <button
+                onClick={() => (isPro ? setActiveTab('favorites') : openGate('favorites'))}
+                className="w-full flex items-center gap-2.5 px-4 py-3 text-left"
+                style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
+                <Heart size={14} color="#D9C17A" fill="#D9C17A" />
+                <span className="text-[13px]" style={{ color: 'var(--td)' }}>Your Favorites</span>
+                {!isPro && <Lock size={11} className="ml-auto" color="var(--tgl)" />}
+              </button>
+              <button
+                onClick={() => setActiveTab('all')}
+                className="w-full flex items-center gap-2.5 px-4 py-3 text-left"
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                <LayoutGrid size={14} color="var(--gp)" />
+                <span className="text-[13px]" style={{ color: 'var(--td)' }}>All Tracks</span>
+                {!isPro && <Lock size={11} className="ml-auto" color="var(--tgl)" />}
+              </button>
+            </div>
           </div>
         </aside>
       </div>

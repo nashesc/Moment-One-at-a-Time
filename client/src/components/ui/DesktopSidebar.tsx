@@ -29,43 +29,50 @@ export default function DesktopSidebar() {
 
   return (
     <aside
-      className="hidden md:flex flex-col w-56 min-h-screen border-r pt-8 pb-6 px-4 shrink-0"
-      style={{ background: 'var(--ow)', borderColor: 'var(--border)' }}
+      className="hidden md:flex flex-col w-60 shrink-0 border-r"
+      style={{
+        background: 'var(--ow)',
+        borderColor: 'var(--border)',
+        position: 'sticky',
+        top: 0,
+        height: '100dvh',
+        overflowY: 'auto',
+      }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 px-2 mb-10">
+      <div className="flex items-center gap-2.5 px-4 pt-7 pb-7">
         <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background: 'var(--gp)' }}
+          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: 'var(--gp)', boxShadow: '0 2px 8px rgba(45,90,39,0.28)' }}
         >
-          <Leaf size={18} color="white" strokeWidth={1.75} />
+          <Leaf size={15} color="white" strokeWidth={1.75} />
         </div>
         <div>
-          <p className="text-[14px] font-semibold leading-tight" style={{ color: 'var(--td)', fontFamily: 'var(--font-display)' }}>
+          <p className="text-[14px] font-semibold leading-none" style={{ color: 'var(--td)', fontFamily: 'var(--font-display)' }}>
             Moment
           </p>
-          <p className="text-[10px]" style={{ color: 'var(--tg)' }}>One at a Time</p>
+          <p className="text-[10px] mt-0.5 leading-none" style={{ color: 'var(--tgl)' }}>One at a Time</p>
         </div>
       </div>
 
       {/* Nav items */}
-      <nav className="flex flex-col gap-1">
+      <nav className="flex flex-col gap-0.5 px-3">
         {NAV.map(({ href, label, Icon }) => {
           const active = isActive(href)
           return (
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-3 px-3 py-[10px] rounded-xl transition-colors duration-150"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
               style={{
-                background: active ? 'var(--gpa)' : 'transparent',
+                background: active ? 'rgba(45,90,39,0.09)' : 'transparent',
                 color: active ? 'var(--gp)' : 'var(--tg)',
                 textDecoration: 'none',
-                fontWeight: active ? 500 : 400,
-                fontSize: '14px',
+                fontWeight: active ? 600 : 400,
+                fontSize: '13px',
               }}
             >
-              <Icon size={18} strokeWidth={active ? 2 : 1.5} />
+              <Icon size={17} strokeWidth={active ? 2 : 1.5} />
               {label}
             </Link>
           )
@@ -73,24 +80,26 @@ export default function DesktopSidebar() {
       </nav>
 
       {/* User at bottom */}
-      <div className="mt-auto flex items-center gap-3 px-2 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[12px] font-semibold shrink-0"
-          style={{ background: 'var(--gp)' }}
-        >
-          {initials}
+      <div className="mt-auto px-4 pb-6">
+        <div className="flex items-center gap-2.5 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+            style={{ background: 'var(--gp)' }}
+          >
+            {initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-medium truncate leading-tight" style={{ color: 'var(--td)' }}>
+              {profile?.full_name ?? '—'}
+            </p>
+            <p className="text-[10px] truncate mt-0.5" style={{ color: 'var(--tgl)' }}>
+              {profile?.email ?? ''}
+            </p>
+          </div>
+          <Link href="/settings" style={{ display: 'flex', textDecoration: 'none', flexShrink: 0 }}>
+            <Settings size={14} color="var(--tgl)" strokeWidth={1.5} />
+          </Link>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-medium truncate" style={{ color: 'var(--td)' }}>
-            {profile?.full_name ?? '—'}
-          </p>
-          <p className="text-[10px] truncate" style={{ color: 'var(--tg)' }}>
-            {profile?.email ?? ''}
-          </p>
-        </div>
-        <Link href="/settings" style={{ display: 'flex', textDecoration: 'none' }}>
-          <Settings size={15} color="var(--tg)" strokeWidth={1.5} />
-        </Link>
       </div>
     </aside>
   )

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase/server'
-import { getUser, unauthorized, badRequest, serverError } from '@/lib/auth'
+import { getUser } from '@/lib/auth'
 import { rateLimiter } from '@/lib/ratelimit'
 import { getUserPlan } from '@/lib/getUserPlan'
 import { taskSchema } from '@/lib/validations'

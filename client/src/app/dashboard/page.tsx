@@ -227,7 +227,7 @@ export default function DashboardPage() {
           {!loading && !error && !showListView && (
             <>
               {/* All done */}
-              {allDone && todayTasks.length > 0 && (
+              {allDone && todayTasks.length > 0 && focusState !== 'done' && (
                 <div className="mx-4 md:mx-8 rounded-2xl p-8 text-center"
                   style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
                   <p className="text-4xl mb-4">🌿</p>
@@ -359,41 +359,43 @@ export default function DashboardPage() {
       </div>
 
       {/* Desktop right panel */}
-      <aside className="hidden xl:flex flex-col w-80 shrink-0 border-l px-6 pt-8 gap-5"
-        style={{ borderColor: 'var(--border)', background: 'var(--ow)' }}>
-
-        {/* Overview card */}
-        <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-          <p className="text-[12px] uppercase tracking-widest mb-4" style={{ color: 'var(--tg)' }}>
-            Today&apos;s Overview
+      <aside className="moment-rail">
+        <div className="px-6 pt-8 pb-1">
+          <p className="text-[11px] uppercase tracking-widest font-semibold" style={{ color: 'var(--tg)' }}>
+            Overview
           </p>
+          <p className="text-[19px] font-bold mt-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+            Today's Progress
+          </p>
+        </div>
+
+        <div className="px-6 pt-5 grid grid-cols-2 gap-2.5">
           {[
-            { label: 'Completed',   count: todayTasks.filter(t => t.status === 'done').length,        dot: '#3B6D11' },
-            { label: 'In Progress', count: todayTasks.filter(t => t.status === 'in_progress').length, dot: '#185FA5' },
-            { label: 'Stuck',       count: todayTasks.filter(t => t.status === 'stuck').length,       dot: '#854F0B' },
-            { label: 'Pending',     count: todayTasks.filter(t => t.status === 'pending').length,     dot: '#888780' },
-          ].map(({ label, count, dot }, i, arr) => (
-            <div key={label}
-              className="flex items-center justify-between py-3"
-              style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
-              <span className="flex items-center gap-2 text-[13px]" style={{ color: 'var(--td)' }}>
-                <span className="w-2 h-2 rounded-full" style={{ background: dot }} />
-                {label}
-              </span>
-              <span className="text-[13px] font-medium" style={{ color: 'var(--td)' }}>{count}</span>
+            { label: 'Completed',   count: todayTasks.filter(t => t.status === 'done').length,        bg: '#EAF3DE', dot: '#3B6D11' },
+            { label: 'In Progress', count: todayTasks.filter(t => t.status === 'in_progress').length, bg: '#E6F1FB', dot: '#185FA5' },
+            { label: 'Stuck',       count: todayTasks.filter(t => t.status === 'stuck').length,       bg: '#FAEEDA', dot: '#854F0B' },
+            { label: 'Pending',     count: todayTasks.filter(t => t.status === 'pending').length,     bg: '#F0EFE8', dot: '#888780' },
+          ].map(({ label, count, bg, dot }) => (
+            <div key={label} className="rounded-2xl p-4" style={{ background: bg }}>
+              <p className="text-[24px] font-bold leading-none" style={{ fontFamily: 'var(--font-display)', color: dot }}>
+                {count}
+              </p>
+              <p className="text-[12px] mt-1.5" style={{ color: dot }}>{label}</p>
             </div>
           ))}
         </div>
 
         {/* Momentum card */}
-        <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-          <p className="text-[12px] uppercase tracking-widest mb-1" style={{ color: 'var(--tg)' }}>Momentum</p>
-          <p className="text-[12px] mb-4" style={{ color: 'var(--tg)' }}>Keep going, you&apos;re doing great.</p>
-          <svg viewBox="0 0 200 50" className="w-full" style={{ height: 48 }}>
-            <polyline points="0,40 33,28 66,35 100,12 133,22 166,38 200,18"
-              fill="none" stroke="var(--gs)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="200" cy="18" r="3.5" fill="var(--gp)" />
-          </svg>
+        <div className="px-6 pt-6 pb-8">
+          <p className="text-[11px] uppercase tracking-widest font-semibold mb-3" style={{ color: 'var(--tg)' }}>Momentum</p>
+            <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+              <div className="flex flex-col items-center text-center gap-3">
+                <MomentumRing done={doneTodayCount} total={Math.max(totalTodayCount, 1)} size={88} />
+                <p className="text-[12px]" style={{ color: 'var(--tg)' }}>
+                  {totalTodayCount === 0 ? 'Add a moment to start building momentum today.' : "Keep going, you're doing great."}
+                </p>
+              </div>
+            </div>
         </div>
       </aside>
 
