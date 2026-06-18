@@ -28,6 +28,12 @@ export async function GET(request) {
     if (!from || !dateRegex.test(from)) return json({ error: 'Invalid from date' }, { status: 400 }, request)
     if (!to   || !dateRegex.test(to))   return json({ error: 'Invalid to date' },   { status: 400 }, request)
 
+    const MAX_RANGE_DAYS = 400
+    const rangeDays = (new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24)
+    if (rangeDays < 0 || rangeDays > MAX_RANGE_DAYS) {
+      return json({ error: 'Date range too large' }, { status: 400 }, request)
+    }
+
     const { data: tasks, error } = await supabase
       .from('tasks')
       .select('status, scheduled_date')

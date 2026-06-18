@@ -94,10 +94,20 @@ async function resolveUserId(data) {
 
 // ─── Event Handlers ─────────────────────────────────────────────────────────
 
+async function logWebhookFailure(eventType, data) {
+  await supabase.from('webhook_failures').insert({
+    event_type: eventType,
+    paddle_subscription_id: data.id,
+    raw_payload: data,
+    created_at: new Date().toISOString(),
+  }).catch(e => console.error('[Paddle] Failed to log webhook failure:', e.message))
+}
+
 async function handleActivated(data) {
   const userId = await resolveUserId(data)
   if (!userId) {
     console.error('[Paddle] subscription.activated — could not resolve user. sub_id:', data.id)
+    await logWebhookFailure('subscription.activated', data)
     return
   }
 
@@ -138,7 +148,11 @@ async function handleActivated(data) {
 
 async function handleUpdated(data) {
   const userId = await resolveUserId(data)
-  if (!userId) return
+  if (!userId) {
+    console.error('[Paddle] subscription.activated — could not resolve user. sub_id:', data.id)
+    await logWebhookFailure('subscription.activated', data)
+    return
+  }
 
   // scheduled_change.action === 'cancel' means they've cancelled but period isn't over
   const cancelAtPeriodEnd = data.scheduled_change?.action === 'cancel'
@@ -164,7 +178,11 @@ async function handleUpdated(data) {
 
 async function handleCanceled(data) {
   const userId = await resolveUserId(data)
-  if (!userId) return
+  if (!userId) {
+    console.error('[Paddle] subscription.activated — could not resolve user. sub_id:', data.id)
+    await logWebhookFailure('subscription.activated', data)
+    return
+  }
 
   // Keep them on Pro until their period ends — just flag the cancellation.
   // The plan route's isPro check handles expiry automatically via current_period_end.

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Play, Pause, SkipBack, SkipForward,
   Volume2, Repeat, Shuffle, List,
@@ -87,7 +87,7 @@ export default function MusicPage() {
   }
 
   // Tracks shown in the CENTER active-category list (mobile + desktop center)
-  const tabTracks = (() => {
+  const tabTracks = useMemo(() => {
     if (activeTab === 'favorites') {
       return [...TRACKS.filter(t => favorites.includes(t.id))].sort((a, b) => a.title.localeCompare(b.title))
     }
@@ -96,7 +96,7 @@ export default function MusicPage() {
     const free   = pool.filter(t => !t.isPro).sort((a, b) => a.title.localeCompare(b.title))
     const locked = pool.filter(t => t.isPro).sort((a, b) => a.title.localeCompare(b.title))
     return [...free, ...locked]
-  })()
+  }, [activeTab, isPro, favorites])
 
   useEffect(() => {
     if (activeTab === 'favorites') return

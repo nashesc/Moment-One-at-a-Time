@@ -33,12 +33,11 @@ const FEATURES = [
   { label: 'Tasks per day',            free: '7 max',             pro: 'Unlimited'         },
   { label: 'Task history',             free: 'Today & Yesterday', pro: 'All time'          },
   { label: 'Recap periods',            free: 'Daily & Weekly',    pro: 'Daily · Weekly · Monthly · Yearly' },
-  { label: 'Reflections history',      free: 'Last 15',           pro: 'Full history'      },
+  { label: 'Reflections history',      free: 'Last 15',           pro: 'Last 50'           },
   { label: 'Focus music library',      free: '21 tracks',         pro: '100+ tracks'       },
   { label: 'Music favorites',          free: false,               pro: true                },
   { label: 'Push notifications',       free: false,               pro: true                },
   { label: 'Dark mode',                free: false,               pro: 'Coming soon'       },
-  { label: 'Data export (CSV)',         free: false,              pro: true                },
   { label: 'Full opening quote library',free: false,              pro: true                },
 ]
 

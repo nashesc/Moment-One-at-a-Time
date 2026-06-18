@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser } from '@/lib/auth'
-import { rateLimiter } from '@/lib/ratelimit'
+import { rateLimiter, writeLimiter } from '@/lib/ratelimit'
 import { getUserPlan } from '@/lib/getUserPlan'
 import { taskSchema } from '@/lib/validations'
 import { optionsResponse, json } from '@/lib/cors'
@@ -34,16 +34,19 @@ export async function GET(request) {
       return json({ error: 'Task history requires Pro' }, { status: 403 }, request)
     }
 
-    const { data, error } = await supabase
+    const TASK_FETCH_LIMIT = 200
+
+    const { data, error, count } = await supabase
       .from('tasks')
-      .select('id, title, description, status, priority, scheduled_date, estimated_minutes, order_index, created_at, updated_at')
+      .select('id, title, description, status, priority, scheduled_date, estimated_minutes, order_index, created_at, updated_at', { count: 'exact' })
       .eq('user_id', user.id)
       .eq('scheduled_date', date)
       .order('order_index', { ascending: true })
-      .limit(50)
+      .limit(TASK_FETCH_LIMIT)
 
     if (error) return json({ error: error.message }, { status: 500 }, request)
-    return json({ data }, {}, request)
+    const truncated = (count ?? data.length) > data.length
+    return json({ data, meta: { truncated, total: count } }, {}, request)
   } catch {
     return json({ error: 'Internal server error' }, { status: 500 }, request)
   }
@@ -51,12 +54,11 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const ip = getClientIp(request)
-    const { success } = await rateLimiter.limit(ip)  // ← swap to rateLimiter
-    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
-
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
+
+    const { success } = await writeLimiter.limit(`user:${user.id}`)
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const body = await request.json()
     const parsed = taskSchema.safeParse(body)

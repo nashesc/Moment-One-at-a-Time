@@ -24,7 +24,6 @@ export function clearRecapCacheForDate(date: string) {
   _recapCache.delete(date)
 }
 
-
 const RECAP_TTL    = 5 * 60 * 1000  // 5 min
 const CHECKINS_TTL = 2 * 60 * 1000  // 2 min
 
@@ -163,5 +162,5 @@ export function savePushSubscription(subscription: PushSubscriptionJSON): Promis
 }
 
 export function sendTestPush(): Promise<{ message: string }> {
-  return apiFetch('/api/push')
+  return apiFetch('/api/push/test', { method: 'POST' })
 }

@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { OPENING_QUOTES } from '@/assets/data/quotes'
+import { FREE_OPENING_QUOTE_COUNT, OPENING_QUOTES } from '@/assets/data/quotes'
+import { usePlan } from '@/context/PlanContext'
 
 export default function SplashPage() {
   // Start with null — renders nothing on server, picks quote on client only
   const [quote, setQuote] = useState<{ text: string; author: string | null } | null>(null)
   const [visible, setVisible] = useState(false)
   const router = useRouter()
+  const { isPro } = usePlan()
 
   useEffect(() => {
     const init = async () => {
@@ -28,7 +30,8 @@ export default function SplashPage() {
         }
       } catch {}
 
-      const picked = OPENING_QUOTES[Math.floor(Math.random() * OPENING_QUOTES.length)]
+      const pool = isPro ? OPENING_QUOTES : OPENING_QUOTES.slice(0, FREE_OPENING_QUOTE_COUNT)
+      const picked = pool[Math.floor(Math.random() * pool.length)]
       setQuote(picked)
       setTimeout(() => setVisible(true), 50)
     }

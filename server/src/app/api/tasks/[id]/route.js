@@ -1,9 +1,8 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser } from '@/lib/auth'
-import { rateLimiter } from '@/lib/ratelimit'
+import { writeLimiter } from '@/lib/ratelimit'
 import { updateTaskSchema } from '@/lib/validations'
 import { optionsResponse, json } from '@/lib/cors'
-import { getClientIp } from '@/lib/getClientIp'
 
 export async function OPTIONS(request) { return optionsResponse(request) }
 
@@ -13,12 +12,11 @@ export async function PATCH(request, context) {
   if (!uuidRegex.test(id)) return json({ error: 'Invalid task ID' }, { status: 400 }, request)
 
   try {
-    const ip = getClientIp(request)
-    const { success } = await rateLimiter.limit(ip)
-    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
-
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
+
+    const { success } = await writeLimiter.limit(`user:${user.id}`)
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const body = await request.json()
     const parsed = updateTaskSchema.safeParse(body)
@@ -39,12 +37,11 @@ export async function PATCH(request, context) {
 export async function DELETE(request, context) {
   const { id } = await context.params
   try {
-    const ip = getClientIp(request)
-    const { success } = await rateLimiter.limit(ip)
-    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
-
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
+
+    const { success } = await writeLimiter.limit(`user:${user.id}`)
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const { error } = await supabase.from('tasks').delete().eq('id', id).eq('user_id', user.id)
     if (error) return json({ error: error.message }, { status: 500 }, request)

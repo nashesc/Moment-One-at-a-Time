@@ -1,9 +1,8 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser } from '@/lib/auth'
-import { rateLimiter } from '@/lib/ratelimit'
+import { writeLimiter } from '@/lib/ratelimit'
 import { optionsResponse, json } from '@/lib/cors'
 import { z } from 'zod'
-import { getClientIp } from '@/lib/getClientIp'
 
 export async function OPTIONS(request) { return optionsResponse(request) }
 
@@ -16,12 +15,11 @@ const profileUpdateSchema = z.object({
 
 export async function PATCH(request) {
   try {
-    const ip = getClientIp(request)
-    const { success } = await rateLimiter.limit(ip)
-    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
-
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
+
+    const { success } = await writeLimiter.limit(`user:${user.id}`)
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const body = await request.json()
     const parsed = profileUpdateSchema.safeParse(body)
@@ -30,12 +28,9 @@ export async function PATCH(request) {
     if (parsed.data.email && parsed.data.email !== user.email) {
       const { error: authError } = await supabase.auth.admin.updateUserById(user.id, {
         email: parsed.data.email,
-        email_confirm: true,
+        email_confirm: false, // sends confirmation link, doesn't apply immediately
       })
-      if (authError) {
-        // Don't leak the real error — it may reveal whether the email is taken
-        return json({ error: 'Could not update email. Please try again.' }, { status: 400 }, request)
-      }
+      if (authError) return json({ error: 'Could not update email. Please try again.' }, { status: 400 }, request)
     }
 
     if (parsed.data.full_name !== undefined) {
@@ -43,11 +38,9 @@ export async function PATCH(request) {
         user_metadata: { full_name: parsed.data.full_name },
       })
     }
-
     // Update profiles table
     const profileUpdates = {}
     if (parsed.data.full_name !== undefined) profileUpdates.full_name = parsed.data.full_name
-    if (parsed.data.email !== undefined) profileUpdates.email = parsed.data.email
 
     const { error: dbError } = await supabase
       .from('profiles')

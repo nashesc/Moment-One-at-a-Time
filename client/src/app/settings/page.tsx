@@ -11,6 +11,7 @@ import { useSettings } from '@/context/SettingsContext'
 import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/context/PlanContext'
 import { useMusic } from '@/context/MusicContext'
+import ProGateModal from '@/components/ui/ProGateModal'
 
 function EditableField({
   label,
@@ -207,10 +208,12 @@ export default function SettingsPage() {
   const [pushMessage, setPushMessage] = useState('')
   const [pushSuccess, setPushSuccess] = useState(false)
   const { currentTrack } = useMusic()
+  const [gateOpen, setGateOpen] = useState(false)
 
   async function handlePushToggle(enabled: boolean) {
+    if (enabled && !isPro) { setGateOpen(true); return }
     if (enabled) {
-      setPushLoading(true)
+    setPushLoading(true)
       setPushMessage('')
       setPushSuccess(false)
       try {
@@ -454,6 +457,14 @@ export default function SettingsPage() {
 
         </div>
       </div>
+
+      <ProGateModal 
+        open={gateOpen} 
+        onClose={() => setGateOpen(false)} 
+        featureName="Push Notifications" 
+        description="Get gentle reminders to check in — available with Pro." 
+      />
+
       <BottomNav />
     </div>
   )

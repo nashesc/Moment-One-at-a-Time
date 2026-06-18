@@ -11,6 +11,7 @@ import { useTasks, useActivateTasks } from '@/context/TaskContext'
 import { useSettings } from '@/context/SettingsContext'
 import { motion } from 'motion/react'
 import { useMusic } from '@/context/MusicContext'
+import { useFabOffset } from '@/hooks/useFabOffset'
 
 const TABS = ['All', 'Pending', 'Done', 'Stuck'] as const
 type Tab = typeof TABS[number]
@@ -202,9 +203,7 @@ export default function MomentsPage() {
         style={{
           background: 'var(--gp)',
           boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
-          bottom: currentTrack
-            ? 'calc(140px + env(safe-area-inset-bottom, 0px))'
-            : 'calc(112px + env(safe-area-inset-bottom, 0px))',
+          bottom: useFabOffset(),
           transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
         initial={{ scale: 0, opacity: 0 }}

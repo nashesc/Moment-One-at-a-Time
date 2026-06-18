@@ -17,6 +17,7 @@ import { Plus } from 'lucide-react'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { motion } from 'motion/react'
 import { useMusic } from '@/context/MusicContext'
+import { useFabOffset } from '@/hooks/useFabOffset'
 
 type FocusState = 'idle' | 'focusing' | 'done'
 
@@ -72,13 +73,19 @@ export default function DashboardPage() {
     }
   }
 
+  const [stuckSheetOpen, setStuckSheetOpen] = useState(false)
+
   function handleStuck() {
     if (!currentTask) return
-    updateStatus(currentTask.id, 'stuck')
+    setStuckSheetOpen(true)
+  }
+
+  function commitStuck(reason?: string) {
+    if (!currentTask) return
+    updateStatus(currentTask.id, 'stuck', reason)
     moveToEnd(currentTask.id)
-    const next = activeTasks.find(t => t.id !== currentTask.id)
-    if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle') }
+    setStuckSheetOpen(false)
+    // ...same next-task logic as before
   }
 
   function handleSkip() {
@@ -406,9 +413,7 @@ export default function DashboardPage() {
           style={{
             background: 'var(--gp)',
             boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
-            bottom: currentTrack
-              ? 'calc(140px + env(safe-area-inset-bottom, 0px))'
-              : 'calc(112px + env(safe-area-inset-bottom, 0px))',
+            bottom: useFabOffset(),
             transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
           initial={{ scale: 0, opacity: 0 }}

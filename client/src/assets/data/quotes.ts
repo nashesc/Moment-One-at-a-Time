@@ -3,6 +3,8 @@ export interface Quote {
   author: string | null
 }
 
+export const FREE_OPENING_QUOTE_COUNT = 5
+
 // ─── Splash / Opening ────────────────────────────────────────────────────────
 export const OPENING_QUOTES: Quote[] = [
   { text: "You do not have to carry the whole mountain today. Just take the next step.", author: null },

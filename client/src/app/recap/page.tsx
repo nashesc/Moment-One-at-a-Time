@@ -14,6 +14,7 @@ import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { useMusic } from '@/context/MusicContext'
 import { usePlan } from '@/context/PlanContext'
 import Link from 'next/link'
+import { useFabOffset } from '@/hooks/useFabOffset'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type View   = 'recap' | 'reflections'
@@ -460,9 +461,7 @@ export default function RecapPage() {
         style={{
           background: 'var(--gp)',
           boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
-          bottom: currentTrack
-            ? 'calc(140px + env(safe-area-inset-bottom, 0px))'
-            : 'calc(112px + env(safe-area-inset-bottom, 0px))',
+          bottom: useFabOffset(),
           transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
         initial={{ scale: 0, opacity: 0 }}

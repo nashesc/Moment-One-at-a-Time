@@ -152,21 +152,22 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => { currentTrackRef.current = currentTrack }, [currentTrack])
 
   // ─── Core playback ────────────────────────────────────────────────────────
-  const loadTrack = useCallback((track: Track) => {
+  const loadTrack = useCallback(async (track: Track) => {
     const audio = audioRef.current
     if (!audio) return
-
-    audio.pause()
-    audio.src = track.url
-    audio.currentTime = 0
-    setCurrentTrack(track)
-    setCurrentTime(0)
-    setDuration(0)
     setIsLoading(true)
-
-    audio.play()
-      .then(() => setIsPlaying(true))
-      .catch(() => setIsPlaying(false))
+    try {
+      const { url } = await apiFetch<{ url: string }>(`/api/music/signed-url?trackId=${track.id}`)
+      audio.pause()
+      audio.src = url
+      audio.currentTime = 0
+      setCurrentTrack(track)
+      await audio.play()
+      setIsPlaying(true)
+    } catch {
+      setIsPlaying(false)
+      setIsLoading(false)
+    }
   }, [])
 
   const handleTrackEnd = useCallback(() => {

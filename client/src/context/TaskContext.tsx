@@ -32,7 +32,7 @@ interface TaskContextValue {
   loading: boolean
   error: string | null
   isOffline: boolean
-  updateStatus: (id: string, status: TaskStatus) => void
+  updateStatus: (id: string, status: TaskStatus, stuckReason?: string) => void
   moveToEnd: (id: string) => void
   addTask: (payload: NewTaskPayload) => Promise<void>
   todayTasks: Task[]
@@ -242,9 +242,14 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const tasksRef = useRef<Task[]>([])
   useEffect(() => { tasksRef.current = tasks }, [tasks])
 
-  const updateStatus = useCallback((id: string, status: TaskStatus) => {
+  const pendingStatusRef = useRef<Map<string, TaskStatus>>(new Map())
+
+  const updateStatus = useCallback((id: string, status: TaskStatus, stuckReason?: string) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
-    if (id.startsWith('temp-')) return
+    if (id.startsWith('temp-')) {
+      pendingStatusRef.current.set(id, status)
+      return
+    }
 
     // Always update Dexie so offline reads stay current
     db.tasks.update(id, { status, updated_at: new Date().toISOString() }).catch(() => {})
@@ -256,6 +261,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         api.createCheckin({
           task_id: id,
           status: status === 'done' ? 'done' : 'stuck',
+          ...(stuckReason ? { stuck_reason: stuckReason } : {}),
           ...(task?.description ? { notes: task.description } : {}),
         }).catch(console.error)
       } else {
@@ -316,9 +322,23 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         estimated_minutes: payload.estimatedMinutes,
         scheduled_date:    today,
       })
-      setTasks(prev => prev.map(t => t.id === tempId ? toUITask(created, today) : t))
+      const pendingStatus = pendingStatusRef.current.get(tempId)
+      pendingStatusRef.current.delete(tempId)
+      const finalTask = pendingStatus ? { ...created, status: pendingStatus } : created
+
+      setTasks(prev => prev.map(t => t.id === tempId ? toUITask(finalTask, today) : t))
       db.tasks.delete(tempId).catch(() => {})
-      db.tasks.put(created).catch(() => {})
+      db.tasks.put(finalTask).catch(() => {})
+
+      if (pendingStatus === 'done' || pendingStatus === 'stuck') {
+        api.createCheckin({
+          task_id: created.id,
+          status: pendingStatus === 'done' ? 'done' : 'stuck',
+          ...(created.description ? { notes: created.description } : {}),
+        }).catch(console.error)
+      } else if (pendingStatus) {
+        api.updateTask(created.id, { status: pendingStatus }).catch(console.error)
+      }
     } catch (err) {
       if (!navigator.onLine) {
         // Keep temp task — persist to Dexie and queue creation for later

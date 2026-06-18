@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/server'
 import { getUser } from '@/lib/auth'
-import { rateLimiter } from '@/lib/ratelimit'
+import { rateLimiter, writeLimiter } from '@/lib/ratelimit'
 import { checkinSchema } from '@/lib/validations'
 import { optionsResponse, json } from '@/lib/cors'
 import { getUserPlan } from '@/lib/getUserPlan'
@@ -10,12 +10,11 @@ export async function OPTIONS(request) { return optionsResponse(request) }
 
 export async function POST(request) {
   try {
-    const ip = getClientIp(request)
-    const { success } = await rateLimiter.limit(ip)
-    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
-
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
+
+    const { success } = await writeLimiter.limit(`user:${user.id}`)
+    if (!success) return json({ error: 'Too many requests' }, { status: 429 }, request)
 
     const body = await request.json()
     const parsed = checkinSchema.safeParse(body)
@@ -64,7 +63,7 @@ export async function GET(request) {
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 
     const plan = await getUserPlan(user.id)
-    const limit = plan.isPro ? 20 : 15
+    const limit = plan.isPro ? 50 : 15
 
     const { data, error } = await supabase
       .from('checkins')

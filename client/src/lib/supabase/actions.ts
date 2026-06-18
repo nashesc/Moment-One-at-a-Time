@@ -24,6 +24,8 @@ export async function login(
   _prevState: { error: string },
   formData: FormData
 ): Promise<{ error: string }> {
+  const limitCheck = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/check-limit`, { method: 'POST' })
+  if (!limitCheck.ok) return { error: 'Too many attempts. Please wait and try again.' }
   const parsed = loginSchema.safeParse({
     email:    formData.get('email'),
     password: formData.get('password'),
@@ -41,6 +43,9 @@ export async function register(
   _prevState: { error: string },
   formData: FormData
 ): Promise<{ error: string }> {
+  const limitCheck = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/check-limit`, { method: 'POST' })
+  if (!limitCheck.ok) return { error: 'Too many attempts. Please wait and try again.' }
+
   const parsed = registerSchema.safeParse({
     email:     formData.get('email'),
     password:  formData.get('password'),
