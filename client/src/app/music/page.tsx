@@ -1,6 +1,5 @@
 'use client'
-
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback, memo } from 'react'
 import {
   Play, Pause, SkipBack, SkipForward,
   Volume2, Repeat, Shuffle, List,
@@ -81,10 +80,10 @@ export default function MusicPage() {
   const [gateOpen, setGateOpen] = useState(false)
   const [gateKey, setGateKey] = useState<keyof typeof PRO_GATES>('library')
 
-  function openGate(key: keyof typeof PRO_GATES) {
+  const openGate = useCallback((key: keyof typeof PRO_GATES) => {
     setGateKey(key)
     setGateOpen(true)
-  }
+  }, [])
 
   // Tracks shown in the CENTER active-category list (mobile + desktop center)
   const tabTracks = useMemo(() => {
@@ -130,15 +129,14 @@ export default function MusicPage() {
   }
 
   // Shared track-row click handler
-  function handleTrackClick(track: Track) {
+  const handleTrackClick = useCallback((track: Track) => {
     const isLocked = track.isPro && !isPro
     if (isLocked) { openGate('library'); return }
-    // Set the pool to the track's own category so next/prev behave sensibly
     if (track.category !== activeTab && activeTab !== 'all' && activeTab !== 'favorites') {
       setActiveTab(track.category)
     }
     play(track)
-  }
+  }, [isPro, activeTab, play, openGate])
 
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
@@ -351,8 +349,8 @@ export default function MusicPage() {
                 <TrackRow key={track.id} track={track} index={i}
                   isPro={isPro} isActive={currentTrack?.id === track.id}
                   isPlaying={isPlaying} isFav={favorites.includes(track.id)}
-                  onPlay={() => handleTrackClick(track)}
-                  onFav={() => toggleFavorite(track.id)} />
+                  onPlay={handleTrackClick}
+                  toggleFavorite={toggleFavorite} />
               ))}
             </div>
           </div>
@@ -461,16 +459,18 @@ export default function MusicPage() {
 }
 
 // ─── Center track row (extracted for reuse) ──────────────────────────────────
-function TrackRow({
-  track, index, isPro, isActive, isPlaying, isFav, onPlay, onFav,
+const TrackRow = memo(function TrackRow({
+  track, index, isPro, isActive, isPlaying, isFav, onPlay, toggleFavorite,
 }: {
   track: Track; index: number; isPro: boolean; isActive: boolean
-  isPlaying: boolean; isFav: boolean; onPlay: () => void; onFav: () => void
+  isPlaying: boolean; isFav: boolean
+  onPlay: (track: Track) => void
+  toggleFavorite: (trackId: string) => void
 }) {
   const isLocked = track.isPro && !isPro
   return (
     <button
-      onClick={onPlay}
+      onClick={() => onPlay(track)}
       className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition-transform active:scale-[0.98]"
       style={{
         background: isActive ? 'var(--gpa)' : 'white',
@@ -493,7 +493,7 @@ function TrackRow({
         {isLocked && <p className="text-[11px]" style={{ color: 'var(--tgl)' }}>Pro</p>}
       </div>
       {isPro && (
-        <button onClick={(e) => { e.stopPropagation(); onFav() }}
+        <button onClick={(e) => { e.stopPropagation(); toggleFavorite(track.id) }}
           className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
           style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
           aria-label="Toggle favorite">
@@ -502,4 +502,4 @@ function TrackRow({
       )}
     </button>
   )
-}
+})

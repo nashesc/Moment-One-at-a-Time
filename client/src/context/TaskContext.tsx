@@ -65,8 +65,10 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const todayStr                = useRef(new Date().toISOString().split('T')[0])
   const loadedUserIdRef         = useRef<string | null>(null)
   const isLoadingRef    = useRef(false)
+  const lastLoadedAtRef = useRef(0)
+  const STALE_MS = 20_000
 
-  const load = useCallback(async () => {
+    const load = useCallback(async (force = false) => {
     if (isLoadingRef.current) return    
     isLoadingRef.current = true
     
@@ -76,6 +78,13 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       setTasks([])
       setLoading(false)
       loadedUserIdRef.current = null
+      isLoadingRef.current = false
+      return
+    }
+
+    // Same user, data still fresh — skip the network round-trip entirely
+    if (!force && loadedUserIdRef.current === session.user.id &&
+        Date.now() - lastLoadedAtRef.current < STALE_MS) {
       isLoadingRef.current = false
       return
     }
@@ -109,6 +118,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         ...todayData.map(t  => toUITask(t, today)),
         ...yesterData.map(t => toUITask(t, today)),
       ])
+      lastLoadedAtRef.current = Date.now()
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
       if (msg.includes('401')) {
@@ -131,6 +141,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
             ...offlineToday.map(t => toUITask(t, today)),
             ...offlineYester.map(t => toUITask(t, today)),
           ])
+          lastLoadedAtRef.current = Date.now()
         } else {
           setIsOffline(true)
           setError('No connection and no cached data available.')
@@ -215,7 +226,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       const newDate = new Date().toISOString().split('T')[0]
       if (newDate !== todayStr.current) {
         todayStr.current = newDate
-        load()
+        load(true)
       }
     }, 60_000)
     return () => clearInterval(checkMidnight)
@@ -226,7 +237,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const handleOnline = () => {
       setIsOffline(false)
       flushSyncQueue()
-        .then(() => load())
+        .then(() => load(true))
         .catch(err => console.error('[Tasks] Reconnect sync failed:', err))
     }
     const handleOffline = () => setIsOffline(true)
@@ -382,7 +393,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   return (
     <TaskContext.Provider value={{
       tasks, loading, error, isOffline,
-      updateStatus, moveToEnd, addTask, refresh: load,
+      updateStatus, moveToEnd, addTask, refresh: () => load(true),
       todayTasks, doneTodayCount, totalTodayCount,
       setActive: setIsActive,  // ← expose it
     }}>
