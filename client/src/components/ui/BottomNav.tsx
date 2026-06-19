@@ -23,7 +23,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-50 flex bg-white/90 backdrop-blur-md border-t"
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 flex bg-white/90 backdrop-blur-sm border-t"
       style={{ borderColor: 'var(--border)', paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}
     >
       {NAV.map(({ href, label, Icon }) => {

@@ -37,7 +37,6 @@ export default function MiniPlayer() {
             className="mx-3 rounded-2xl flex items-center gap-3 px-4 py-3"
             style={{
               background: 'rgba(23, 58, 45, 0.96)',
-              backdropFilter: 'blur(16px)',
               boxShadow: '0 -2px 20px rgba(0,0,0,0.25), 0 4px 24px rgba(0,0,0,0.15)',
             }}
           >

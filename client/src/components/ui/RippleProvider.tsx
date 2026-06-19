@@ -1,37 +1,58 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+
+const POOL_SIZE = 3
 
 export default function RippleProvider() {
+  const poolIndexRef = useRef(0)
+
   useEffect(() => {
-    function spawnRipple(x: number, y: number) {
+    // Pool of reusable elements instead of creating + destroying
+    // a new DOM node on every tap (kills GC churn on low-RAM devices).
+    const pool: HTMLSpanElement[] = []
+    for (let i = 0; i < POOL_SIZE; i++) {
       const el = document.createElement('span')
       el.style.cssText = `
         position: fixed;
         pointer-events: none;
         z-index: 9998;
-        left: ${x}px;
-        top: ${y}px;
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        transform: translate(-50%, -50%) scale(0);
         background: radial-gradient(circle, rgba(90,158,80,0.30) 0%, rgba(168,197,160,0.12) 50%, transparent 70%);
-        animation: momentRipple 0.75s cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+        opacity: 0;
+        left: -9999px;
+        top: -9999px;
       `
       document.body.appendChild(el)
-      el.addEventListener('animationend', () => el.remove(), { once: true })
+      pool.push(el)
+    }
+
+    function spawnRipple(x: number, y: number) {
+      const el = pool[poolIndexRef.current % pool.length]
+      poolIndexRef.current++
+
+      el.style.animation = 'none'
+      el.style.left = `${x}px`
+      el.style.top = `${y}px`
+      el.style.opacity = '1'
+      el.style.transform = 'translate(-50%, -50%) scale(0)'
+      void el.offsetWidth // force restart of the animation
+      el.style.animation = 'momentRipple 0.75s cubic-bezier(0.2, 0.8, 0.4, 1) forwards'
     }
 
     function onPointerDown(e: PointerEvent) {
-      // Skip inputs and textareas — they have their own focus feedback
       const tag = (e.target as HTMLElement).tagName.toLowerCase()
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return
       spawnRipple(e.clientX, e.clientY)
     }
 
     document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      pool.forEach(el => el.remove())
+    }
   }, [])
 
   return null

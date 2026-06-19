@@ -469,18 +469,14 @@ function TrackRow({
 }) {
   const isLocked = track.isPro && !isPro
   return (
-    <motion.button
+    <button
       onClick={onPlay}
-      className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
+      className="w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition-transform active:scale-[0.98]"
       style={{
         background: isActive ? 'var(--gpa)' : 'white',
         border:     isActive ? '1.5px solid var(--gs)' : '1px solid var(--border)',
         boxShadow:  'var(--shadow-card)', cursor: 'pointer', opacity: isLocked ? 0.6 : 1,
       }}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: isLocked ? 0.6 : 1, y: 0 }}
-      transition={{ duration: 0.15, delay: Math.min(index * 0.02, 0.2) }}
-      whileTap={isLocked ? undefined : { scale: 0.98 }}
     >
       <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
         style={{ background: isActive ? 'var(--gp)' : 'var(--gpa)' }}>
@@ -504,6 +500,6 @@ function TrackRow({
           <Heart size={14} color={isFav ? '#D9C17A' : 'var(--tgl)'} fill={isFav ? '#D9C17A' : 'none'} />
         </button>
       )}
-    </motion.button>
+    </button>
   )
 }
