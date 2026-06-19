@@ -18,6 +18,7 @@ import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { motion } from 'motion/react'
 import { useMusic } from '@/context/MusicContext'
 import { useFabOffset } from '@/hooks/useFabOffset'
+import StuckSheet from '@/components/dashboard/StuckSheet'
 
 type FocusState = 'idle' | 'focusing' | 'done'
 
@@ -85,7 +86,9 @@ export default function DashboardPage() {
     updateStatus(currentTask.id, 'stuck', reason)
     moveToEnd(currentTask.id)
     setStuckSheetOpen(false)
-    // ...same next-task logic as before
+    const next = activeTasks.find(t => t.id !== currentTask.id)
+    if (next) { setFocused(next); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle') }
   }
 
   function handleSkip() {
@@ -328,7 +331,8 @@ export default function DashboardPage() {
                   )}
                 </>
               )}
-
+              <StuckSheet open={stuckSheetOpen} onClose={() => setStuckSheetOpen(false)} onSubmit={commitStuck} />
+                
               {/* Focus picker — mobile fixed overlay */}
               {showPicker && !allDone && activeTasks.length > 0 && todayTasks.length > 0 && (
                 <div className="md:hidden fixed inset-0 z-30">
@@ -425,12 +429,12 @@ export default function DashboardPage() {
           <Plus size={24} strokeWidth={2} color="white" />
       </motion.button>
 
-        <CreateTaskSheet open={sheetOpen} onClose={() => {
-          setSheetOpen(false)
-          setFocusState('idle')
-          setFocused(null)
-          setShowPicker(true)
-        }} />
+      <CreateTaskSheet open={sheetOpen} onClose={() => {
+        setSheetOpen(false)
+        setFocusState('idle')
+        setFocused(null)
+        setShowPicker(true)
+      }} />
 
       <BottomNav />
     </div>

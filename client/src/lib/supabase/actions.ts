@@ -8,6 +8,7 @@
 import { createClient } from './server'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { headers } from 'next/headers'
 
 const loginSchema = z.object({
   email:    z.string().email('Invalid email'),
@@ -24,7 +25,15 @@ export async function login(
   _prevState: { error: string },
   formData: FormData
 ): Promise<{ error: string }> {
-  const limitCheck = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/check-limit`, { method: 'POST' })
+  const hdrs = await headers()
+    const clientIp = hdrs.get('x-real-ip')
+      ?? hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
+      ?? 'unknown'
+    const limitCheck = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/check-limit`, {
+      method: 'POST',
+      headers: { 'x-client-ip': clientIp },
+    })
+
   if (!limitCheck.ok) return { error: 'Too many attempts. Please wait and try again.' }
   const parsed = loginSchema.safeParse({
     email:    formData.get('email'),
@@ -43,7 +52,15 @@ export async function register(
   _prevState: { error: string },
   formData: FormData
 ): Promise<{ error: string }> {
-  const limitCheck = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/check-limit`, { method: 'POST' })
+  const hdrs = await headers()
+    const clientIp = hdrs.get('x-real-ip')
+      ?? hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
+      ?? 'unknown'
+    const limitCheck = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/check-limit`, {
+      method: 'POST',
+      headers: { 'x-client-ip': clientIp },
+    })
+
   if (!limitCheck.ok) return { error: 'Too many attempts. Please wait and try again.' }
 
   const parsed = registerSchema.safeParse({

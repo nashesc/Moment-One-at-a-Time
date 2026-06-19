@@ -117,12 +117,8 @@ async function handleActivated(data) {
     console.error('[Paddle] Rejecting — custom_data.user_id present but no customer email to verify against. sub_id:', data.id)
     return
   }
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('email')
-    .eq('id', userId)
-    .single()
-  if (!profile || profile.email.toLowerCase() !== data.customer.email.toLowerCase()) {
+  const { data: authUser } = await supabase.auth.admin.getUserById(userId)
+    if (!authUser?.user?.email || authUser.user.email.toLowerCase() !== data.customer.email.toLowerCase()) {
     console.error('[Paddle] Email/user_id mismatch — rejecting. sub_id:', data.id)
     return
   }
@@ -146,11 +142,11 @@ async function handleActivated(data) {
   if (error) console.error('[Paddle] handleActivated DB error:', error.message)
 }
 
-async function handleUpdated(data) {
+async function handleUpdated(data, eventType) {
   const userId = await resolveUserId(data)
   if (!userId) {
-    console.error('[Paddle] subscription.activated — could not resolve user. sub_id:', data.id)
-    await logWebhookFailure('subscription.activated', data)
+    console.error(`[Paddle] ${eventType} — could not resolve user. sub_id:`, data.id)
+    await logWebhookFailure(eventType, data)
     return
   }
 
@@ -176,11 +172,11 @@ async function handleUpdated(data) {
   if (error) console.error('[Paddle] handleUpdated DB error:', error.message)
 }
 
-async function handleCanceled(data) {
+async function handleCanceled(data, eventType) {
   const userId = await resolveUserId(data)
   if (!userId) {
-    console.error('[Paddle] subscription.activated — could not resolve user. sub_id:', data.id)
-    await logWebhookFailure('subscription.activated', data)
+    console.error(`[Paddle] ${eventType} — could not resolve user. sub_id:`, data.id)
+    await logWebhookFailure(eventType, data)
     return
   }
 
@@ -241,8 +237,8 @@ export async function POST(request) {
   try {
     switch (event_type) {
       case 'subscription.activated': await handleActivated(data); break
-      case 'subscription.updated':   await handleUpdated(data);   break
-      case 'subscription.canceled':  await handleCanceled(data);  break
+      case 'subscription.updated':   await handleUpdated(data, event_type);   break
+      case 'subscription.canceled':  await handleCanceled(data, event_type);  break
       case 'subscription.past_due':  await handlePastDue(data);   break
       default:
         // Acknowledge all other events without processing them

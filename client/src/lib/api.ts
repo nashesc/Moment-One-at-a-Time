@@ -164,3 +164,19 @@ export function savePushSubscription(subscription: PushSubscriptionJSON): Promis
 export function sendTestPush(): Promise<{ message: string }> {
   return apiFetch('/api/push/test', { method: 'POST' })
 }
+
+export interface TasksResult { tasks: Task[]; truncated: boolean }
+
+export async function getTasksWithMeta(date?: string): Promise<TasksResult> {
+  const q = date ? `?date=${date}` : ''
+  const token = await getToken()
+  const res = await fetch(`${SERVER_URL}/api/tasks${q}`, {
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? `Request failed: ${res.status}`)
+  }
+  const json = await res.json()
+  return { tasks: json.data ?? [], truncated: json.meta?.truncated ?? false }
+}
