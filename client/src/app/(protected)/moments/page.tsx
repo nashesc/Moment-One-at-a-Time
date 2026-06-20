@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { Plus, RefreshCw } from 'lucide-react'
-import BottomNav from '@/components/ui/BottomNav'
-import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import TaskRow from '@/components/tasks/TaskRow'
 import Toggle from '@/components/ui/Toggle'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
@@ -39,9 +37,7 @@ export default function MomentsPage() {
   const momentumPct       = totalTodayCount === 0 ? 0 : Math.round((doneTodayCount / totalTodayCount) * 100)
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
-      <DesktopSidebar />
-
+    <>
       <div className="flex flex-col flex-1 min-w-0 md:pb-16 moment-col moment-col--center w-full"
         style={{ paddingBottom: currentTrack ? 200 : 152 }}
       >
@@ -216,7 +212,6 @@ export default function MomentsPage() {
       </motion.button>
 
       <CreateTaskSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
-      <BottomNav />
-    </div>
+    </>
   )
 }

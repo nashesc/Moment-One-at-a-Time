@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { MessageSquare, Plus } from 'lucide-react'
-import BottomNav from '@/components/ui/BottomNav'
-import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import MomentumRing from '@/components/ui/MomentumRing'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { getRecap, getRecapRange, getCheckins, type RecapRangeItem } from '@/lib/api'
@@ -261,8 +259,7 @@ export default function RecapPage() {
   const chartHeading = { daily: 'Last 7 days', weekly: 'Day by day', monthly: 'Day by day', yearly: 'Month by month' }[period]
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
-      <DesktopSidebar />
+    <>
       <div className="flex flex-col flex-1 min-w-0 md:pb-8 px-5 md:px-8 moment-col moment-col--center w-full"
         style={{ paddingBottom: currentTrack ? 200 : 152 }}
       >
@@ -474,8 +471,6 @@ export default function RecapPage() {
       </motion.button>
 
       <CreateTaskSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
-
-      <BottomNav />
-    </div>
+    </>
   )
 }

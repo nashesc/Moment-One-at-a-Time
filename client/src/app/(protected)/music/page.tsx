@@ -7,8 +7,6 @@ import {
   Zap, Leaf, Wind, Library, Compass,
   type LucideIcon
 } from 'lucide-react'
-import BottomNav from '@/components/ui/BottomNav'
-import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import ProGateModal from '@/components/plan/ProGateModal'
 import { useMusic, type PlayMode } from '@/context/MusicContext'
 import { usePlan } from '@/context/PlanContext'
@@ -139,9 +137,7 @@ export default function MusicPage() {
   }, [isPro, activeTab, play, openGate])
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
-      <DesktopSidebar />
-
+    <>
       {/* CENTER + RIGHT PANEL wrapper */}
       <div className="moment-with-panel">
 
@@ -451,10 +447,10 @@ export default function MusicPage() {
       </div>
 
       <ProGateModal open={gateOpen} onClose={() => setGateOpen(false)}
-        featureName={PRO_GATES[gateKey].name} description={PRO_GATES[gateKey].description} />
-
-      <BottomNav />
-    </div>
+        featureName={PRO_GATES[gateKey].name} 
+        description={PRO_GATES[gateKey].description} 
+      />
+    </>
   )
 }
 

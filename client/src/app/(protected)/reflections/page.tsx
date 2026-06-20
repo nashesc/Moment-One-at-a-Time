@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import BottomNav from '@/components/ui/BottomNav'
-import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { MessageSquare } from 'lucide-react'
 import { getCheckins } from '@/lib/api'
@@ -77,8 +75,7 @@ export default function ReflectionsPage() {
 
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
-      <DesktopSidebar />
+    
       <div className="flex flex-col flex-1 min-w-0 pb-24 md:pb-8 px-5 md:px-8 moment-col moment-col--center w-full">
 
         <div className="pt-6 pb-2">
@@ -168,7 +165,6 @@ export default function ReflectionsPage() {
         )}
 
       </div>
-      <BottomNav />
-    </div>
+    
   )
 }

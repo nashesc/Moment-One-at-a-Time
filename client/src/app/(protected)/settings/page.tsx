@@ -3,8 +3,6 @@
 import { useState } from 'react'
 import { Check, X, Pencil, Bell, Clock, Sparkles } from 'lucide-react'
 import Link from 'next/link'
-import BottomNav from '@/components/ui/BottomNav'
-import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import Toggle from '@/components/ui/Toggle'
 import { logout } from '@/lib/supabase/actions'
 import { useSettings } from '@/context/SettingsContext'
@@ -236,8 +234,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
-      <DesktopSidebar />
+    <>
       <div className="flex flex-col flex-1 min-w-0 px-5 md:px-8 moment-col moment-col--center w-full"
         style={{ paddingBottom: currentTrack ? 200 : 96 }}>
 
@@ -464,8 +461,6 @@ export default function SettingsPage() {
         featureName="Push Notifications" 
         description="Get gentle reminders to check in — available with Pro." 
       />
-
-      <BottomNav />
-    </div>
+    </>
   )
 }

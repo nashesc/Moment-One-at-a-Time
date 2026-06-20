@@ -3,8 +3,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { Play, RefreshCw } from 'lucide-react'
-import BottomNav from '@/components/ui/BottomNav'
-import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import MomentumRing from '@/components/ui/MomentumRing'
 import TaskCard from '@/components/dashboard/TaskCard'
 import DonePanel from '@/components/dashboard/DonePanel'
@@ -113,9 +111,7 @@ export default function DashboardPage() {
   const showListView = !prefs.oneTaskAtATime
 
   return (
-    <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
-      <DesktopSidebar />
-
+    <>
       <div className="flex flex-col flex-1 min-w-0 relative">
         <div className="moment-col moment-col--center w-full">
           {isOffline && (
@@ -435,8 +431,6 @@ export default function DashboardPage() {
         setFocused(null)
         setShowPicker(true)
       }} />
-
-      <BottomNav />
-    </div>
+    </>
   )
 }
