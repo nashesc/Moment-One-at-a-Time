@@ -131,6 +131,13 @@ function ReflectionsView() {
     )
   }
 
+  function formatDuration(seconds: number): string {
+    const m = Math.round(seconds / 60)
+    if (m < 1) return '<1m'
+    if (m < 60) return `${m}m`
+    return `${Math.floor(m / 60)}h ${m % 60}m`
+  }
+
   return (
     <>
       <div className="rounded-2xl px-4 py-4 mb-4 flex gap-3 items-start"
@@ -149,7 +156,15 @@ function ReflectionsView() {
               <p className="text-[15px] font-semibold" style={{ color: 'var(--td)' }}>
                 {checkin.task_title ?? 'Task'}
               </p>
-              <StatusBadge status={toBadgeStatus(checkin.status)} />
+              
+              <div className="flex items-center gap-2 shrink-0">
+                {checkin.duration_seconds != null && (
+                  <span className="text-[11px]" style={{ color: 'var(--tgl)' }}>
+                    {formatDuration(checkin.duration_seconds)}
+                  </span>
+                )}
+                <StatusBadge status={toBadgeStatus(checkin.status)} />
+              </div>
             </div>
 
             {checkin.stuck_reason && (

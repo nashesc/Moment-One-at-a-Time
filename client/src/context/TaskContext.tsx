@@ -32,7 +32,7 @@ interface TaskContextValue {
   loading: boolean
   error: string | null
   isOffline: boolean
-  updateStatus: (id: string, status: TaskStatus, stuckReason?: string) => void
+  updateStatus: (id: string, status: TaskStatus, opts?: { stuckReason?: string; durationSeconds?: number }) => void
   moveToEnd: (id: string) => void
   addTask: (payload: NewTaskPayload) => Promise<void>
   todayTasks: Task[]
@@ -255,7 +255,11 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   const pendingStatusRef = useRef<Map<string, TaskStatus>>(new Map())
 
-  const updateStatus = useCallback((id: string, status: TaskStatus, stuckReason?: string) => {
+  const updateStatus = useCallback((
+      id: string, 
+      status: TaskStatus, 
+      opts?: { stuckReason?: string; durationSeconds?: number }) => 
+  {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t))
     if (id.startsWith('temp-')) {
       pendingStatusRef.current.set(id, status)
@@ -266,13 +270,16 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     db.tasks.update(id, { status, updated_at: new Date().toISOString() }).catch(() => {})
     clearRecapCacheForDate(todayStr.current)
 
+    const isCheckinStatus = status === 'done' || status === 'stuck' || status === 'skipped'
+
     if (navigator.onLine) {
-      if (status === 'done' || status === 'stuck') {
+      if (isCheckinStatus) {
         const task = tasksRef.current.find(t => t.id === id)
         api.createCheckin({
           task_id: id,
-          status: status === 'done' ? 'done' : 'stuck',
-          ...(stuckReason ? { stuck_reason: stuckReason } : {}),
+          status,
+          ...(opts?.stuckReason ? { stuck_reason: opts.stuckReason } : {}),
+          ...(opts?.durationSeconds !== undefined ? { duration_seconds: opts.durationSeconds } : {}),
           ...(task?.description ? { notes: task.description } : {}),
         }).catch(console.error)
       } else {
@@ -280,13 +287,15 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
       }
     } else {
       // Queue for sync when back online
-      if (status === 'done' || status === 'stuck') {
+      if (isCheckinStatus) {
         const task = tasksRef.current.find(t => t.id === id)
         db.syncQueue.add({
           type: 'createCheckin',
           payload: {
             task_id: id,
-            status: status === 'done' ? 'done' : 'stuck',
+            status,
+            ...(opts?.stuckReason ? { stuck_reason: opts.stuckReason } : {}),
+            ...(opts?.durationSeconds !== undefined ? { duration_seconds: opts.durationSeconds } : {}),
             ...(task?.description ? { notes: task.description } : {}),
           },
           createdAt: Date.now(),

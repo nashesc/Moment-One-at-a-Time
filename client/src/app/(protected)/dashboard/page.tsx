@@ -81,7 +81,7 @@ export default function DashboardPage() {
 
   function commitStuck(reason?: string) {
     if (!currentTask) return
-    updateStatus(currentTask.id, 'stuck', reason)
+    updateStatus(currentTask.id, 'stuck', { stuckReason: reason })
     moveToEnd(currentTask.id)
     setStuckSheetOpen(false)
     const next = activeTasks.find(t => t.id !== currentTask.id)
@@ -91,7 +91,7 @@ export default function DashboardPage() {
 
   function handleSkip() {
     if (!currentTask) return
-    moveToEnd(currentTask.id)
+    updateStatus(currentTask.id, 'skipped')
     const next = activeTasks.find(t => t.id !== currentTask.id)
     if (next) { setFocused(next); setFocusState('idle') }
     else { setFocused(null); setFocusState('idle') }

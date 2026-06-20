@@ -37,15 +37,33 @@ export async function POST(request) {
 
     if (error) return json({ error: error.message }, { status: 500 }, request)
 
+    const statusMap = { done: 'done', stuck: 'stuck', skipped: 'skipped' }
     await supabase
       .from('tasks')
       .update({
-        status: parsed.data.status === 'done' ? 'done' :
-                parsed.data.status === 'stuck' ? 'stuck' : 'in_progress',
+        status: statusMap[parsed.data.status] ?? 'in_progress',
         updated_at: new Date().toISOString()
       })
       .eq('id', parsed.data.task_id)
       .eq('user_id', user.id)
+
+    // Read-then-write, not atomic — acceptable here since checkins for one
+    // task realistically only come from one device/tab at a time for this
+    // app's usage pattern. Revisit with an RPC if that assumption breaks.
+    if (parsed.data.duration_seconds) {
+      const { data: task } = await supabase
+        .from('tasks')
+        .select('actual_minutes')
+        .eq('id', parsed.data.task_id)
+        .eq('user_id', user.id)
+        .single()
+      const addedMinutes = Math.round(parsed.data.duration_seconds / 60)
+      await supabase
+        .from('tasks')
+        .update({ actual_minutes: (task?.actual_minutes ?? 0) + addedMinutes })
+        .eq('id', parsed.data.task_id)
+        .eq('user_id', user.id)
+    }
 
     return json({ data }, { status: 201 }, request)
   } catch {

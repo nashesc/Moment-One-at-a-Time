@@ -73,6 +73,13 @@ export default function ReflectionsPage() {
     }
   }, [])
 
+  function formatDuration(seconds: number): string {
+    const m = Math.round(seconds / 60)
+    if (m < 1) return '<1m'
+    if (m < 60) return `${m}m`
+    return `${Math.floor(m / 60)}h ${m % 60}m`
+  }
+
 
   return (
     
@@ -134,7 +141,15 @@ export default function ReflectionsPage() {
                   <p className="text-[15px] font-semibold" style={{ color: 'var(--td)' }}>
                     {checkin.task_title ?? 'Task'}
                   </p>
-                  <StatusBadge status={toBadgeStatus(checkin.status)} />
+                  
+                  <div className="flex items-center gap-2 shrink-0">
+                    {checkin.duration_seconds != null && (
+                      <span className="text-[11px]" style={{ color: 'var(--tgl)' }}>
+                        {formatDuration(checkin.duration_seconds)}
+                      </span>
+                    )}
+                    <StatusBadge status={toBadgeStatus(checkin.status)} />
+                  </div>
                 </div>
 
                 {checkin.stuck_reason && (

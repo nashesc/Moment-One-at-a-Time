@@ -24,6 +24,7 @@ export interface Checkin {
   notes?: string
   checked_at: string
   task_title?: string
+  duration_seconds?: number
 }
 
 export interface Recap {

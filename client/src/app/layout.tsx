@@ -1,5 +1,3 @@
-// client/src/app/layout.tsx
-
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, Inter } from 'next/font/google'
 import { TaskProvider } from '@/context/TaskContext'
@@ -30,7 +28,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Moment — One at a Time',
+  title: 'Moment: One at a Time',
   description: 'Focus on one thing. Then the next.',
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Moment' },

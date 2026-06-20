@@ -19,6 +19,7 @@ export const checkinSchema = z.object({
   status: z.enum(['on_track', 'stuck', 'skipped', 'done']),
   stuck_reason: z.string().max(200).optional(),
   notes: z.string().max(500).optional(),
+  duration_seconds: z.number().int().min(0).max(86400).optional(),
 })
 
 export const pushSubscriptionSchema = z.object({

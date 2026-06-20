@@ -101,6 +101,7 @@ export function createCheckin(payload: {
   status: 'on_track' | 'stuck' | 'skipped' | 'done'
   stuck_reason?: string
   notes?: string
+  duration_seconds?: number
 }): Promise<Checkin> {
   _checkinsCache = null
   return apiFetch<Checkin>('/api/checkins', {
