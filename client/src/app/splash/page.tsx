@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { FREE_OPENING_QUOTE_COUNT, OPENING_QUOTES } from '@/assets/data/quotes'
+import { FREE_OPENING_QUOTE_COUNT, OPENING_QUOTES } from '@/data/quotes'
 import { usePlan } from '@/context/PlanContext'
 
 export default function SplashPage() {

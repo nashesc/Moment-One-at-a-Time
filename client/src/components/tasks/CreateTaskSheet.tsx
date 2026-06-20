@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Clock, Flag } from 'lucide-react'
 import { useTasks } from '@/context/TaskContext'
-import ProGateModal from '@/components/ui/ProGateModal'
+import ProGateModal from '@/components/plan/ProGateModal'
 
 interface CreateTaskSheetProps {
   open: boolean

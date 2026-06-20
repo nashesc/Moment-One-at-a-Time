@@ -13,7 +13,7 @@ import {
   getTracksByCategory,
   type Track,
   type TrackCategory,
-} from '@/assets/data/tracks'
+} from '@/data/tracks'
 import { apiFetch } from '@/lib/api'
 import { usePlan } from '@/context/PlanContext'
 

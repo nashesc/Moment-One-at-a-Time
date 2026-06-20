@@ -1,6 +1,6 @@
 'use client'
 
-// client/src/components/ui/TrialExpiryModal.tsx
+// client/src/components/plan/TrialExpiryModal.tsx
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'

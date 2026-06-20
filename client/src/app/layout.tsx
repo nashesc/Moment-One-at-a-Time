@@ -10,8 +10,8 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { MusicProvider } from '@/context/MusicContext'
 import { PlanProvider } from '@/context/PlanContext'
 import MiniPlayer from '@/components/music/MiniPlayer'
-import TrialBanner from '@/components/ui/TrialBanner'
-import TrialExpiryModal from '@/components/ui/TrialExpiryModal'
+import TrialBanner from '@/components/plan/TrialBanner'
+import TrialExpiryModal from '@/components/plan/TrialExpiryModal'
 import '@/app/globals.css'
 
 const playfair = Playfair_Display({

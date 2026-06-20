@@ -11,7 +11,7 @@ import { useSettings } from '@/context/SettingsContext'
 import { useAuth } from '@/context/AuthContext'
 import { usePlan } from '@/context/PlanContext'
 import { useMusic } from '@/context/MusicContext'
-import ProGateModal from '@/components/ui/ProGateModal'
+import ProGateModal from '@/components/plan/ProGateModal'
 
 function EditableField({
   label,

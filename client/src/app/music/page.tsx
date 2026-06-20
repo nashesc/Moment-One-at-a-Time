@@ -9,10 +9,10 @@ import {
 } from 'lucide-react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
-import ProGateModal from '@/components/ui/ProGateModal'
+import ProGateModal from '@/components/plan/ProGateModal'
 import { useMusic, type PlayMode } from '@/context/MusicContext'
 import { usePlan } from '@/context/PlanContext'
-import { TRACKS, getTracksByCategory, type Track, type TrackCategory } from '@/assets/data/tracks'
+import { TRACKS, getTracksByCategory, type Track, type TrackCategory } from '@/data/tracks'
 import { motion } from 'motion/react'
 
 type Tab = TrackCategory | 'favorites' | 'all'
