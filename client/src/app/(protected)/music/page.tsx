@@ -341,13 +341,25 @@ export default function MusicPage() {
                 </div>
               )}
 
-              {tabTracks.map((track, i) => (
-                <TrackRow key={track.id} track={track} index={i}
-                  isPro={isPro} isActive={currentTrack?.id === track.id}
-                  isPlaying={isPlaying} isFav={favorites.includes(track.id)}
-                  onPlay={handleTrackClick}
-                  toggleFavorite={toggleFavorite} />
-              ))}
+              <div className="md:hidden flex flex-col gap-2">
+                {tabTracks.map((track, i) => (
+                  <TrackRow key={track.id} track={track} index={i}
+                    isPro={isPro} isActive={currentTrack?.id === track.id}
+                    isPlaying={isPlaying} isFav={favorites.includes(track.id)}
+                    onPlay={handleTrackClick}
+                    toggleFavorite={toggleFavorite} />
+                ))}
+              </div>
+
+              <div className="hidden md:grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
+                {tabTracks.map(track => (
+                  <TrackGridCard key={track.id} track={track}
+                    isPro={isPro} isActive={currentTrack?.id === track.id}
+                    isPlaying={isPlaying} isFav={favorites.includes(track.id)}
+                    onPlay={handleTrackClick}
+                    toggleFavorite={toggleFavorite} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -496,6 +508,51 @@ const TrackRow = memo(function TrackRow({
           <Heart size={14} color={isFav ? '#D9C17A' : 'var(--tgl)'} fill={isFav ? '#D9C17A' : 'none'} />
         </button>
       )}
+    </button>
+  )
+})
+
+const TrackGridCard = memo(function TrackGridCard({
+  track, isPro, isActive, isPlaying, isFav, onPlay, toggleFavorite,
+}: {
+  track: Track; isPro: boolean; isActive: boolean
+  isPlaying: boolean; isFav: boolean
+  onPlay: (track: Track) => void
+  toggleFavorite: (trackId: string) => void
+}) {
+  const isLocked = track.isPro && !isPro
+  return (
+    <button
+      onClick={() => onPlay(track)}
+      className="flex flex-col gap-3 rounded-2xl p-4 text-left h-full transition-transform active:scale-[0.98]"
+      style={{
+        background: isActive ? 'var(--gpa)' : 'white',
+        border: isActive ? '1.5px solid var(--gs)' : '1px solid var(--border)',
+        boxShadow: 'var(--shadow-card)', cursor: 'pointer', opacity: isLocked ? 0.6 : 1,
+      }}
+    >
+      <div className="flex items-start justify-between">
+        <span className="w-8 h-8 rounded-full flex items-center justify-center"
+          style={{ background: isActive ? 'var(--gp)' : 'var(--gpa)' }}>
+          {isLocked ? <Lock size={13} color="var(--tg)" />
+            : isActive && isPlaying ? <Pause size={13} fill="white" color="white" />
+            : <Play size={13} fill={isActive ? 'white' : 'var(--gp)'} color={isActive ? 'white' : 'var(--gp)'} />}
+        </span>
+        {isPro && (
+          <button onClick={(e) => { e.stopPropagation(); toggleFavorite(track.id) }}
+            className="w-7 h-7 rounded-full flex items-center justify-center"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+            <Heart size={14} color={isFav ? '#D9C17A' : 'var(--tgl)'} fill={isFav ? '#D9C17A' : 'none'} />
+          </button>
+        )}
+      </div>
+      <p className="text-[14px] font-medium leading-snug mt-auto"
+        style={{ color: isActive ? 'var(--gp)' : 'var(--td)' }}>
+        {track.title}
+      </p>
+      <p className="text-[11px] capitalize" style={{ color: 'var(--tgl)' }}>
+        {isLocked ? 'Pro' : track.category}
+      </p>
     </button>
   )
 })

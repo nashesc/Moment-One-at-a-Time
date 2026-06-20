@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Plus, RefreshCw } from 'lucide-react'
-import TaskRow from '@/components/tasks/TaskRow'
+import TaskGridCard from '@/components/tasks/TaskGridCard'
 import Toggle from '@/components/ui/Toggle'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
 import { useTasks, useActivateTasks } from '@/context/TaskContext'
@@ -38,7 +38,7 @@ export default function MomentsPage() {
 
   return (
     <>
-      <div className="flex flex-col flex-1 min-w-0 md:pb-16 moment-col moment-col--center w-full"
+      <div className="flex flex-col flex-1 min-w-0 md:pb-16 moment-col--wide moment-col--center w-full"
         style={{ paddingBottom: currentTrack ? 200 : 152 }}
       >
         {/* Header */}
@@ -141,22 +141,30 @@ export default function MomentsPage() {
 
         {/* Task groups */}
         {!loading && !error && (
-          <div className="flex flex-col gap-2 px-5 md:px-8">
+          <div className="flex flex-col gap-4 px-5 md:px-8">
             {todayFiltered.length > 0 && (
-              <>
-                <p className="text-[11px] font-semibold uppercase tracking-widest pt-1 pb-1" style={{ color: 'var(--tg)' }}>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest pt-1 pb-2" style={{ color: 'var(--tg)' }}>
                   Today
                 </p>
-                {todayFiltered.map(t => <TaskRow key={t.id} title={t.title} date="Today" estimatedMinutes={t.estimatedMinutes} priority={t.priority} status={t.status} />)}
-              </>
+                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+                  {todayFiltered.map(t => (
+                    <TaskGridCard key={t.id} title={t.title} estimatedMinutes={t.estimatedMinutes} priority={t.priority} status={t.status} />
+                  ))}
+                </div>
+              </div>
             )}
             {yesterdayFiltered.length > 0 && (
-              <>
-                <p className="text-[11px] font-semibold uppercase tracking-widest pt-3 pb-1" style={{ color: 'var(--tg)' }}>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest pt-3 pb-2" style={{ color: 'var(--tg)' }}>
                   Yesterday
                 </p>
-                {yesterdayFiltered.map(t => <TaskRow key={t.id} title={t.title} date="Yesterday" estimatedMinutes={t.estimatedMinutes} priority={t.priority} status={t.status} />)}
-              </>
+                <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+                  {yesterdayFiltered.map(t => (
+                    <TaskGridCard key={t.id} title={t.title} estimatedMinutes={t.estimatedMinutes} priority={t.priority} status={t.status} />
+                  ))}
+                </div>
+              </div>
             )}
             {todayFiltered.length === 0 && yesterdayFiltered.length === 0 && !loading && (
               <div className="text-center py-12">
@@ -182,7 +190,7 @@ export default function MomentsPage() {
             </div>
             <div className="ml-4 shrink-0">
               <Toggle
-                defaultOn={prefs.oneTaskAtATime}
+                on={prefs.oneTaskAtATime}
                 onChange={(v) => setPref('oneTaskAtATime', v)}
               />
             </div>

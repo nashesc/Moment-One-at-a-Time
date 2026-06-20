@@ -245,190 +245,191 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex flex-col gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
 
-          {/* Account — inline editable */}
-          <div>
-            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Account</p>
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-              <EditableField
-                label="Name"
-                value={profile?.full_name ?? ''}
-                onSave={async (v) => {
-                  const res = await updateProfile({ full_name: v })
-                  return res.error
-                }}
-              />
-              <EditableField
-                label="Email"
-                value={profile?.email ?? ''}
-                type="email"
-                hint="A confirmation email may be sent to verify your new address."
-                onSave={async (v) => {
-                  const res = await updateProfile({ email: v })
-                  return res.error
-                }}
-              />
-              {/* Last row — no bottom border */}
-              <div className="flex items-center justify-between px-5 py-4">
-                <span className="text-[14px]" style={{ color: 'var(--tg)' }}>Member since</span>
-                <span className="text-[13px]" style={{ color: 'var(--tgl)' }}>
-                  {profile?.created_at
-                    ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-                    : '—'}
-                </span>
+            {/* Account — inline editable */}
+            <div>
+              <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Account</p>
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                <EditableField
+                  label="Name"
+                  value={profile?.full_name ?? ''}
+                  onSave={async (v) => {
+                    const res = await updateProfile({ full_name: v })
+                    return res.error
+                  }}
+                />
+                <EditableField
+                  label="Email"
+                  value={profile?.email ?? ''}
+                  type="email"
+                  hint="A confirmation email may be sent to verify your new address."
+                  onSave={async (v) => {
+                    const res = await updateProfile({ email: v })
+                    return res.error
+                  }}
+                />
+                {/* Last row — no bottom border */}
+                <div className="flex items-center justify-between px-5 py-4">
+                  <span className="text-[14px]" style={{ color: 'var(--tg)' }}>Member since</span>
+                  <span className="text-[13px]" style={{ color: 'var(--tgl)' }}>
+                    {profile?.created_at
+                      ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                      : '—'}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Display */}
-          <div>
-            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Display</p>
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-                <div>
-                  <p className="text-[14px]" style={{ color: 'var(--td)' }}>Show opening quote</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--tg)' }}>Inspirational quote when app opens</p>
-                </div>
-                <Toggle
-                  defaultOn={prefs.showOpeningQuote}
-                  onChange={(v) => setPref('showOpeningQuote', v)}
-                />
-              </div>
-              <div className="flex items-center justify-between px-5 py-4">
-                <div>
-                  <p className="text-[14px]" style={{ color: 'var(--td)' }}>One task at a time</p>
-                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--tg)' }}>Focus on a single moment on the dashboard</p>
-                </div>
-                <Toggle
-                  defaultOn={prefs.oneTaskAtATime}
-                  onChange={(v) => setPref('oneTaskAtATime', v)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Notifications */}
-          <div>
-            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Notifications</p>
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-              <div className="flex items-start justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-                <div className="flex-1 min-w-0 mr-4">
-                  <div className="flex items-center gap-2">
-                    <Bell size={14} color="var(--tg)" />
-                    <p className="text-[14px]" style={{ color: 'var(--td)' }}>Push notifications</p>
+            {/* Display */}
+            <div>
+              <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Display</p>
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <div>
+                    <p className="text-[14px]" style={{ color: 'var(--td)' }}>Show opening quote</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--tg)' }}>Inspirational quote when app opens</p>
                   </div>
-                  <p className="text-[11px] mt-0.5 ml-[22px]" style={{ color: 'var(--tg)' }}>
-                    {pushSupported ? 'Get gentle reminders to check in' : 'Not supported on this device'}
-                  </p>
-                  {pushMessage && (
-                    <p className="text-[11px] mt-1 ml-[22px]" style={{ color: '#C0392B' }}>{pushMessage}</p>
-                  )}
-                  {pushSuccess && (
-                    <p className="text-[11px] mt-1 ml-[22px]" style={{ color: 'var(--gp)' }}>Notifications enabled.</p>
-                  )}
+                  <Toggle
+                    on={prefs.showOpeningQuote}
+                    onChange={(v) => setPref('showOpeningQuote', v)}
+                  />
                 </div>
-                <div className="shrink-0">
-                  {pushLoading ? (
-                    <div className="w-11 h-6 flex items-center justify-center">
-                      <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin"
-                        style={{ borderColor: 'var(--gso)', borderTopColor: 'var(--gp)' }} />
+                <div className="flex items-center justify-between px-5 py-4">
+                  <div>
+                    <p className="text-[14px]" style={{ color: 'var(--td)' }}>One task at a time</p>
+                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--tg)' }}>Focus on a single moment on the dashboard</p>
+                  </div>
+                  <Toggle
+                    on={prefs.oneTaskAtATime}
+                    onChange={(v) => setPref('oneTaskAtATime', v)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Notifications */}
+            <div>
+              <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Notifications</p>
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                <div className="flex items-start justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <div className="flex-1 min-w-0 mr-4">
+                    <div className="flex items-center gap-2">
+                      <Bell size={14} color="var(--tg)" />
+                      <p className="text-[14px]" style={{ color: 'var(--td)' }}>Push notifications</p>
                     </div>
-                  ) : (
-                    <Toggle
-                      defaultOn={prefs.pushNotifications}
-                      onChange={handlePushToggle}
-                    />
-                  )}
+                    <p className="text-[11px] mt-0.5 ml-[22px]" style={{ color: 'var(--tg)' }}>
+                      {pushSupported ? 'Get gentle reminders to check in' : 'Not supported on this device'}
+                    </p>
+                    {pushMessage && (
+                      <p className="text-[11px] mt-1 ml-[22px]" style={{ color: '#C0392B' }}>{pushMessage}</p>
+                    )}
+                    {pushSuccess && (
+                      <p className="text-[11px] mt-1 ml-[22px]" style={{ color: 'var(--gp)' }}>Notifications enabled.</p>
+                    )}
+                  </div>
+                  <div className="shrink-0">
+                    {pushLoading ? (
+                      <div className="w-11 h-6 flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin"
+                          style={{ borderColor: 'var(--gso)', borderTopColor: 'var(--gp)' }} />
+                      </div>
+                    ) : (
+                      <Toggle
+                        on={prefs.pushNotifications}
+                        onChange={handlePushToggle}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <TimePickerRow
+                  value={prefs.reminderTime}
+                  onChange={(v) => setPref('reminderTime', v)}
+                />
+              </div>
+            </div>
+
+            {/* Appearance */}
+            <div>
+              <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Appearance</p>
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                <div className="flex items-center justify-between px-5 py-4">
+                  <span className="text-[14px]" style={{ color: 'var(--td)' }}>Theme</span>
+                  <span className="text-[13px]" style={{ color: 'var(--tg)' }}>Light</span>
                 </div>
               </div>
-
-              <TimePickerRow
-                value={prefs.reminderTime}
-                onChange={(v) => setPref('reminderTime', v)}
-              />
             </div>
-          </div>
 
-          {/* Appearance */}
-          <div>
-            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Appearance</p>
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-              <div className="flex items-center justify-between px-5 py-4">
-                <span className="text-[14px]" style={{ color: 'var(--td)' }}>Theme</span>
-                <span className="text-[13px]" style={{ color: 'var(--tg)' }}>Light</span>
-              </div>
-            </div>
-          </div>
+            {/* Plan — always visible */}
+            <div>
+              <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Plan</p>
+              <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
 
-          {/* Plan — always visible */}
-          <div>
-            <p className="text-[11px] uppercase tracking-widest pb-2 pl-1" style={{ color: 'var(--tg)' }}>Plan</p>
-            <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-
-              {/* Current plan row */}
-              <div
-                className="flex items-center justify-between px-5 py-4"
-                style={{ borderBottom: plan !== 'pro' || isTrialActive ? '1px solid var(--border)' : 'none' }}
-              >
-                <div className="flex items-center gap-2">
-                  <p className="text-[14px] font-medium" style={{ color: 'var(--td)' }}>
-                    {isTrialActive ? 'Pro Trial' : plan === 'pro' ? 'Pro' : 'Free'}
-                  </p>
-                  {isTrialActive && (
-                    <span
-                      className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-                      style={{
-                        background: trialDaysLeft <= 3 ? '#FAEEDA' : 'var(--gpa)',
-                        color: trialDaysLeft <= 3 ? '#854F0B' : 'var(--gp)',
-                      }}
-                    >
-                      {trialDaysLeft}d left
-                    </span>
-                  )}
-                  {plan === 'pro' && !isTrialActive && (
-                    <span
-                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                      style={{
-                        background: 'linear-gradient(135deg, var(--gold) 0%, #C4A040 100%)',
-                        color: 'var(--deep-pine)',
-                      }}
-                    >
-                      Pro
-                    </span>
+                {/* Current plan row */}
+                <div
+                  className="flex items-center justify-between px-5 py-4"
+                  style={{ borderBottom: plan !== 'pro' || isTrialActive ? '1px solid var(--border)' : 'none' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <p className="text-[14px] font-medium" style={{ color: 'var(--td)' }}>
+                      {isTrialActive ? 'Pro Trial' : plan === 'pro' ? 'Pro' : 'Free'}
+                    </p>
+                    {isTrialActive && (
+                      <span
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                        style={{
+                          background: trialDaysLeft <= 3 ? '#FAEEDA' : 'var(--gpa)',
+                          color: trialDaysLeft <= 3 ? '#854F0B' : 'var(--gp)',
+                        }}
+                      >
+                        {trialDaysLeft}d left
+                      </span>
+                    )}
+                    {plan === 'pro' && !isTrialActive && (
+                      <span
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{
+                          background: 'linear-gradient(135deg, var(--gold) 0%, #C4A040 100%)',
+                          color: 'var(--deep-pine)',
+                        }}
+                      >
+                        Pro
+                      </span>
+                    )}
+                  </div>
+                  {plan === 'pro' && !isTrialActive && currentPeriodEnd && (
+                    <p className="text-[12px]" style={{ color: 'var(--tg)' }}>
+                      Renews {new Date(currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </p>
                   )}
                 </div>
-                {plan === 'pro' && !isTrialActive && currentPeriodEnd && (
-                  <p className="text-[12px]" style={{ color: 'var(--tg)' }}>
-                    Renews {new Date(currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </p>
+
+                {/* Upgrade CTA — shown when not on paid Pro */}
+                {(plan !== 'pro' || isTrialActive) && (
+                  <div className="px-5 py-4">
+                    <p className="text-[12px] mb-3" style={{ color: 'var(--tg)' }}>
+                      {isTrialActive
+                        ? `Trial ends in ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'}. Lock in Pro before it expires.`
+                        : 'Unlock unlimited tasks, full history, 100+ music tracks, and more.'}
+                    </p>
+                    <Link
+                      href="/upgrade"
+                      className="flex items-center justify-center gap-2 w-full rounded-full py-3 text-[14px] font-semibold text-white"
+                      style={{
+                        background: 'var(--gp)',
+                        boxShadow: 'var(--shadow-btn)',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <Sparkles size={14} />
+                      Upgrade to Pro
+                    </Link>
+                  </div>
                 )}
               </div>
-
-              {/* Upgrade CTA — shown when not on paid Pro */}
-              {(plan !== 'pro' || isTrialActive) && (
-                <div className="px-5 py-4">
-                  <p className="text-[12px] mb-3" style={{ color: 'var(--tg)' }}>
-                    {isTrialActive
-                      ? `Trial ends in ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'}. Lock in Pro before it expires.`
-                      : 'Unlock unlimited tasks, full history, 100+ music tracks, and more.'}
-                  </p>
-                  <Link
-                    href="/upgrade"
-                    className="flex items-center justify-center gap-2 w-full rounded-full py-3 text-[14px] font-semibold text-white"
-                    style={{
-                      background: 'var(--gp)',
-                      boxShadow: 'var(--shadow-btn)',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    <Sparkles size={14} />
-                    Upgrade to Pro
-                  </Link>
-                </div>
-              )}
             </div>
           </div>
-
           {/* Sign out */}
           <form action={logout} onSubmit={() => {
             import('@/lib/api').then(({ clearApiCache, setCurrentUser }) => {

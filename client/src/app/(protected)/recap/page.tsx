@@ -398,7 +398,7 @@ export default function RecapPage() {
                   </p>
                 </motion.div>
 
-                <motion.div className="grid grid-cols-2 gap-3 mb-4"
+                <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"
                   initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: 0.07, ease: [0.4, 0, 0.2, 1] }}>
                   {[

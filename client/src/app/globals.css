@@ -457,6 +457,13 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
+.moment-col--wide {
+  width: 100%;
+  max-width: 640px;
+}
+@media (min-width: 1024px) {
+  .moment-col--wide { max-width: 1100px; }
+}
 .moment-with-panel {
   display: flex;
   flex: 1;

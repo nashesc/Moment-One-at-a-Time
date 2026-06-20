@@ -1,34 +1,21 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-
 interface ToggleProps {
-  defaultOn?: boolean
+  on: boolean
   onChange?: (v: boolean) => void
 }
 
-export default function Toggle({ defaultOn = true, onChange }: ToggleProps) {
-  const [on, setOn] = useState(defaultOn)
-
-  const handleClick = useCallback(() => {
-    // Compute next value first, then call both setOn and onChange
-    // Never call onChange inside the setState updater — that fires during render
-    const next = !on
-    setOn(next)
-    onChange?.(next)
-  }, [on, onChange])
-
+export default function Toggle({ on, onChange }: ToggleProps) {
   return (
     <button
       role="switch"
       aria-checked={on}
-      onClick={handleClick}
+      onClick={() => onChange?.(!on)}
       className="relative shrink-0 rounded-full border-none cursor-pointer transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       style={{
         width: 44,
         height: 24,
         background: on ? 'var(--gs)' : '#D1D1D1',
-        // Colored shadow matches the toggle color
         boxShadow: on ? '0 2px 8px rgba(90,158,80,0.35)' : 'none',
         transition: 'background 0.2s ease, box-shadow 0.2s ease',
       }}
