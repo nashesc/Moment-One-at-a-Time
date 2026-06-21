@@ -8,6 +8,7 @@ import {
   type LucideIcon
 } from 'lucide-react'
 import ProGateModal from '@/components/plan/ProGateModal'
+import MusicLibraryRail from '@/components/music/MusicLibraryRail'
 import { useMusic, type PlayMode } from '@/context/MusicContext'
 import { usePlan } from '@/context/PlanContext'
 import { TRACKS, getTracksByCategory, type Track, type TrackCategory } from '@/data/tracks'
@@ -21,12 +22,6 @@ const TABS: { id: Tab; label: string; Icon: LucideIcon; proOnly?: boolean }[] = 
   { id: 'nature',    label: 'Nature',    Icon: Leaf  },
   { id: 'ambient',   label: 'Ambient',   Icon: Wind  },
   { id: 'favorites', label: 'Favorites', Icon: Heart, proOnly: true },
-]
-
-const CATEGORY_META: { id: TrackCategory; label: string; Icon: LucideIcon }[] = [
-  { id: 'focus',   label: 'Focus',   Icon: Zap },
-  { id: 'nature',  label: 'Nature',  Icon: Leaf },
-  { id: 'ambient', label: 'Ambient', Icon: Wind },
 ]
 
 const TIMER_OPTIONS: { label: string; seconds: number | null }[] = [
@@ -378,57 +373,7 @@ export default function MusicPage() {
             </p>
           </div>
 
-          <div className="px-6 flex flex-col gap-4">
-            {CATEGORY_META.map(({ id, label, Icon }) => {
-              const tracks = getTracksByCategory(id)
-              const visible = isPro
-                ? [...tracks].sort((a, b) => a.title.localeCompare(b.title))
-                : [
-                    ...tracks.filter(t => !t.isPro).sort((a, b) => a.title.localeCompare(b.title)),
-                    ...tracks.filter(t => t.isPro).sort((a, b) => a.title.localeCompare(b.title)),
-                  ]
-              return (
-                <div key={id} className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-                  <div className="flex items-center justify-between px-4 pt-4 pb-2.5">
-                    <span className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide"
-                      style={{ color: 'var(--moss)' }}>
-                      <Icon size={13} /> {label}
-                    </span>
-                    <span className="text-[11px]" style={{ color: 'var(--tgl)' }}>{tracks.length}</span>
-                  </div>
-                  <div className="flex flex-col gap-0.5 pb-2">
-                    {visible.map(track => {
-                      const locked = track.isPro && !isPro
-                      const active = currentTrack?.id === track.id
-                      return (
-                        <button key={track.id}
-                          onClick={() => handleTrackClick(track)}
-                          className="w-full flex items-center gap-2.5 mx-2 rounded-xl px-2.5 py-2 text-left transition-colors"
-                          style={{
-                            background: active ? 'var(--gpa)' : 'transparent',
-                            border: 'none', cursor: 'pointer', opacity: locked ? 0.55 : 1,
-                            width: 'calc(100% - 16px)',
-                          }}
-                        >
-                          <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
-                            style={{ background: active ? 'var(--gp)' : 'var(--pale-green)' }}>
-                            {locked ? <Lock size={11} color="var(--tg)" />
-                              : active && isPlaying ? <Pause size={11} fill="white" color="white" />
-                              : <Play size={11} fill={active ? 'white' : 'var(--gp)'} color={active ? 'white' : 'var(--gp)'} />}
-                          </span>
-                          <span className="text-[13px] truncate flex-1"
-                            style={{ color: active ? 'var(--gp)' : 'var(--td)', fontWeight: active ? 500 : 400 }}>
-                            {track.title}
-                          </span>
-                          {locked && <span className="text-[10px] shrink-0" style={{ color: 'var(--tgl)' }}>Pro</span>}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <MusicLibraryRail isPro={isPro} variant="desktop" onLockedTrack={() => openGate('library')} />
 
           {/* Explore */}
           <div className="px-6 pt-4 pb-8">

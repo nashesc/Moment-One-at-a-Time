@@ -13,7 +13,8 @@ import { useAuth } from '@/context/AuthContext'
 import { useSettings } from '@/context/SettingsContext'
 import { Plus } from 'lucide-react'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
+import FocusOverlay from '@/components/dashboard/FocusOverlay'
 import { useMusic } from '@/context/MusicContext'
 import { useFabOffset } from '@/hooks/useFabOffset'
 import StuckSheet from '@/components/dashboard/StuckSheet'
@@ -36,6 +37,7 @@ export default function DashboardPage() {
   const [focusState, setFocusState] = useState<FocusState>('idle')
   const [showPicker, setShowPicker] = useState(true)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [forceFocusView, setForceFocusView] = useState(false)
 
   // Auto-select the task if there's only one — no need to show the picker
   useEffect(() => {
@@ -66,13 +68,38 @@ export default function DashboardPage() {
     if (focusState === 'idle') {
       updateStatus(currentTask.id, 'in_progress')
       setFocusState('focusing')
-    } else if (focusState === 'focusing') {
-      updateStatus(currentTask.id, 'done')
-      setFocusState('done')
     }
+    setOverlayOpen(true)
+  }
+
+  function handleOverlayFinish(durationSeconds: number) {
+    if (!currentTask) return
+    updateStatus(currentTask.id, 'done', { durationSeconds })
+    setOverlayOpen(false)
+    setFocusState('done')
+  }
+
+  function handleOverlaySkip(durationSeconds: number) {
+    if (!currentTask) return
+    updateStatus(currentTask.id, 'skipped', { durationSeconds })
+    setOverlayOpen(false)
+    const next = activeTasks.find(t => t.id !== currentTask.id)
+    if (next) { setFocused(next); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
+  }
+
+  function handleOverlayStuck(durationSeconds: number, reason?: string) {
+    if (!currentTask) return
+    updateStatus(currentTask.id, 'stuck', { stuckReason: reason, durationSeconds })
+    moveToEnd(currentTask.id)
+    setOverlayOpen(false)
+    const next = activeTasks.find(t => t.id !== currentTask.id)
+    if (next) { setFocused(next); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
   }
 
   const [stuckSheetOpen, setStuckSheetOpen] = useState(false)
+  const [overlayOpen, setOverlayOpen] = useState(false)
 
   function handleStuck() {
     if (!currentTask) return
@@ -86,7 +113,7 @@ export default function DashboardPage() {
     setStuckSheetOpen(false)
     const next = activeTasks.find(t => t.id !== currentTask.id)
     if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
   }
 
   function handleSkip() {
@@ -94,21 +121,21 @@ export default function DashboardPage() {
     updateStatus(currentTask.id, 'skipped')
     const next = activeTasks.find(t => t.id !== currentTask.id)
     if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
   }
 
   function handleNext() {
     const next = activeTasks.find(t => t.id !== currentTask?.id)
     if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
     setShowPicker(false)
   }
 
-  const btnLabel = focusState === 'idle' ? 'Begin Focus' : 'Mark as Done'
+  const btnLabel = focusState === 'idle' ? 'Begin Focus' : 'Resume Focus'
   const btnBg    = focusState === 'focusing' ? 'var(--bp)' : 'var(--gp)'
 
   // LIST VIEW — when one-at-a-time is off
-  const showListView = !prefs.oneTaskAtATime
+  const showListView = !prefs.oneTaskAtATime && !forceFocusView
 
   return (
     <>
@@ -224,6 +251,15 @@ export default function DashboardPage() {
                   estimatedMinutes={t.estimatedMinutes}
                   priority={t.priority}
                   status={t.status}
+                  onClick={
+                    t.status === 'pending' || t.status === 'in_progress'
+                    ? () => {
+                        setFocused(t)
+                        setFocusState(t.status === 'in_progress' ? 'focusing' : 'idle')
+                        setForceFocusView(true)
+                      }
+                    : undefined
+                  }
                 />
               ))}
             </div>
@@ -311,23 +347,36 @@ export default function DashboardPage() {
                           <Play size={12} fill="white" color="white" />
                         </span>
                       </button>
-                      <div className="flex gap-2">
-                        <button onClick={handleStuck}
-                          className="flex-1 py-[13px] text-[14px] rounded-full"
-                          style={{ color: 'var(--tg)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-                          I&apos;m Stuck
-                        </button>
-                        <button onClick={handleSkip}
-                          className="flex-1 py-[13px] text-[14px] rounded-full"
-                          style={{ color: 'var(--tg)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-                          Skip for now
-                        </button>
-                      </div>
+                      {focusState === 'idle' && (
+                        <div className="flex gap-2">
+                          <button onClick={handleStuck}
+                            className="flex-1 py-[13px] text-[14px] rounded-full"
+                            style={{ color: 'var(--tg)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                            I&apos;m Stuck
+                          </button>
+                          <button onClick={handleSkip}
+                            className="flex-1 py-[13px] text-[14px] rounded-full"
+                            style={{ color: 'var(--tg)', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
+                            Skip for now
+                          </button>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </>
               )}
               <StuckSheet open={stuckSheetOpen} onClose={() => setStuckSheetOpen(false)} onSubmit={commitStuck} />
+              <AnimatePresence>
+                {overlayOpen && currentTask && (
+                  <FocusOverlay
+                    task={{ id: currentTask.id, title: currentTask.title, estimatedMinutes: currentTask.estimatedMinutes }}
+                    onClose={() => setOverlayOpen(false)}
+                    onFinish={handleOverlayFinish}
+                    onSkip={handleOverlaySkip}
+                    onStuck={handleOverlayStuck}
+                  />
+                )}
+              </AnimatePresence>
                 
               {/* Focus picker — mobile fixed overlay */}
               {showPicker && !allDone && activeTasks.length > 0 && todayTasks.length > 0 && (
