@@ -59,10 +59,13 @@ const PRO_GATES: Record<string, { name: string; description: string }> = {
 export default function MusicPage() {
   const {
     currentTrack, isPlaying, volume, playMode, timer,
-    favorites, isLoading, currentTime, duration,
+    favorites, isLoading, subscribeTime,
     play, pause, resume, next, prev,
     setVolume, setPlayMode, setTimer, toggleFavorite, seek, setActivePool,
   } = useMusic()
+
+  const [{ currentTime, duration }, setTime] = useState({ currentTime: 0, duration: 0 })
+  useEffect(() => subscribeTime(setTime), [subscribeTime])
 
   const { isPro } = usePlan()
 

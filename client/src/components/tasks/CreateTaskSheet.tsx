@@ -34,7 +34,9 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
   // Focus title on open
   useEffect(() => {
     if (open) {
-      setTitle(''); setDesc(''); setPriority(2); setMinutes(30); setError('')
+      setTitle('')
+      setDesc('')
+      setError('')
       setTimeout(() => titleRef.current?.focus(), 100)
     }
   }, [open])

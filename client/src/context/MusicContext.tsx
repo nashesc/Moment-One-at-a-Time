@@ -7,6 +7,7 @@ import {
   useEffect,
   useRef,
   useCallback,
+  useMemo,
 } from 'react'
 import {
   TRACKS,
@@ -19,6 +20,11 @@ import { usePlan } from '@/context/PlanContext'
 
 export type PlayMode = 'all' | 'repeat' | 'shuffle'
 
+interface TimeState {
+  currentTime: number
+  duration: number
+}
+
 interface MusicContextValue {
   // State
   currentTrack: Track | null
@@ -28,8 +34,6 @@ interface MusicContextValue {
   timer: number | null        // remaining seconds, null = infinite
   favorites: string[]         // track IDs
   isLoading: boolean
-  currentTime: number
-  duration: number
 
   // Actions
   play: (track: Track) => void
@@ -44,6 +48,11 @@ interface MusicContextValue {
   toggleFavorite: (trackId: string) => void
   seek: (seconds: number) => void
   setActivePool: (tracks: Track[]) => void
+
+  // High-frequency playback position — NOT part of the main context value.
+  // Subscribe directly so only the component that needs per-second updates
+  // (the Music page progress bar) re-renders; everything else stays still.
+  subscribeTime: (cb: (t: TimeState) => void) => () => void
 }
 
 const MusicContext = createContext<MusicContextValue | null>(null)
@@ -53,15 +62,31 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null)
   const [isPlaying, setIsPlaying]       = useState(false)
   const [volume, setVolumeState]        = useState(0.8)
-  const [playMode, setPlayMode]         = useState<PlayMode>('all')
+  const [playMode, setPlayMode]         = useState<PlayMode>('repeat')
   const [timer, setTimerState]          = useState<number | null>(null)
   const [favorites, setFavorites]       = useState<string[]>([])
   const [isLoading, setIsLoading]       = useState(false)
   const [activePool, setActivePoolState] = useState<Track[]>([])
   const activePoolRef = useRef<Track[]>([])
-  const [currentTime, setCurrentTime]   = useState(0)
-  const [duration, setDuration]         = useState(0)
-  
+
+  // ─── High-frequency time state — ref + listener set, never triggers
+  // a context re-render. timeupdate fires multiple times/sec while playing;
+  // putting that in useState here would re-render every consumer of
+  // useMusic() app-wide (MiniPlayer is mounted globally) on every tick.
+  const timeRef = useRef<TimeState>({ currentTime: 0, duration: 0 })
+  const timeListenersRef = useRef<Set<(t: TimeState) => void>>(new Set())
+
+  const notifyTime = useCallback((patch: Partial<TimeState>) => {
+    timeRef.current = { ...timeRef.current, ...patch }
+    timeListenersRef.current.forEach(cb => cb(timeRef.current))
+  }, [])
+
+  const subscribeTime = useCallback((cb: (t: TimeState) => void) => {
+    timeListenersRef.current.add(cb)
+    cb(timeRef.current) // immediate sync value on subscribe
+    return () => { timeListenersRef.current.delete(cb) }
+  }, [])
+
   useEffect(() => { activePoolRef.current = activePool }, [activePool])
 
   const setActivePool = useCallback((tracks: Track[]) => {
@@ -88,8 +113,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     audio.preload = 'metadata'
     audio.volume = volume
 
-    audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime))
-    audio.addEventListener('durationchange', () => setDuration(audio.duration || 0))
+    audio.addEventListener('timeupdate', () => notifyTime({ currentTime: audio.currentTime }))
+    audio.addEventListener('durationchange', () => notifyTime({ duration: audio.duration || 0 }))
     audio.addEventListener('loadstart', () => setIsLoading(true))
     audio.addEventListener('canplay', () => setIsLoading(false))
     audio.addEventListener('ended', () => handleTrackEndRef.current())
@@ -161,6 +186,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       audio.pause()
       audio.src = url
       audio.currentTime = 0
+      notifyTime({ currentTime: 0, duration: 0 })
       setCurrentTrack(track)
       await audio.play()
       setIsPlaying(true)
@@ -168,7 +194,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setIsPlaying(false)
       setIsLoading(false)
     }
-  }, [])
+  }, [notifyTime])
 
   const handleTrackEnd = useCallback(() => {
   const mode  = playModeRef.current
@@ -218,11 +244,10 @@ useEffect(() => { handleTrackEndRef.current = handleTrackEnd }, [handleTrackEnd]
     if (audio) { audio.pause(); audio.src = ''; audio.currentTime = 0 }
     setIsPlaying(false)
     setCurrentTrack(null)
-    setCurrentTime(0)
-    setDuration(0)
+    notifyTime({ currentTime: 0, duration: 0 })
     setTimerState(null)
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
-  }, [])
+  }, [notifyTime])
 
   const next = useCallback(() => {
     const track = currentTrackRef.current
@@ -244,6 +269,7 @@ useEffect(() => { handleTrackEndRef.current = handleTrackEnd }, [handleTrackEnd]
     const audio = audioRef.current
     if (audio && audio.currentTime > 3) {
       audio.currentTime = 0
+      notifyTime({ currentTime: 0 })
       return
     }
     const pool = activePoolRef.current.length > 0 ? activePoolRef.current : allowedTracks(track.category)
@@ -255,12 +281,13 @@ useEffect(() => { handleTrackEndRef.current = handleTrackEnd }, [handleTrackEnd]
         : track
       : pool[(idx - 1 + pool.length) % pool.length]
     if (prevTrack) loadTrack(prevTrack)
-  }, [playMode, loadTrack, allowedTracks])
+  }, [playMode, loadTrack, allowedTracks, notifyTime])
 
   const seek = useCallback((seconds: number) => {
     const audio = audioRef.current
-    if (audio) { audio.currentTime = seconds; setCurrentTime(seconds) }
-  }, [])
+    if (audio) { audio.currentTime = seconds }
+    notifyTime({ currentTime: seconds })
+  }, [notifyTime])
 
   // ─── Volume ───────────────────────────────────────────────────────────────
   const setVolume = useCallback((v: number) => {
@@ -311,13 +338,26 @@ useEffect(() => { handleTrackEndRef.current = handleTrackEnd }, [handleTrackEnd]
     })
   }, [])
 
+  // ─── Memoized provider value ───────────────────────────────────────────────
+  // All action functions below are stable useCallbacks (or stable across
+  // renders given their deps), so this object only changes identity when
+  // currentTrack/isPlaying/volume/playMode/timer/favorites/isLoading change —
+  // none of which fire multiple times per second. currentTime/duration are
+  // intentionally excluded; consumers get those via subscribeTime instead.
+  const value = useMemo<MusicContextValue>(() => ({
+    currentTrack, isPlaying, volume, playMode, timer, favorites, isLoading,
+    play, pause, resume, stop, next, prev,
+    setVolume, setPlayMode, setTimer, toggleFavorite, seek, setActivePool,
+    subscribeTime,
+  }), [
+    currentTrack, isPlaying, volume, playMode, timer, favorites, isLoading,
+    play, pause, resume, stop, next, prev,
+    setVolume, setPlayMode, setTimer, toggleFavorite, seek, setActivePool,
+    subscribeTime,
+  ])
+
   return (
-    <MusicContext.Provider value={{
-      currentTrack, isPlaying, volume, playMode, timer,
-      favorites, isLoading, currentTime, duration,
-      play, pause, resume, stop, next, prev,
-      setVolume, setPlayMode, setTimer, toggleFavorite, seek, setActivePool,
-    }}>
+    <MusicContext.Provider value={value}>
       {children}
     </MusicContext.Provider>
   )

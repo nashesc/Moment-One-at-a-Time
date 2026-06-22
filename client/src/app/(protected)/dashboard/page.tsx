@@ -41,13 +41,26 @@ export default function DashboardPage() {
 
   // Auto-select the task if there's only one — no need to show the picker
   useEffect(() => {
-    if (!loading && showPicker && activeTasks.length === 1 && !focused) {
-      setFocused(activeTasks[0])
-      setFocusState('idle')
-      setShowPicker(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, showPicker, activeTasks.length])
+  if (loading) return
+  if (focused) return
+
+  // Restore any in-progress task — handles returning from another page
+  const inProgress = activeTasks.find(t => t.status === 'in_progress')
+  if (inProgress) {
+    setFocused(inProgress)
+    setFocusState('focusing')
+    setShowPicker(false)
+    return
+  }
+
+  // Auto-select when only one task remains (skip picker)
+  if (showPicker && activeTasks.length === 1) {
+    setFocused(activeTasks[0])
+    setFocusState('idle')
+    setShowPicker(false)
+  }
+}, [loading, activeTasks, focused, showPicker])
+
 
   const now      = new Date()
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening'
@@ -95,7 +108,6 @@ export default function DashboardPage() {
     setOverlayOpen(false)
     const next = activeTasks.find(t => t.id !== currentTask.id)
     if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
   }
 
   const [stuckSheetOpen, setStuckSheetOpen] = useState(false)
@@ -113,7 +125,6 @@ export default function DashboardPage() {
     setStuckSheetOpen(false)
     const next = activeTasks.find(t => t.id !== currentTask.id)
     if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
   }
 
   function handleSkip() {
