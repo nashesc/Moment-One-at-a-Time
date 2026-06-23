@@ -151,7 +151,9 @@ export default function UpgradePage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           >
-            <div className="text-6xl mb-6">🌿</div>
+            <div className="mb-6 flex justify-center">
+              <Leaf size={64} color="var(--gp)" strokeWidth={1.5} />
+            </div>
             <h1
               className="text-[30px] font-bold mb-3"
               style={{ fontFamily: 'var(--font-display)', color: 'var(--gp)' }}

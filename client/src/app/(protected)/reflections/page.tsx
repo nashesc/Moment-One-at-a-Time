@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import StatusBadge from '@/components/ui/StatusBadge'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Leaf } from 'lucide-react'
 import { getCheckins } from '@/lib/api'
 import type { Checkin } from '@/types'
 import { createClient } from '@/lib/supabase/client'
@@ -126,7 +126,9 @@ export default function ReflectionsPage() {
           </div>
         ) : checkins.length === 0 ? (
           <div className="rounded-2xl p-8 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-            <p className="text-4xl mb-4">🌿</p>
+            <div className="flex justify-center mb-4">
+              <Leaf size={40} color="var(--gp)" strokeWidth={1.5} />
+            </div>
             <p className="text-[16px] font-medium mb-1" style={{ color: 'var(--td)' }}>No reflections yet</p>
             <p className="text-[13px]" style={{ color: 'var(--tg)' }}>
               As you work through tasks — completing, getting stuck, or noting how things felt — your reflections will appear here.

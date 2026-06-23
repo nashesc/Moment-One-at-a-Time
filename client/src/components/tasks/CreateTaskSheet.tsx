@@ -23,13 +23,24 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
   const { addTask } = useTasks()
   const [title, setTitle]       = useState('')
   const [description, setDesc]  = useState('')
-  const [priority, setPriority] = useState<1 | 2 | 3>(2)
-  const [minutes, setMinutes]   = useState(30)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]       = useState('')
   const [showProGate, setShowProGate] = useState(false)
   const isSubmittingRef = useRef(false)
   const titleRef = useRef<HTMLInputElement>(null)
+
+  const [priority, setPriority] = useState<1 | 2 | 3>(() => {
+    if (typeof window === 'undefined') return 2
+    const stored = localStorage.getItem('moment_task_sheet_priority')
+    const parsed = stored ? parseInt(stored) : NaN
+    return ([1, 2, 3].includes(parsed) ? parsed : 2) as 1 | 2 | 3
+  })
+  const [minutes, setMinutes] = useState<number>(() => {
+    if (typeof window === 'undefined') return 30
+    const stored = localStorage.getItem('moment_task_sheet_minutes')
+    const parsed = stored ? parseInt(stored) : NaN
+    return [15, 30, 45, 60, 90, 120].includes(parsed) ? parsed : 30
+  })
 
   // Focus title on open
   useEffect(() => {
@@ -90,7 +101,7 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
           {/* Backdrop */}
           <motion.div
             className="fixed inset-0 z-40"
-            style={{ background: 'rgba(26,26,26,0.4)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(26,26,26,0.55)' }}
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -196,7 +207,10 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
                       <button
                         key={p.value}
                         type="button"
-                        onClick={() => setPriority(p.value)}
+                        onClick={() => {
+                          setPriority(p.value)
+                          localStorage.setItem('moment_task_sheet_priority', String(p.value))
+                        }}
                         className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-3 text-[13px] font-medium transition-all duration-150"
                         style={{
                           background: priority === p.value ? 'var(--gpa)' : 'white',
@@ -225,7 +239,10 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
                       <button
                         key={t}
                         type="button"
-                        onClick={() => setMinutes(t)}
+                        onClick={() => {
+                          setMinutes(t)
+                          localStorage.setItem('moment_task_sheet_minutes', String(t))
+                        }}
                         className="rounded-full px-4 py-2 text-[13px] font-medium transition-all duration-150"
                         style={{
                           background: minutes === t ? 'var(--gp)' : 'white',

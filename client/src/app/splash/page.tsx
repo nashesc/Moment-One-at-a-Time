@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { FREE_OPENING_QUOTE_COUNT, OPENING_QUOTES } from '@/data/quotes'
 import { usePlan } from '@/context/PlanContext'
+import { Leaf } from 'lucide-react'
 
 export default function SplashPage() {
   // Start with null — renders nothing on server, picks quote on client only
@@ -53,12 +54,11 @@ export default function SplashPage() {
       }}
     >
       <div className="px-8 max-w-sm text-center">
-        <div
-          className="text-6xl mb-8"
+        <div className="mb-8 flex justify-center" 
           style={{ animation: 'leafFloat 3s ease-in-out infinite' }}
         >
-          🌿
-        </div>
+        <Leaf size={64} color="rgba(255,255,255,0.93)" strokeWidth={1.5} />
+      </div>
 
         {/* Only render quote after client hydration — no mismatch */}
         {quote && (

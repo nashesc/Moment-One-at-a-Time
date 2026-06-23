@@ -33,13 +33,18 @@ export default function RippleProvider() {
       const el = pool[poolIndexRef.current % pool.length]
       poolIndexRef.current++
 
-      el.style.animation = 'none'
+      el.getAnimations().forEach(a => a.cancel())
       el.style.left = `${x}px`
       el.style.top = `${y}px`
-      el.style.opacity = '1'
-      el.style.transform = 'translate(-50%, -50%) scale(0)'
-      void el.offsetWidth // force restart of the animation
-      el.style.animation = 'momentRipple 0.75s cubic-bezier(0.2, 0.8, 0.4, 1) forwards'
+
+      el.animate(
+        [
+          { transform: 'translate(-50%, -50%) scale(0)', opacity: 1 },
+          { transform: 'translate(-50%, -50%) scale(28)', opacity: 0.6, offset: 0.6 },
+          { transform: 'translate(-50%, -50%) scale(45)', opacity: 0 },
+        ],
+        { duration: 750, easing: 'cubic-bezier(0.2, 0.8, 0.4, 1)' }
+      )
     }
 
     function onPointerDown(e: PointerEvent) {

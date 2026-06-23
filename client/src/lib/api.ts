@@ -29,16 +29,31 @@ const CHECKINS_TTL = 2 * 60 * 1000  // 2 min
 
 const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL ?? 'http://localhost:4000'
 
+// Concurrent apiFetch calls (e.g. weekly recap's 7 parallel requests) used to
+// each trigger their own getSession() call. Dedupe calls landing in the same
+// short window onto one in-flight promise — window is short enough that this
+// never risks serving a stale token after a refresh.
+let _tokenPromise: Promise<string | null> | null = null
+let _tokenPromiseAt = 0
+const TOKEN_DEDUPE_WINDOW_MS = 50
+
 async function getToken(): Promise<string | null> {
-  try {
-    const supabase = createClient()
-    const { data } = await supabase.auth.getSession()
-    const token = data.session?.access_token ?? null
-    return token
-  } catch (err) {
-    console.error('[API] Failed to get auth token:', err)
-    return null
+  const now = Date.now()
+  if (_tokenPromise && now - _tokenPromiseAt < TOKEN_DEDUPE_WINDOW_MS) {
+    return _tokenPromise
   }
+  _tokenPromiseAt = now
+  _tokenPromise = (async () => {
+    try {
+      const supabase = createClient()
+      const { data } = await supabase.auth.getSession()
+      return data.session?.access_token ?? null
+    } catch (err) {
+      console.error('[API] Failed to get auth token:', err)
+      return null
+    }
+  })()
+  return _tokenPromise
 }
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {

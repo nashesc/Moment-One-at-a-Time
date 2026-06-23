@@ -55,10 +55,10 @@
   --border:       rgba(0, 0, 0, 0.07);
   --border-focus: var(--gs);
   /* Shadows */
-  --shadow-card:  0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
-  --shadow-btn:   0 2px 8px rgba(45, 90, 39, 0.25);
-  --shadow-fab:   0 4px 20px rgba(45, 90, 39, 0.40), 0 2px 6px rgba(45, 90, 39, 0.20);
-  --shadow-modal: 0 8px 40px rgba(0, 0, 0, 0.14), 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card:  0 1px 2px rgba(23, 58, 45, 0.06), 0 1px 1px rgba(23, 58, 45, 0.04);
+--shadow-btn:   0 1px 2px rgba(23, 58, 45, 0.18);
+--shadow-fab:   0 2px 6px rgba(23, 58, 45, 0.30), 0 1px 2px rgba(23, 58, 45, 0.15);
+--shadow-modal: 0 4px 24px rgba(23, 58, 45, 0.18), 0 1px 4px rgba(23, 58, 45, 0.10);
   --shadow-nav:   0 -1px 0 rgba(0, 0, 0, 0.06);
   /* Radii */
   --radius-sm:    8px;
@@ -124,7 +124,7 @@
 .lf {
   --lf-overlay:     rgba(23, 58, 45, 0.45);
   --lf-glass-bg:    rgba(255, 255, 255, 0.12);
-  --lf-glass-blur:  blur(30px);
+  --lf-glass-blur:  none;
   --lf-glass-border: rgba(255, 255, 255, 0.18);
   --lf-text:        rgba(255, 255, 255, 0.93);
   --lf-text-muted:  rgba(255, 255, 255, 0.50);
@@ -147,9 +147,6 @@ body {
   font-family: var(--font-body);
   color: var(--td);
   background-color: var(--ow);
-  background-image:
-    radial-gradient(ellipse 60% 50% at 20% 10%, rgba(212, 232, 207, 0.45) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(196, 180, 154, 0.25) 0%, transparent 60%);
   min-height: 100dvh;
 }
 @media (min-width: 768px) {
@@ -229,6 +226,7 @@ body {
 /* ─── 7. Card Surfaces ───────────────────────────────────────────────────────*/
 .moment-card {
   background: var(--card-white);
+  border: 1px solid var(--border);
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-card);
 }
@@ -238,9 +236,9 @@ body {
   box-shadow: var(--shadow-card);
 }
 .moment-card--glass {
-  background: var(--lf-glass-bg);
-  backdrop-filter: var(--lf-glass-blur);
-  -webkit-backdrop-filter: var(--lf-glass-blur);
+  background: linear-gradient(160deg, 
+    rgba(255,255,255,0.22) 0%, 
+    rgba(255,255,255,0.10) 100%);
   border: 1px solid var(--lf-glass-border);
   border-radius: var(--radius-2xl);
 }
@@ -492,9 +490,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
-  background: rgba(26, 26, 26, 0.40);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(26, 26, 26, 0.55);
 }
 .moment-sheet {
   position: fixed;

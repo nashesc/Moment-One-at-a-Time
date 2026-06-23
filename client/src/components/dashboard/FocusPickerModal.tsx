@@ -19,7 +19,7 @@ export default function FocusPickerModal({
   return (
     <div
       className="w-full h-full flex flex-col px-5 pt-8 pb-6 overflow-y-auto"
-      style={{ background: 'rgba(245,242,236,0.97)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(245,242,236,0.99)' }}
     >
       <div className="flex items-start justify-between mb-1">
         <h2

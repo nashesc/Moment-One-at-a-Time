@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect, useRef } from 'react'
 import { Play, Pause, Lock } from 'lucide-react'
 import { TRACKS, getTracksByCategory, type Track, type TrackCategory } from '@/data/tracks'
 import { useMusic } from '@/context/MusicContext'
@@ -17,6 +18,44 @@ interface MusicLibraryRailProps {
   isPro: boolean
   variant?: 'desktop' | 'overlay'
   onLockedTrack?: (track: Track) => void
+}
+
+// Windowed render — mounts pageSize rows, grows via IntersectionObserver.
+// resetKey (not the tracks array) drives the reset effect, since `tracks`
+// is a freshly-sorted array on every parent render and using it directly
+// as a dep would re-trigger the reset on every unrelated re-render.
+function PaginatedRows({
+  tracks, pageSize, resetKey, renderRow,
+}: {
+  tracks: Track[]; pageSize: number; resetKey: string
+  renderRow: (t: Track) => React.ReactNode
+}) {
+  const [count, setCount] = useState(pageSize)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { setCount(pageSize) }, [resetKey, pageSize])
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCount(c => Math.min(c + pageSize, tracks.length))
+        }
+      },
+      { rootMargin: '300px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [tracks.length, pageSize])
+
+  return (
+    <>
+      {tracks.slice(0, count).map(renderRow)}
+      {count < tracks.length && <div ref={sentinelRef} aria-hidden style={{ height: 1 }} />}
+    </>
+  )
 }
 
 export default function MusicLibraryRail({ isPro, variant = 'desktop', onLockedTrack }: MusicLibraryRailProps) {
@@ -70,7 +109,12 @@ export default function MusicLibraryRail({ isPro, variant = 'desktop', onLockedT
                 <span className="text-[11px]" style={{ color: 'var(--tgl)' }}>{tracks.length}</span>
               </div>
               <div className="flex flex-col gap-0.5 pb-2">
-                {tracks.map(t => <Row key={t.id} track={t} showCategory={false} />)}
+                <PaginatedRows
+                  tracks={tracks}
+                  pageSize={15}
+                  resetKey={cat}
+                  renderRow={t => <Row key={t.id} track={t} showCategory={false} />}
+                />
               </div>
             </div>
           )
@@ -96,7 +140,12 @@ export default function MusicLibraryRail({ isPro, variant = 'desktop', onLockedT
           <span className="text-[11px]" style={{ color: 'var(--tgl)' }}>{freeTracks.length}</span>
         </div>
         <div className="flex flex-col gap-0.5 pb-2">
-          {freeTracks.map(t => <Row key={t.id} track={t} showCategory />)}
+          <PaginatedRows
+            tracks={freeTracks}
+            pageSize={15}
+            resetKey="free"
+            renderRow={t => <Row key={t.id} track={t} showCategory />}
+          />
         </div>
       </div>
 
@@ -111,7 +160,12 @@ export default function MusicLibraryRail({ isPro, variant = 'desktop', onLockedT
           Tap any track to unlock the full library.
         </p>
         <div className="flex flex-col gap-0.5 pb-2">
-          {proTracks.map(t => <Row key={t.id} track={t} showCategory />)}
+          <PaginatedRows
+            tracks={proTracks}
+            pageSize={15}
+            resetKey="pro"
+            renderRow={t => <Row key={t.id} track={t} showCategory />}
+          />
         </div>
       </div>
     </div>

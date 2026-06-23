@@ -14,9 +14,16 @@ export default function StuckSheet({
     <AnimatePresence>
       {open && (
         <>
-          <motion.div className="fixed inset-0 z-40" style={{ background: 'rgba(26,26,26,0.4)', backdropFilter: 'blur(4px)' }}
-            onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
-          <motion.div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl"
+          <motion.div 
+            className="fixed inset-0 z-40" 
+            style={{ background: 'rgba(26,26,26,0.55)' }}
+            onClick={onClose} 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+          />
+          <motion.div 
+          className="fixed .moment-miniplayer left-0 right-0 z-50 rounded-t-3xl"
             style={{ background: 'var(--ow)', boxShadow: '0 -4px 32px rgba(0,0,0,0.12)' }}
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { MessageSquare, Plus } from 'lucide-react'
+import { MessageSquare, Plus, Leaf } from 'lucide-react'
 import MomentumRing from '@/components/ui/MomentumRing'
 import StatusBadge from '@/components/ui/StatusBadge'
 import { getRecap, getRecapRange, getCheckins, type RecapRangeItem } from '@/lib/api'
@@ -122,7 +122,9 @@ function ReflectionsView() {
   if (checkins.length === 0) {
     return (
       <div className="rounded-2xl p-8 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-        <p className="text-4xl mb-4">🌿</p>
+        <div className="flex justify-center mb-4">
+          <Leaf size={40} color="var(--gp)" strokeWidth={1.5} />
+        </div>
         <p className="text-[16px] font-medium mb-1" style={{ color: 'var(--td)' }}>No reflections yet</p>
         <p className="text-[13px]" style={{ color: 'var(--tg)' }}>
           As you work through tasks — completing, getting stuck, or noting how things felt — your reflections will appear here.
@@ -443,13 +445,15 @@ export default function RecapPage() {
                   <div className="flex items-end gap-2 h-20">
                     {chartBars.map((pct, i) => (
                       <div key={i} className="flex flex-1 flex-col items-center gap-1.5 h-full">
-                        <div className="flex-1 w-full rounded-lg overflow-hidden flex items-end"
+                        <div className="flex-1 w-full rounded-lg overflow-hidden relative"
                           style={{ background: 'var(--gpa)' }}>
-                          <div className="w-full rounded-lg"
+                          <div className="w-full h-full rounded-lg absolute bottom-0 left-0"
                             style={{
-                              height: `${Math.max(pct, pct > 0 ? 6 : 0)}%`,
                               background: pct > 0 ? 'var(--gs)' : 'var(--gpa)',
-                              transition: 'height 0.7s cubic-bezier(0.4,0,0.2,1)',
+                              transform: `scaleY(${Math.max(pct, pct > 0 ? 6 : 0) / 100})`,
+                              transformOrigin: 'bottom',
+                              transition: 'transform 0.7s cubic-bezier(0.4,0,0.2,1)',
+                              willChange: 'transform',
                             }}
                           />
                         </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Plus, RefreshCw, Leaf } from 'lucide-react'
 import TaskGridCard from '@/components/tasks/TaskGridCard'
 import Toggle from '@/components/ui/Toggle'
 import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
@@ -168,7 +168,9 @@ export default function MomentsPage() {
             )}
             {todayFiltered.length === 0 && yesterdayFiltered.length === 0 && !loading && (
               <div className="text-center py-12">
-                <p className="text-[32px] mb-3">🌿</p>
+                <div className="flex justify-center mb-3">
+                  <Leaf size={32} color="var(--gp)" strokeWidth={1.5} />
+                </div>
                 <p className="text-[15px] font-medium" style={{ color: 'var(--td)' }}>Nothing here</p>
                 <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>
                   {tab === 'All' ? 'Tap + to add your first moment' : `No ${tab.toLowerCase()} tasks`}

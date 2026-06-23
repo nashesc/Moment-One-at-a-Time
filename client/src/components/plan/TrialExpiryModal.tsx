@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'motion/react'
 import { usePlan } from '@/context/PlanContext'
 import { useAuth } from '@/context/AuthContext'
+import { Leaf } from 'lucide-react'
 
 export default function TrialExpiryModal() {
   const { isPro, isTrialActive, loading } = usePlan()
@@ -50,7 +51,7 @@ export default function TrialExpiryModal() {
           {/* Backdrop */}
           <motion.div
             className="fixed inset-0 z-50"
-            style={{ background: 'rgba(26,26,26,0.5)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(26,26,26,0.55)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -72,7 +73,9 @@ export default function TrialExpiryModal() {
             transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }}
           >
             <div className="text-center">
-              <div className="text-5xl mb-4">🌿</div>
+              <div className="mb-4 flex justify-center">
+                <Leaf size={52} color="var(--gp)" strokeWidth={1.5} />
+              </div>
               <h2
                 className="text-[22px] font-bold mb-2"
                 style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}

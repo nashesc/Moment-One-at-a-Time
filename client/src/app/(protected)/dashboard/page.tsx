@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { Play, RefreshCw } from 'lucide-react'
+import { Play, RefreshCw, Leaf } from 'lucide-react'
 import MomentumRing from '@/components/ui/MomentumRing'
 import TaskCard from '@/components/dashboard/TaskCard'
 import DonePanel from '@/components/dashboard/DonePanel'
@@ -165,7 +165,8 @@ export default function DashboardPage() {
               <p className="text-[12px]" style={{ color: 'var(--tg)' }}>{dateStr}</p>
               <p className="text-[20px] font-semibold mt-0.5"
                 style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
-                {greeting}, {firstName} 🌿
+                {greeting}, {firstName}{' '}
+                <Leaf size={18} className="inline -mt-1 ml-1" color="var(--gp)" strokeWidth={1.75} />
               </p>
             </div>
             <Link href="/moments" className="text-[12px] px-3 py-1.5 rounded-full border"
@@ -283,7 +284,9 @@ export default function DashboardPage() {
               {allDone && todayTasks.length > 0 && focusState !== 'done' && (
                 <div className="mx-4 md:mx-8 rounded-2xl p-8 text-center"
                   style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-                  <p className="text-4xl mb-4">🌿</p>
+                  <div className="flex justify-center mb-4">
+                    <Leaf size={40} color="var(--gp)" strokeWidth={1.5} />
+                  </div>
                   <h2 className="text-[24px] font-bold mb-2"
                     style={{ fontFamily: 'var(--font-display)', color: 'var(--gp)' }}>
                     All done for today.
@@ -299,7 +302,9 @@ export default function DashboardPage() {
                   className="mx-4 md:mx-8 rounded-2xl p-6 text-center"
                   style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
                 >
-                  <p className="text-3xl mb-3">🌿</p>
+                  <div className="flex justify-center mb-3">
+                    <Leaf size={32} color="var(--gp)" strokeWidth={1.5} />
+                  </div>
                   <p className="text-[16px] font-medium mb-2" style={{ color: 'var(--td)' }}>
                     Your tasks are ready when you are.
                   </p>

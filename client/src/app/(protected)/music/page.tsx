@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState, useCallback, memo } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef, memo } from 'react'
 import {
   Play, Pause, SkipBack, SkipForward,
   Volume2, Repeat, Shuffle, List,
@@ -59,19 +59,22 @@ const PRO_GATES: Record<string, { name: string; description: string }> = {
 export default function MusicPage() {
   const {
     currentTrack, isPlaying, volume, playMode, timer,
-    favorites, isLoading, subscribeTime,
+    favorites, isLoading,
     play, pause, resume, next, prev,
     setVolume, setPlayMode, setTimer, toggleFavorite, seek, setActivePool,
   } = useMusic()
 
-  const [{ currentTime, duration }, setTime] = useState({ currentTime: 0, duration: 0 })
-  useEffect(() => subscribeTime(setTime), [subscribeTime])
-
   const { isPro } = usePlan()
 
-  const [activeTab, setActiveTab] = useState<Tab>(() => currentTrack?.category ?? 'focus')
+  const [activeTab, setActiveTab] = useState<Tab>(() => currentTrack?.category ?? 'all')
   const [showTimer, setShowTimer] = useState(false)
   const [showVolume, setShowVolume] = useState(false)
+
+  const PAGE_SIZE = 20
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [activeTab])
+
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   const [gateOpen, setGateOpen] = useState(false)
   const [gateKey, setGateKey] = useState<keyof typeof PRO_GATES>('library')
@@ -93,6 +96,23 @@ export default function MusicPage() {
     return [...free, ...locked]
   }, [activeTab, isPro, favorites])
 
+  const visibleTracks = useMemo(() => tabTracks.slice(0, visibleCount), [tabTracks, visibleCount])
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount(c => Math.min(c + PAGE_SIZE, tabTracks.length))
+        }
+      },
+      { rootMargin: '400px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [tabTracks.length])
+
   useEffect(() => {
     if (activeTab === 'favorites') return
     if (activeTab === 'all') {
@@ -110,8 +130,6 @@ export default function MusicPage() {
     if (activeTab !== 'favorites') return
     setActivePool(TRACKS.filter(t => favorites.includes(t.id)))
   }, [activeTab, favorites, setActivePool])
-
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
 
   const PLAY_MODE_ICONS: Record<PlayMode, React.ReactNode> = {
     all:     <List size={15} />,
@@ -204,22 +222,7 @@ export default function MusicPage() {
                 </div>
 
                 {/* Progress */}
-                <div className="h-1 rounded-full mb-1 overflow-hidden cursor-pointer"
-                  style={{ background: 'rgba(255,255,255,0.15)' }}
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect()
-                    seek(((e.clientX - rect.left) / rect.width) * duration)
-                  }}
-                >
-                  <div className="h-full rounded-full"
-                    style={{ width: `${progress}%`, background: 'var(--gold)', transition: 'width 0.5s linear' }} />
-                </div>
-                <div className="flex justify-between mb-4">
-                  <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{formatTime(currentTime)}</span>
-                  <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                    {duration > 0 ? formatTime(duration) : '--:--'}
-                  </span>
-                </div>
+                <NowPlayingTimeline onSeek={seek} />
 
                 {/* Controls */}
                 <div className="flex items-center justify-between">
@@ -340,7 +343,7 @@ export default function MusicPage() {
               )}
 
               <div className="md:hidden flex flex-col gap-2">
-                {tabTracks.map((track, i) => (
+                {visibleTracks.map((track, i) => (
                   <TrackRow key={track.id} track={track} index={i}
                     isPro={isPro} isActive={currentTrack?.id === track.id}
                     isPlaying={isPlaying} isFav={favorites.includes(track.id)}
@@ -350,7 +353,7 @@ export default function MusicPage() {
               </div>
 
               <div className="hidden md:grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
-                {tabTracks.map(track => (
+                {visibleTracks.map(track => (
                   <TrackGridCard key={track.id} track={track}
                     isPro={isPro} isActive={currentTrack?.id === track.id}
                     isPlaying={isPlaying} isFav={favorites.includes(track.id)}
@@ -358,6 +361,7 @@ export default function MusicPage() {
                     toggleFavorite={toggleFavorite} />
                 ))}
               </div>
+              <div ref={sentinelRef} aria-hidden />
             </div>
           </div>
         </div>
@@ -504,3 +508,33 @@ const TrackGridCard = memo(function TrackGridCard({
     </button>
   )
 })
+
+// Isolated so the timeupdate tick (multiple times/sec while playing) only
+// re-renders this small subtree, not the whole page + track list.
+function NowPlayingTimeline({ onSeek }: { onSeek: (seconds: number) => void }) {
+  const { subscribeTime } = useMusic()
+  const [{ currentTime, duration }, setTime] = useState({ currentTime: 0, duration: 0 })
+  useEffect(() => subscribeTime(setTime), [subscribeTime])
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+
+  return (
+    <>
+      <div className="h-1 rounded-full mb-1 overflow-hidden cursor-pointer"
+        style={{ background: 'rgba(255,255,255,0.15)' }}
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect()
+          onSeek(((e.clientX - rect.left) / rect.width) * duration)
+        }}
+      >
+        <div className="h-full rounded-full"
+          style={{ width: `${progress}%`, background: 'var(--gold)', transition: 'width 0.5s linear' }} />
+      </div>
+      <div className="flex justify-between mb-4">
+        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{formatTime(currentTime)}</span>
+        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          {duration > 0 ? formatTime(duration) : '--:--'}
+        </span>
+      </div>
+    </>
+  )
+}
