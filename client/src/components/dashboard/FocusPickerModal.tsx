@@ -5,7 +5,7 @@ import { motion } from 'motion/react'
 import type { Task } from '@/context/TaskContext'
 
 const priorityLabel: Record<number, string> = { 1: 'High', 2: 'Medium', 3: 'Low' }
-const priorityDot:   Record<number, string> = { 1: '#5A9E50', 2: '#C4A35A', 3: '#1B3A6B' }
+const priorityDot:   Record<number, string> = { 1: '#5A9E50', 2: 'var(--gold-dark)', 3: '#1B3A6B' }
 
 export default function FocusPickerModal({
   tasks,

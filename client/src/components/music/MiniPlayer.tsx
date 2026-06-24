@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Play, Pause, SkipForward, X } from 'lucide-react'
+import { Play, Pause, SkipForward, X, Zap, Wind, TreePine, Music, LucideIcon} from 'lucide-react'
 import { useMusic } from '@/context/MusicContext'
 import { motion, AnimatePresence } from 'motion/react'
 
@@ -13,15 +13,17 @@ function formatTimer(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  focus:   '🎯',
-  nature:  '🌿',
-  ambient: '🌌',
+const CATEGORY_ICON: Record<string, LucideIcon> = {
+  focus:   Zap,
+  nature:  TreePine,
+  ambient: Wind,
 }
-
 export default function MiniPlayer() {
   const router = useRouter()
   const { currentTrack, isPlaying, timer, isLoading, pause, resume, next, stop } = useMusic()
+  const CategoryIcon = currentTrack
+    ? CATEGORY_ICON[currentTrack.category]
+    : null
 
   return (
     <AnimatePresence>
@@ -40,9 +42,15 @@ export default function MiniPlayer() {
               boxShadow: '0 -2px 20px rgba(0,0,0,0.25), 0 4px 24px rgba(0,0,0,0.15)',
             }}
           >
-            {/* Category emoji */}
+            {/* Category icon */}
             <span className="text-xl shrink-0">
-              {CATEGORY_EMOJI[currentTrack.category] ?? '🎵'}
+              {CategoryIcon ? (
+                <CategoryIcon size={20}
+                  style={{ color: 'var(--gpa)' }}  
+                />
+              ) : (
+                '🎵'
+              )}
             </span>
 
             {/* Track info — tapping navigates to /music */}

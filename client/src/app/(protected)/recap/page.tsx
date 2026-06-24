@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { MessageSquare, Plus, Leaf } from 'lucide-react'
 import MomentumRing from '@/components/ui/MomentumRing'
 import StatusBadge from '@/components/ui/StatusBadge'
@@ -208,6 +208,41 @@ export default function RecapPage() {
   const { currentTrack } = useMusic()
   const { isPro } = usePlan()
 
+  const recapContentRef      = useRef<HTMLDivElement>(null)
+  const reflectionsContentRef = useRef<HTMLDivElement>(null)
+  const prevPeriodRef        = useRef<Period>('daily')
+  const prevViewRef          = useRef<View>('recap')
+
+  const PERIOD_INDEX: Record<Period, number> = { daily: 0, weekly: 1, monthly: 2, yearly: 3 }
+  const VIEW_INDEX:   Record<View,   number> = { recap: 0, reflections: 1 }
+
+  function animateRef(ref: React.RefObject<HTMLDivElement | null>, dir: 'left' | 'right') {
+    const el = ref.current
+    if (!el) return
+    el.getAnimations().forEach(a => a.cancel())
+    el.animate(
+      [
+        { transform: `translateX(${dir === 'right' ? 20 : -20}px)`, opacity: 0 },
+        { transform: 'translateX(0)', opacity: 1 },
+      ],
+      { duration: 180, easing: 'cubic-bezier(0.4,0,0.2,1)', fill: 'both' }
+    )
+  }
+
+  useEffect(() => {
+    if (period === prevPeriodRef.current) return
+    const dir = PERIOD_INDEX[period] > PERIOD_INDEX[prevPeriodRef.current] ? 'right' : 'left'
+    prevPeriodRef.current = period
+    animateRef(recapContentRef, dir)
+  }, [period])
+
+  useEffect(() => {
+    if (view === prevViewRef.current) return
+    const dir = VIEW_INDEX[view] > VIEW_INDEX[prevViewRef.current] ? 'right' : 'left'
+    prevViewRef.current = view
+    animateRef(view === 'reflections' ? reflectionsContentRef : recapContentRef, dir)
+  }, [view])
+
   const loadData = useCallback(async (p: Period) => {
     if ((p === 'monthly' || p === 'yearly') && !isPro) {
     setLoading(false)
@@ -281,7 +316,7 @@ export default function RecapPage() {
         style={{ paddingBottom: currentTrack ? 200 : 152 }}
       >
         {/* Page header */}
-        <div className="pt-6 pb-3">
+        <div className="-mx-5 md:-mx-8 px-5 md:px-8 pt-6 pb-3 moment-sticky-header">
           <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
             {view === 'recap' ? 'Recap' : 'Reflections'}
           </h1>
@@ -291,31 +326,41 @@ export default function RecapPage() {
         </div>
 
         {/* View switcher */}
+        {/* View switcher — sticky */}
         <div
-          className="flex w-full rounded-2xl p-1 mb-4"
-          style={{ background: 'rgba(0,0,0,0.06)' }}
+          className="sticky top-0 z-10 pt-1 pb-2"
+          style={{ background: 'var(--ow)' }}
         >
-          {(['recap', 'reflections'] as View[]).map(v => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className="flex-1 py-2.5 text-[14px] font-medium capitalize rounded-xl transition-all duration-200"
-              style={{
-                background: view === v ? 'white' : 'transparent',
-                color:      view === v ? 'var(--td)' : 'var(--tg)',
-                boxShadow:  view === v ? '0 1px 4px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)' : 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
-              {v}
-            </button>
-          ))}
+          <div
+            className="flex w-full rounded-2xl p-1"
+            style={{ background: 'rgba(0,0,0,0.06)' }}
+          >
+            {(['recap', 'reflections'] as View[]).map(v => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className="flex-1 py-2.5 text-[14px] font-medium capitalize rounded-xl transition-all duration-200"
+                style={{
+                  background: view === v ? 'white' : 'transparent',
+                  color:      view === v ? 'var(--td)' : 'var(--tg)',
+                  boxShadow:  view === v ? '0 1px 4px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)' : 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-body)',
+                }}
+                >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ── REFLECTIONS VIEW ── */}
-        {view === 'reflections' && <ReflectionsView />}
+        {view === 'reflections' && (
+          <div ref={reflectionsContentRef}>
+            <ReflectionsView />
+          </div>
+        )}
 
         {/* ── RECAP VIEW ── */}
         {view === 'recap' && (
@@ -339,133 +384,129 @@ export default function RecapPage() {
               ))}
             </div>
 
-            {(period === 'monthly' || period === 'yearly') && !isPro ? (
-              <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-                <div className="p-6 filter blur-sm pointer-events-none select-none opacity-60">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-[90px] h-[90px] rounded-full" style={{ background: 'var(--gpa)' }} />
-                    <div className="flex flex-col gap-2 flex-1">
-                      <div className="h-4 rounded w-3/4" style={{ background: 'var(--gpa)' }} />
-                      <div className="h-3 rounded w-1/2" style={{ background: 'var(--gpa)' }} />
+            <div ref={recapContentRef}>
+              {(period === 'monthly' || period === 'yearly') && !isPro ? (
+                <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                  <div className="p-6 filter blur-sm pointer-events-none select-none opacity-60">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-[90px] h-[90px] rounded-full" style={{ background: 'var(--gpa)' }} />
+                      <div className="flex flex-col gap-2 flex-1">
+                        <div className="h-4 rounded w-3/4" style={{ background: 'var(--gpa)' }} />
+                        <div className="h-3 rounded w-1/2" style={{ background: 'var(--gpa)' }} />
+                      </div>
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[0,1,2,3].map(i => (
+                        <div key={i} className="rounded-2xl p-4 text-center" style={{ background: 'var(--card)' }}>
+                          <div className="h-8 w-10 rounded mx-auto mb-2" style={{ background: 'var(--gpa)' }} />
+                          <div className="h-3 w-16 rounded mx-auto" style={{ background: 'var(--gpa)' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="px-6 pb-6 pt-2 text-center border-t" style={{ borderColor: 'var(--border)' }}>
+                    <p className="text-[15px] font-semibold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+                      {period === 'monthly' ? 'Monthly trends' : 'Yearly overview'} require Pro
+                    </p>
+                    <p className="text-[13px] mb-4" style={{ color: 'var(--tg)' }}>
+                      Unlock your full momentum history.
+                    </p>
+                    <Link
+                      href="/upgrade"
+                      className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[14px] font-semibold text-white"
+                      style={{ background: 'var(--gp)', boxShadow: 'var(--shadow-btn)', textDecoration: 'none' }}
+                    >
+                      Upgrade to Pro
+                    </Link>
+                  </div>
+                </div>
+              ) : loading ? (
+                <div className="flex flex-col gap-4">
+                  <div className="moment-card--support" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                    <div className="flex items-center gap-4">
+                      <div className="skeleton rounded-full shrink-0" style={{ width: 90, height: 90 }} />
+                      <div className="flex flex-col gap-2 flex-1">
+                        <div className="skeleton h-4 w-3/4" />
+                        <div className="skeleton h-3 w-1/2 mt-1" />
+                      </div>
+                    </div>
+                    <div className="skeleton h-4 w-2/3 mx-auto mt-5" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     {[0,1,2,3].map(i => (
-                      <div key={i} className="rounded-2xl p-4 text-center" style={{ background: 'var(--card)' }}>
-                        <div className="h-8 w-10 rounded mx-auto mb-2" style={{ background: 'var(--gpa)' }} />
-                        <div className="h-3 w-16 rounded mx-auto" style={{ background: 'var(--gpa)' }} />
+                      <div key={i} className="rounded-2xl p-4 flex flex-col items-center gap-2"
+                        style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                        <div className="skeleton h-8 w-10" />
+                        <div className="skeleton h-3 w-16" />
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="px-6 pb-6 pt-2 text-center border-t" style={{ borderColor: 'var(--border)' }}>
-                  <p className="text-[15px] font-semibold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
-                    {period === 'monthly' ? 'Monthly trends' : 'Yearly overview'} require Pro
-                  </p>
-                  <p className="text-[13px] mb-4" style={{ color: 'var(--tg)' }}>
-                    Unlock your full momentum history.
-                  </p>
-                  <Link
-                    href="/upgrade"
-                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[14px] font-semibold text-white"
-                    style={{ background: 'var(--gp)', boxShadow: 'var(--shadow-btn)', textDecoration: 'none' }}
-                  >
-                    Upgrade to Pro
-                  </Link>
+              ) : total === 0 && period === 'daily' ? (
+                <div className="rounded-2xl p-8 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                  <p className="mb-4 flex items-center justify-center">
+                    <Leaf size={40} color="var(--gp)" strokeWidth={1.5} /> 
+                  </p> 
+                  <p className="text-[16px] font-medium" style={{ color: 'var(--td)' }}>No tasks today yet</p>
+                  <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>Add moments in the dashboard to track your day.</p>
                 </div>
-              </div>
-            ) : loading ? (
-              <div className="flex flex-col gap-4">
-                <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-                  <div className="flex items-center gap-4">
-                    <div className="skeleton rounded-full shrink-0" style={{ width: 90, height: 90 }} />
-                    <div className="flex flex-col gap-2 flex-1">
-                      <div className="skeleton h-4 w-3/4" />
-                      <div className="skeleton h-3 w-1/2 mt-1" />
-                    </div>
+              ) : (
+                <>
+                  <div className="rounded-2xl p-5 mb-4"
+                    style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+                    <MomentumRing done={done} total={Math.max(total, 1)} size={90} showImage />
+                    <p className="mt-4 text-[15px] text-center italic"
+                      style={{ fontFamily: 'var(--font-display)', color: 'var(--gp)' }}>
+                      &ldquo;{quote}&rdquo;
+                    </p>
                   </div>
-                  <div className="skeleton h-4 w-2/3 mx-auto mt-5" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[0,1,2,3].map(i => (
-                    <div key={i} className="rounded-2xl p-4 flex flex-col items-center gap-2"
-                      style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-                      <div className="skeleton h-8 w-10" />
-                      <div className="skeleton h-3 w-16" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : total === 0 && period === 'daily' ? (
-              <div className="rounded-2xl p-8 text-center" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-                <p className="text-4xl mb-4">🌱</p>
-                <p className="text-[16px] font-medium" style={{ color: 'var(--td)' }}>No tasks today yet</p>
-                <p className="text-[13px] mt-1" style={{ color: 'var(--tg)' }}>Add moments in the dashboard to track your day.</p>
-              </div>
-            ) : (
-              <>
-                <motion.div className="rounded-2xl p-5 mb-4"
-                  style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}>
-                  <MomentumRing done={done} total={Math.max(total, 1)} size={90} showImage />
-                  <p className="mt-4 text-[15px] text-center italic"
-                    style={{ fontFamily: 'var(--font-display)', color: 'var(--gp)' }}>
-                    &ldquo;{quote}&rdquo;
-                  </p>
-                </motion.div>
 
-                <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: 0.07, ease: [0.4, 0, 0.2, 1] }}>
-                  {[
-                    { n: done,       label: 'Completed',   color: '#3B6D11' },
-                    { n: inProgress, label: 'In Progress', color: '#185FA5' },
-                    { n: stuck,      label: 'Stuck',       color: '#854F0B' },
-                    { n: skipped,    label: 'Skipped',     color: '#888780' },
-                  ].map(({ n, label, color }) => (
-                    <div key={label} className="rounded-2xl p-4 text-center"
-                      style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-                      <p className="text-[28px] font-bold" style={{ fontFamily: 'var(--font-display)', color }}>{n}</p>
-                      <p className="text-[12px] mt-1" style={{ color: 'var(--tg)' }}>{label}</p>
-                    </div>
-                  ))}
-                </motion.div>
-
-                <motion.div className="rounded-2xl p-5"
-                  style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: 0.14, ease: [0.4, 0, 0.2, 1] }}>
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="moment-label">{chartHeading}</p>
-                    {total === 0 && period !== 'daily' && (
-                      <p className="text-[10px]" style={{ color: 'var(--tgl)' }}>History builds over time</p>
-                    )}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    {[
+                      { n: done,       label: 'Completed',   color: '#3B6D11',     size: 28, weight: 700 },
+                      { n: inProgress, label: 'In Progress', color: '#185FA5',     size: 28, weight: 700 },
+                      { n: stuck,      label: 'Stuck',       color: '#854F0B',     size: 20, weight: 500 },
+                      { n: skipped,    label: 'Skipped',     color: 'var(--tg)',   size: 20, weight: 500 },
+                    ].map(({ n, label, color, size, weight }) => (
+                      <div key={label} className="moment-card--support text-center">
+                        <p style={{ fontFamily: 'var(--font-display)', color, fontSize: size, fontWeight: weight }}>{n}</p>
+                        <p className="text-[12px] mt-1" style={{ color: 'var(--tg)' }}>{label}</p>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-end gap-2 h-20">
-                    {chartBars.map((pct, i) => (
-                      <div key={i} className="flex flex-1 flex-col items-center gap-1.5 h-full">
-                        <div className="flex-1 w-full rounded-lg overflow-hidden relative"
-                          style={{ background: 'var(--gpa)' }}>
-                          <div className="w-full h-full rounded-lg absolute bottom-0 left-0"
-                            style={{
-                              background: pct > 0 ? 'var(--gs)' : 'var(--gpa)',
-                              transform: `scaleY(${Math.max(pct, pct > 0 ? 6 : 0) / 100})`,
-                              transformOrigin: 'bottom',
-                              transition: 'transform 0.7s cubic-bezier(0.4,0,0.2,1)',
-                              willChange: 'transform',
-                            }}
-                          />
+
+                  <div className="rounded-2xl p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="moment-label">{chartHeading}</p>
+                      {total === 0 && period !== 'daily' && (
+                        <p className="text-[10px]" style={{ color: 'var(--tgl)' }}>History builds over time</p>
+                      )}
+                    </div>
+                    <div className="flex items-end gap-2 h-20">
+                      {chartBars.map((pct, i) => (
+                        <div key={i} className="flex flex-1 flex-col items-center gap-1.5 h-full">
+                          <div className="flex-1 w-full rounded-lg overflow-hidden relative"
+                            style={{ background: 'var(--gpa)' }}>
+                            <div className="w-full h-full rounded-lg absolute bottom-0 left-0"
+                              style={{
+                                background: pct > 0 ? 'var(--gs)' : 'var(--gpa)',
+                                transform: `scaleY(${Math.max(pct, pct > 0 ? 6 : 0) / 100})`,
+                                transformOrigin: 'bottom',
+                                transition: 'transform 0.7s cubic-bezier(0.4,0,0.2,1)',
+                                willChange: 'transform',
+                              }}
+                            />
+                          </div>
+                          <span className="text-[9px]" style={{ color: 'var(--tg)' }}>
+                            {chartLabels[i] ?? ''}
+                          </span>
                         </div>
-                        <span className="text-[9px]" style={{ color: 'var(--tg)' }}>
-                          {chartLabels[i] ?? ''}
-                        </span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </motion.div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </>
         )}
       </div>
@@ -480,7 +521,7 @@ export default function RecapPage() {
           bottom: useFabOffset(),
           transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
-        initial={{ scale: 0, opacity: 0 }}
+        initial={false}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
         whileHover={{ scale: 1.08 }}

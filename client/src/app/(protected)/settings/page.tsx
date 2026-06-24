@@ -390,7 +390,7 @@ export default function SettingsPage() {
                       <span
                         className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                         style={{
-                          background: 'linear-gradient(135deg, var(--gold) 0%, #C4A040 100%)',
+                          background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%)',
                           color: 'var(--deep-pine)',
                         }}
                       >

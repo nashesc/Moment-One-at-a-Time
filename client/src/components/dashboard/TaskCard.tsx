@@ -12,7 +12,7 @@ interface TaskCardProps {
 
 const priorityConfig = {
   1: { dot: '#5A9E50', label: 'High Priority'   },
-  2: { dot: '#C4A35A', label: 'Medium Priority' },
+  2: { dot: 'var(--gold-dark)', label: 'Medium Priority' },
   3: { dot: '#1B3A6B', label: 'Low Priority'    },
 }
 
@@ -21,7 +21,7 @@ export default function TaskCard({ title, description, estimatedMinutes, priorit
 
   return (
     <div
-      className="rounded-2xl p-6"
+      className="moment-card--hero"
       style={{ background: 'var(--card)', boxShadow: 'var(--shadow-card)' }}
     >
       <p className="text-[11px] uppercase tracking-widest mb-3" style={{ color: 'var(--tg)' }}>

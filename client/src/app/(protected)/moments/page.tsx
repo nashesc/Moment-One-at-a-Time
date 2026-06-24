@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Plus, RefreshCw, Leaf } from 'lucide-react'
 import TaskGridCard from '@/components/tasks/TaskGridCard'
 import Toggle from '@/components/ui/Toggle'
@@ -22,9 +22,17 @@ export default function MomentsPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const { currentTrack } = useMusic()
 
+  const TAB_INDEX: Record<Tab, number> = { All: 0, Pending: 1, Done: 2, Stuck: 3 }
+  const contentRef = useRef<HTMLDivElement>(null)
+  const prevTabRef = useRef<Tab>('All')
+
   const todayAll     = tasks.filter(t => t.date === 'Today')
   const yesterdayAll = tasks.filter(t => t.date === 'Yesterday')
 
+  const todayFiltered     = filterByTab(todayAll).slice().reverse()
+  const yesterdayFiltered = filterByTab(yesterdayAll).slice().reverse()
+  const momentumPct       = totalTodayCount === 0 ? 0 : Math.round((doneTodayCount / totalTodayCount) * 100)
+  
   function filterByTab(list: typeof tasks) {
     if (tab === 'Pending') return list.filter(t => t.status === 'pending' || t.status === 'in_progress')
     if (tab === 'Done')    return list.filter(t => t.status === 'done')
@@ -32,9 +40,21 @@ export default function MomentsPage() {
     return list
   }
 
-  const todayFiltered     = filterByTab(todayAll).slice().reverse()
-  const yesterdayFiltered = filterByTab(yesterdayAll).slice().reverse()
-  const momentumPct       = totalTodayCount === 0 ? 0 : Math.round((doneTodayCount / totalTodayCount) * 100)
+  useEffect(() => {
+    if (tab === prevTabRef.current) return
+    const dir = TAB_INDEX[tab] > TAB_INDEX[prevTabRef.current] ? 'right' : 'left'
+    prevTabRef.current = tab
+    const el = contentRef.current
+    if (!el) return
+    el.getAnimations().forEach(a => a.cancel())
+    el.animate(
+      [
+        { transform: `translateX(${dir === 'right' ? 20 : -20}px)`, opacity: 0 },
+        { transform: 'translateX(0)', opacity: 1 },
+      ],
+      { duration: 180, easing: 'cubic-bezier(0.4,0,0.2,1)', fill: 'both' }
+    )
+  }, [tab])
 
   return (
     <>
@@ -42,7 +62,7 @@ export default function MomentsPage() {
         style={{ paddingBottom: currentTrack ? 200 : 152 }}
       >
         {/* Header */}
-        <div className="px-5 md:px-8 pt-6 pb-1 flex items-center justify-between">
+        <div className="px-5 md:px-8 pt-6 pb-2 flex items-center justify-between moment-sticky-header">
           <div>
             <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
               Moments
@@ -141,7 +161,7 @@ export default function MomentsPage() {
 
         {/* Task groups */}
         {!loading && !error && (
-          <div className="flex flex-col gap-4 px-5 md:px-8">
+          <div ref={contentRef} className="flex flex-col gap-4 px-5 md:px-8">
             {todayFiltered.length > 0 && (
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest pt-1 pb-2" style={{ color: 'var(--tg)' }}>
@@ -212,7 +232,7 @@ export default function MomentsPage() {
           bottom: useFabOffset(),
           transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
-        initial={{ scale: 0, opacity: 0 }}
+        initial={false}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
         whileHover={{ scale: 1.08 }}

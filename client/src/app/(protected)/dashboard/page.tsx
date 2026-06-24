@@ -181,7 +181,10 @@ export default function DashboardPage() {
               <p className="text-[13px]" style={{ color: 'var(--tg)' }}>{dateStr}</p>
               <p className="text-[24px] font-bold mt-0.5"
                 style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
-                {greeting}, {firstName} 🌿
+                <span className="flex items-center gap-1.5">
+                  {greeting}, {firstName}
+                  <Leaf size={20} color="var(--gp)" strokeWidth={1.75} />
+                </span>
               </p>
             </div>
             <Link href="/moments" className="text-[13px] px-4 py-2 rounded-full"
@@ -194,7 +197,7 @@ export default function DashboardPage() {
           <motion.div
             className="mx-4 md:mx-8 rounded-2xl p-5 mb-4"
             style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
-            initial={{ opacity: 0, y: 12 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
           >
@@ -238,7 +241,9 @@ export default function DashboardPage() {
           {!loading && !error && todayTasks.length === 0 && (
             <div className="mx-4 md:mx-8 rounded-2xl p-8 text-center"
               style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
-              <p className="text-4xl mb-4">🌱</p>
+              <p className="mb-4 flex items-center justify-center">
+                <Leaf size={40} color="var(--gp)" strokeWidth={1.5} /> 
+              </p>
               <h2 className="text-[20px] font-bold mb-2"
                 style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
                 No moments yet
@@ -328,7 +333,7 @@ export default function DashboardPage() {
                 <>
                   <motion.div
                     className="mx-4 md:mx-8 mb-3"
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={false}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35, delay: 0.05, ease: [0.4, 0, 0.2, 1] }}
                   >
@@ -350,7 +355,7 @@ export default function DashboardPage() {
                   {focusState !== 'done' && (
                     <motion.div
                       className="mx-4 md:mx-8 flex flex-col gap-3 mb-2"
-                      initial={{ opacity: 0, y: 12 }}
+                      initial={false}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35, delay: 0.1, ease: [0.4, 0, 0.2, 1] }}
                     >
@@ -460,7 +465,7 @@ export default function DashboardPage() {
         {/* Momentum card */}
         <div className="px-6 pt-6 pb-8">
           <p className="text-[11px] uppercase tracking-widest font-semibold mb-3" style={{ color: 'var(--tg)' }}>Momentum</p>
-            <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
+            <div className="moment-card--support" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
               <div className="flex flex-col items-center text-center gap-3">
                 <MomentumRing done={doneTodayCount} total={Math.max(totalTodayCount, 1)} size={88} />
                 <p className="text-[12px]" style={{ color: 'var(--tg)' }}>
@@ -481,7 +486,7 @@ export default function DashboardPage() {
             bottom: useFabOffset(),
             transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
-          initial={{ scale: 0, opacity: 0 }}
+          initial={false}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
           whileHover={{ scale: 1.08 }}

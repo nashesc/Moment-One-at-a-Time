@@ -13,7 +13,7 @@ interface CreateTaskSheetProps {
 
 const PRIORITY_OPTIONS = [
   { value: 1 as const, label: 'High',   dot: '#5A9E50' },
-  { value: 2 as const, label: 'Medium', dot: '#C4A35A' },
+  { value: 2 as const, label: 'Medium', dot: 'var(--gold-dark)' },
   { value: 3 as const, label: 'Low',    dot: '#1B3A6B' },
 ]
 
@@ -48,7 +48,6 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
       setTitle('')
       setDesc('')
       setError('')
-      setTimeout(() => titleRef.current?.focus(), 100)
     }
   }, [open])
 
@@ -118,6 +117,7 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: '100%', opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              onAnimationComplete={() => { if (open) titleRef.current?.focus() }}
             >
               {/* Handle — drag affordance only makes sense as a bottom sheet */}
               <div className="flex justify-center pt-3 pb-1 md:hidden">

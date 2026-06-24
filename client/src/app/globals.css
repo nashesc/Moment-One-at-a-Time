@@ -18,29 +18,30 @@
 :root {
   /* Green scale */
   --deep-pine:    #173A2D;
-  --gp:           #2D5A27;   /* primary — buttons, active nav, logo */
+  --gp:           #2D5A27;   /* primary - buttons, active nav, logo */
   --gf:           #3D7A35;   /* hover states, secondary headings */
   --moss:         #4D7C59;   /* section headers, accents */
   --fern:         #7FA878;   /* decorative, dividers */
   --gs:           #5A9E50;   /* progress rings, success indicators */
   --gso:          #A8C5A0;   /* borders, tag backgrounds */
   --gpa:          #D4E8CF;   /* light backgrounds, skeleton shimmer */
-  --pale-green:   #EEF5EC;   /* very pale — hover overlays */
+  --pale-green:   #EEF5EC;   /* very pale - hover overlays */
   /* Blue scale */
   --bp:           #1B3A6B;   /* in-progress state, info */
   --blue-pale:    #E6F1FB;
   /* Accent */
   --gold:         #D9C17A;   /* CTAs on dark/forest backgrounds */
   --tan:          #C4B49A;   /* decorative warm accent */
+  --gold-dark:    #C4A040;
   /* Status colours */
   --status-pending-bg:     #F0EFE8;
   --status-pending-text:   #888780;
-  --status-progress-bg:    #E6F1FB;
-  --status-progress-text:  #185FA5;
-  --status-done-bg:        #EAF3DE;
-  --status-done-text:      #3B6D11;
-  --status-stuck-bg:       #FAEEDA;
-  --status-stuck-text:     #854F0B;
+  --status-progress-bg:    rgba(27, 58, 107, 0.10);
+  --status-progress-text:  var(--bp);
+  --status-done-bg:        var(--gpa); 
+  --status-done-text:      var(--gp);
+  --status-stuck-bg:       rgba(196, 180, 154, 0.35);
+  --status-stuck-text:     #6B4F32;
   --status-skipped-bg:     #F5F3EF;
   --status-skipped-text:   #9B9B9B;
   /* Page & surface */
@@ -224,11 +225,27 @@ body {
 }
 
 /* ─── 7. Card Surfaces ───────────────────────────────────────────────────────*/
-.moment-card {
+.moment-card--hero {
   background: var(--card-white);
   border: 1px solid var(--border);
+  border-top: 3px solid var(--gp);
   border-radius: var(--radius-2xl);
+  padding: var(--space-8);
   box-shadow: var(--shadow-card);
+}
+.moment-card--support {
+  background: var(--card-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-card);
+}
+.moment-sticky-header {
+  position: sticky;
+  top: 0;
+  /* z-index: var(--z-sticky); */
+  background: rgba(245, 242, 236, 0.98);
+  /* border-bottom: 1px solid var(--border); */
 }
 .moment-card--soft {
   background: var(--card);
@@ -632,6 +649,14 @@ body {
 @keyframes shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+@keyframes slideInFromRight {
+  from { transform: translateX(20px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideInFromLeft {
+  from { transform: translateX(-20px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 @keyframes leafFloat {
   0%, 100% { transform: translateY(0) rotate(-4deg); }
