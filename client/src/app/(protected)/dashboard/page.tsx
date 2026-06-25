@@ -12,7 +12,7 @@ import { useTasks, useActivateTasks, type Task } from '@/context/TaskContext'
 import { useAuth } from '@/context/AuthContext'
 import { useSettings } from '@/context/SettingsContext'
 import { Plus } from 'lucide-react'
-import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
+import { useCreateTaskSheet } from '@/context/CreateTaskSheetContext'
 import { motion, AnimatePresence } from 'motion/react'
 import FocusOverlay from '@/components/dashboard/FocusOverlay'
 import { useMusic } from '@/context/MusicContext'
@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const { profile } = useAuth()
   const { prefs } = useSettings()
   const { currentTrack } = useMusic()
+  const { openSheet } = useCreateTaskSheet()
 
   const activeTasks = useMemo(
     () => todayTasks.filter(t => t.status !== 'done' && t.status !== 'skipped'),
@@ -36,7 +37,6 @@ export default function DashboardPage() {
   const [focused,    setFocused]    = useState<Task | null>(null)
   const [focusState, setFocusState] = useState<FocusState>('idle')
   const [showPicker, setShowPicker] = useState(true)
-  const [sheetOpen, setSheetOpen] = useState(false)
   const [forceFocusView, setForceFocusView] = useState(false)
 
   // Auto-select the task if there's only one — no need to show the picker
@@ -478,7 +478,11 @@ export default function DashboardPage() {
 
       <motion.button
           aria-label="Add task"
-          onClick={() => setSheetOpen(true)}
+          onClick={() => openSheet(() => {
+            setFocusState('idle')
+            setFocused(null)
+            setShowPicker(true)
+          })}
           className="fixed right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
           style={{
             background: 'var(--gp)',
@@ -494,13 +498,6 @@ export default function DashboardPage() {
         >
           <Plus size={24} strokeWidth={2} color="white" />
       </motion.button>
-
-      <CreateTaskSheet open={sheetOpen} onClose={() => {
-        setSheetOpen(false)
-        setFocusState('idle')
-        setFocused(null)
-        setShowPicker(true)
-      }} />
     </>
   )
 }

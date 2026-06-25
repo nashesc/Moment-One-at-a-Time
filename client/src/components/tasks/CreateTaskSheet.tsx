@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
 import { X, Clock, Flag } from 'lucide-react'
 import { useTasks } from '@/context/TaskContext'
 import ProGateModal from '@/components/plan/ProGateModal'
@@ -94,17 +94,15 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
         featureName="More Tasks Today"
         description="You've reached the 7-task daily limit on the free plan. Upgrade to Pro for unlimited tasks."
       />
-      <AnimatePresence>
       {open && (
         <>
           {/* Backdrop */}
           <motion.div
             className="fixed inset-0 z-40"
-            style={{ background: 'rgba(26,26,26,0.55)' }}
+            style={{ background: 'rgba(26,26,26,0.55)', pointerEvents: open ? 'auto' : 'none' }}
             onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={false}
+            animate={{ opacity: open ? 1 : 0 }}
             transition={{ duration: 0.2 }}
           />
 
@@ -112,10 +110,16 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
           <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center pointer-events-none">
             <motion.div
               className="pointer-events-auto w-full md:w-[480px] md:max-w-[90vw] rounded-t-3xl md:rounded-3xl"
-              style={{ background: 'var(--ow)', boxShadow: '0 -4px 32px rgba(0,0,0,0.12)', maxHeight: '92vh', overflowY: 'auto' }}
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '100%', opacity: 0 }}
+              style={{
+                background: 'var(--ow)',
+                boxShadow: '0 -4px 32px rgba(0,0,0,0.12)',
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                pointerEvents: open ? 'auto' : 'none',
+              }}
+              aria-hidden={!open}
+              initial={false}
+              animate={{ y: open ? 0 : '100%', opacity: open ? 1 : 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               onAnimationComplete={() => { if (open) titleRef.current?.focus() }}
             >
@@ -279,7 +283,6 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
           </div>
         </>
       )}
-    </AnimatePresence>
     </>
   )
 }

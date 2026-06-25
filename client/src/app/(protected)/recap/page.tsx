@@ -8,7 +8,7 @@ import { getRecap, getRecapRange, getCheckins, type RecapRangeItem } from '@/lib
 import { useTasks, useActivateTasks } from '@/context/TaskContext'
 import type { Recap, Checkin } from '@/types'
 import { motion } from 'motion/react'
-import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
+import { useCreateTaskSheet } from '@/context/CreateTaskSheetContext'
 import { useMusic } from '@/context/MusicContext'
 import { usePlan } from '@/context/PlanContext'
 import Link from 'next/link'
@@ -204,9 +204,9 @@ export default function RecapPage() {
   const [recaps, setRecaps]       = useState<(Recap | null)[]>([])
   const [rangeData, setRangeData] = useState<RecapRangeItem[]>([])
   const [loading, setLoading]     = useState(true)
-  const [sheetOpen, setSheetOpen] = useState(false)
   const { currentTrack } = useMusic()
   const { isPro } = usePlan()
+  const { openSheet } = useCreateTaskSheet()
 
   const recapContentRef      = useRef<HTMLDivElement>(null)
   const reflectionsContentRef = useRef<HTMLDivElement>(null)
@@ -513,7 +513,7 @@ export default function RecapPage() {
 
       <motion.button
         aria-label="Add task"
-        onClick={() => setSheetOpen(true)}
+        onClick={() => openSheet()}
         className="fixed right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
         style={{
           background: 'var(--gp)',
@@ -529,8 +529,6 @@ export default function RecapPage() {
       >
         <Plus size={24} strokeWidth={2} color="white" />
       </motion.button>
-
-      <CreateTaskSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
     </>
   )
 }

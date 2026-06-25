@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Plus, RefreshCw, Leaf } from 'lucide-react'
 import TaskGridCard from '@/components/tasks/TaskGridCard'
 import Toggle from '@/components/ui/Toggle'
-import CreateTaskSheet from '@/components/tasks/CreateTaskSheet'
+import { useCreateTaskSheet } from '@/context/CreateTaskSheetContext'
 import { useTasks, useActivateTasks } from '@/context/TaskContext'
 import { useSettings } from '@/context/SettingsContext'
 import { motion } from 'motion/react'
@@ -19,8 +19,8 @@ export default function MomentsPage() {
   const { tasks, doneTodayCount, totalTodayCount, loading, error, refresh } = useTasks()
   const { prefs, setPref } = useSettings()
   const [tab, setTab]         = useState<Tab>('All')
-  const [sheetOpen, setSheetOpen] = useState(false)
   const { currentTrack } = useMusic()
+  const { openSheet } = useCreateTaskSheet()
 
   const TAB_INDEX: Record<Tab, number> = { All: 0, Pending: 1, Done: 2, Stuck: 3 }
   const contentRef = useRef<HTMLDivElement>(null)
@@ -224,7 +224,7 @@ export default function MomentsPage() {
       {/* FAB */}
       <motion.button
         aria-label="Add task"
-        onClick={() => setSheetOpen(true)}
+        onClick={() => openSheet()}
         className="fixed right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
         style={{
           background: 'var(--gp)',
@@ -240,8 +240,6 @@ export default function MomentsPage() {
       >
         <Plus size={24} strokeWidth={2} color="white" />
       </motion.button>
-
-      <CreateTaskSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
     </>
   )
 }
