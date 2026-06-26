@@ -9,6 +9,7 @@ interface PersistedSession {
   accumulatedSeconds: number
   resumedAt: number | null
   hasOverrun: boolean
+  estimatedMinutes: number
 }
 
 function storageKey(userId: string, taskId: string) {
@@ -40,6 +41,11 @@ export function useFocusSession(
   const [running, setRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [hasOverrun, setHasOverrun] = useState(false)
+  // Target duration is pinned to whatever was active when the session
+  // started. A freshly-passed estimatedMinutes prop — e.g. from a
+  // re-fetched/re-selected task after navigating away and back — must
+  // not silently override an in-progress countdown's target.
+  const [sessionEstimatedMinutes, setSessionEstimatedMinutes] = useState(estimatedMinutes)
 
   const accumulatedRef = useRef(0)
   const resumedAtRef   = useRef<number | null>(null)
@@ -47,19 +53,27 @@ export function useFocusSession(
   const onCrossedRef   = useRef(onThresholdCrossed)
   useEffect(() => { onCrossedRef.current = onThresholdCrossed }, [onThresholdCrossed])
 
-  const targetSeconds = estimatedMinutes * 60
+  const targetSeconds = sessionEstimatedMinutes * 60
 
   // Load any open session for this task — picks up wherever it was left,
   // including time that passed while this component wasn't mounted at all.
   useEffect(() => {
     if (!userId) return
     const existing = loadSession(userId, taskId)
-    if (!existing) return
+    if (!existing) {
+      setSessionEstimatedMinutes(estimatedMinutes)
+      return
+    }
     accumulatedRef.current = existing.accumulatedSeconds
     resumedAtRef.current = existing.resumedAt
     setModeState(existing.mode)
     setHasOverrun(existing.hasOverrun)
     setRunning(existing.resumedAt !== null)
+    setSessionEstimatedMinutes(
+      typeof existing.estimatedMinutes === 'number' && !Number.isNaN(existing.estimatedMinutes)
+        ? existing.estimatedMinutes
+        : estimatedMinutes
+    )
     setElapsed(
       existing.accumulatedSeconds +
       (existing.resumedAt ? Math.floor((Date.now() - existing.resumedAt) / 1000) : 0)
@@ -74,9 +88,10 @@ export function useFocusSession(
       accumulatedSeconds: accumulatedRef.current,
       resumedAt: resumedAtRef.current,
       hasOverrun,
+      estimatedMinutes: sessionEstimatedMinutes,
       ...overrides,
     })
-  }, [userId, taskId, mode, hasOverrun])
+  }, [userId, taskId, mode, hasOverrun, sessionEstimatedMinutes])
 
   useEffect(() => {
     if (!running) {
@@ -93,7 +108,7 @@ export function useFocusSession(
         resumedAtRef.current = null
         setRunning(false)
         setHasOverrun(true)
-        if (userId) saveSession(userId, taskId, { mode, accumulatedSeconds: live, resumedAt: null, hasOverrun: true })
+        if (userId) persist({ accumulatedSeconds: live, resumedAt: null, hasOverrun: true })
         onCrossedRef.current?.()
       }
     }, 1000)

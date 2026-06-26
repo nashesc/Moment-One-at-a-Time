@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, AlertCircle, ArrowRight, Clock } from 'lucide-react'
+import { CheckCircle2, AlertCircle, ArrowRight, RotateCcw, Clock } from 'lucide-react'
 import StatusBadge from '@/components/ui/StatusBadge'
 
 type Status = 'pending' | 'in_progress' | 'done' | 'stuck' | 'skipped'
@@ -17,15 +17,24 @@ interface TaskGridCardProps {
   estimatedMinutes: number
   priority: 1 | 2 | 3
   status: Status
+  onReactivate?: () => void
 }
 
 const priorityDot = { 1: '#5A9E50', 2: '#C4A35A', 3: '#1B3A6B' }
 
-export default function TaskGridCard({ title, estimatedMinutes, priority, status }: TaskGridCardProps) {
+export default function TaskGridCard({ title, estimatedMinutes, priority, status, onReactivate }: TaskGridCardProps) {
+  const canReactivate = (status === 'skipped' || status === 'stuck') && !!onReactivate
+
   return (
     <div
-      className="flex flex-col gap-3 rounded-2xl p-4 h-full"
-      style={{ background: 'white', border: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
+      onClick={canReactivate ? onReactivate : undefined}
+      className="flex flex-col gap-3 rounded-2xl p-4 h-full text-left"
+      style={{
+        background: 'white',
+        border: '1px solid var(--border)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        cursor: canReactivate ? 'pointer' : 'default',
+      }}
     >
       <div className="flex items-start justify-between gap-2">
         <StatusIcon status={status} />
@@ -41,6 +50,12 @@ export default function TaskGridCard({ title, estimatedMinutes, priority, status
         <span>·</span>
         <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: priorityDot[priority] }} />
       </p>
+      {canReactivate && (
+        <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: 'var(--gp)' }}>
+          <RotateCcw size={11} strokeWidth={2} />
+          Tap to do it again
+        </span>
+      )}
     </div>
   )
 }

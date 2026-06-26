@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { motion } from 'motion/react'
 import { X, Clock, Flag } from 'lucide-react'
 import { useTasks } from '@/context/TaskContext'
 import ProGateModal from '@/components/plan/ProGateModal'
@@ -97,31 +96,28 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
       {open && (
         <>
           {/* Backdrop */}
-          <motion.div
-            className="fixed inset-0 z-40"
-            style={{ background: 'rgba(26,26,26,0.55)', pointerEvents: open ? 'auto' : 'none' }}
+          <div
+            className="fixed inset-0 z-40 transition-opacity duration-200"
+            style={{ 
+              background: 'rgba(26,26,26,0.55)', 
+              opacity: open ? 1 : 0, 
+              pointerEvents: open ? 'auto' : 'none' 
+            }}
             onClick={onClose}
-            initial={false}
-            animate={{ opacity: open ? 1 : 0 }}
-            transition={{ duration: 0.2 }}
           />
 
           {/* Sheet — bottom sheet on mobile, centered modal on desktop */}
           <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center pointer-events-none">
-            <motion.div
-              className="pointer-events-auto w-full md:w-[480px] md:max-w-[90vw] rounded-t-3xl md:rounded-3xl"
+            <div
+              className="w-full md:w-[480px] md:max-w-[90vw] rounded-t-3xl md:rounded-3xl transition-transform duration-300"
               style={{
-                background: 'var(--ow)',
-                boxShadow: '0 -4px 32px rgba(0,0,0,0.12)',
-                maxHeight: '92vh',
-                overflowY: 'auto',
+                background: 'var(--ow)', boxShadow: '0 -4px 32px rgba(0,0,0,0.12)', maxHeight: '92vh', overflowY: 'auto',
+                transform: open ? 'translateY(0)' : 'translateY(100%)',
+                transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
                 pointerEvents: open ? 'auto' : 'none',
               }}
               aria-hidden={!open}
-              initial={false}
-              animate={{ y: open ? 0 : '100%', opacity: open ? 1 : 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              onAnimationComplete={() => { if (open) titleRef.current?.focus() }}
+              onTransitionEnd={(e) => { if (open && e.propertyName === 'transform') titleRef.current?.focus() }}
             >
               {/* Handle — drag affordance only makes sense as a bottom sheet */}
               <div className="flex justify-center pt-3 pb-1 md:hidden">
@@ -279,7 +275,7 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
                 </button>
                 <div className="md:hidden" style={{ height: '32px' }} />
               </form>
-            </motion.div>
+            </div>
           </div>
         </>
       )}

@@ -1,10 +1,11 @@
 'use client'
-import { useEffect, useMemo, useState, useCallback, useRef, memo } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef, memo,useLayoutEffect } from 'react'
 import {
   Play, Pause, SkipBack, SkipForward,
   Volume2, Repeat, Shuffle, List,
   Heart, Lock, Timer, LayoutGrid,
-  Zap, Leaf, Wind, TreePine , Library, Compass,
+  Zap, Wind, TreePine , Library, Compass, 
+  Infinity as InfinityIcon,
   type LucideIcon
 } from 'lucide-react'
 import ProGateModal from '@/components/plan/ProGateModal'
@@ -12,7 +13,6 @@ import MusicLibraryRail from '@/components/music/MusicLibraryRail'
 import { useMusic, type PlayMode } from '@/context/MusicContext'
 import { usePlan } from '@/context/PlanContext'
 import { TRACKS, getTracksByCategory, type Track, type TrackCategory } from '@/data/tracks'
-import { motion } from 'motion/react'
 
 type Tab = TrackCategory | 'favorites' | 'all'
 
@@ -24,8 +24,8 @@ const TABS: { id: Tab; label: string; Icon: LucideIcon; proOnly?: boolean }[] = 
   { id: 'favorites', label: 'Favorites', Icon: Heart, proOnly: true },
 ]
 
-const TIMER_OPTIONS: { label: string; seconds: number | null }[] = [
-  { label: '∞',   seconds: null },
+const TIMER_OPTIONS: { label: string; icon?: typeof InfinityIcon; seconds: number | null }[] = [
+  { label: 'Infinite', icon: InfinityIcon, seconds: null },
   { label: '30m', seconds: 30 * 60 },
   { label: '1h',  seconds: 60 * 60 },
   { label: '2h',  seconds: 120 * 60 },
@@ -101,6 +101,19 @@ export default function MusicPage() {
   }, [activeTab, isPro, favorites])
 
   const visibleTracks = useMemo(() => tabTracks.slice(0, visibleCount), [tabTracks, visibleCount])
+
+  const tabsRef = useRef<HTMLDivElement>(null)
+
+  const nowPlayingRef = useRef<HTMLDivElement>(null)
+  const [nowPlayingHeight, setNowPlayingHeight] = useState(0)
+
+  useLayoutEffect(() => {
+  const el = nowPlayingRef.current
+  if (!el) { setNowPlayingHeight(0); return }
+  const ro = new ResizeObserver(([entry]) => setNowPlayingHeight(entry.target.getBoundingClientRect().height))
+  ro.observe(el)
+  return () => ro.disconnect()
+}, [currentTrack])
 
   useEffect(() => {
     if (activeTab === prevTabRef.current) return
@@ -181,155 +194,161 @@ export default function MusicPage() {
         <div className="flex flex-col flex-1 min-w-0 pb-40 md:pb-8">
           <div className="moment-col moment-col--center w-full px-5 md:px-8">
 
-            <div
-              className="-mx-5 md:-mx-8 px-5 pb-1 md:px-8 moment-sticky-header"
-              style={{ zIndex: 'var(--z-sticky)' }}
-            >
+            
             {/* Header */}
-              <div className="pt-6 pb-2">
-                <h1 className="text-[26px] font-bold"
-                  style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
-                  Music
-                </h1>
-                <p className="text-[13px] mt-0.5" style={{ color: 'var(--tg)' }}>
-                  Focus sounds for every mood.
-                </p>
-              </div>
+            <div className="pt-6 pb-2">
+              <h1 className="text-[26px] font-bold"
+                style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
+                Music
+              </h1>
+              <p className="text-[13px] mt-0.5" style={{ color: 'var(--tg)' }}>
+                Focus sounds for every mood.
+              </p>
+            </div>
 
-              {/* Now playing card */}
-              {currentTrack && (
-                <div
-                  className="mt-4 moment-card--support"
-                  style={{ background: 'var(--deep-pine)', boxShadow: 'var(--shadow-card)' }}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] uppercase tracking-widest mb-1"
-                        style={{ color: 'rgba(255,255,255,0.4)' }}>
-                        Now Playing
-                      </p>
-                      <p className="text-[18px] font-bold truncate"
-                        style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.93)' }}>
-                        {currentTrack.title}
-                      </p>
-                      <p className="text-[12px] capitalize mt-0.5"
-                        style={{ color: 'rgba(255,255,255,0.45)' }}>
-                        {currentTrack.category}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 ml-3 shrink-0">
-                      <button
-                        onClick={() => { if (!isPro) { openGate('favorites'); return } toggleFavorite(currentTrack.id) }}
-                        className="w-9 h-9 rounded-full flex items-center justify-center"
-                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer' }}
-                        aria-label="Toggle favorite"
-                      >
-                        <Heart size={16}
-                          color={favorites.includes(currentTrack.id) ? '#D9C17A' : 'rgba(255,255,255,0.5)'}
-                          fill={favorites.includes(currentTrack.id) ? '#D9C17A' : 'none'} />
-                      </button>
-                      <button
-                        onClick={() => setShowVolume(v => !v)}
-                        className="w-9 h-9 rounded-full flex items-center justify-center"
-                        style={{
-                          background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer',
-                          color: showVolume ? 'var(--gold)' : 'rgba(255,255,255,0.5)',
-                        }}
-                        aria-label="Toggle volume"
-                      >
-                        <Volume2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Progress */}
-                  <NowPlayingTimeline onSeek={seek} />
-
-                  {/* Controls */}
-                  <div className="flex items-center justify-between">
-                    <button onClick={cyclePlayMode}
-                      className="w-9 h-9 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer',
-                        color: playMode !== 'all' ? 'var(--gold)' : 'rgba(255,255,255,0.6)' }}
-                      aria-label="Play mode">
-                      {PLAY_MODE_ICONS[playMode]}
-                    </button>
-                    <button onClick={prev}
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer' }}
-                      aria-label="Previous">
-                      <SkipBack size={18} color="rgba(255,255,255,0.8)" />
-                    </button>
-                    <button onClick={isPlaying ? pause : resume} disabled={isLoading}
-                      className="w-14 h-14 rounded-full flex items-center justify-center"
-                      style={{ background: 'var(--gold)', border: 'none', cursor: 'pointer',
-                        opacity: isLoading ? 0.6 : 1, boxShadow: '0 4px 16px rgba(217,193,122,0.4)' }}
-                      aria-label={isPlaying ? 'Pause' : 'Play'}>
-                      {isLoading ? (
-                        <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
-                          style={{ borderColor: 'var(--deep-pine)', borderTopColor: 'transparent' }} />
-                      ) : isPlaying ? (
-                        <Pause size={22} fill="var(--deep-pine)" color="var(--deep-pine)" />
-                      ) : (
-                        <Play size={22} fill="var(--deep-pine)" color="var(--deep-pine)" />
-                      )}
-                    </button>
-                    <button onClick={next}
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer' }}
-                      aria-label="Next">
-                      <SkipForward size={18} color="rgba(255,255,255,0.8)" />
-                    </button>
-                    <button onClick={() => setShowTimer(v => !v)}
-                      className="w-9 h-9 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer',
-                        color: timer !== null ? 'var(--gold)' : 'rgba(255,255,255,0.6)' }}
-                      aria-label="Timer">
-                      <Timer size={15} />
-                    </button>
-                  </div>
-
-                  {timer !== null && (
-                    <p className="text-center text-[12px] mt-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                      Stops in {formatTimer(timer)}
-                    </p>
-                  )}
-
-                  {showTimer && (
-                    <div className="flex gap-2 mt-4 justify-center">
-                      {TIMER_OPTIONS.map(opt => (
-                        <button key={opt.label}
-                          onClick={() => { setTimer(opt.seconds); setShowTimer(false) }}
-                          className="px-3 py-1.5 rounded-full text-[12px] font-medium"
-                          style={{
-                            background: timer === opt.seconds ? 'var(--gold)' : 'rgba(255,255,255,0.12)',
-                            color: timer === opt.seconds ? 'var(--deep-pine)' : 'rgba(255,255,255,0.7)',
-                            border: 'none', cursor: 'pointer',
-                          }}>
-                          {opt.label}
+            {/* Now playing card */}
+            {currentTrack && (
+               <div
+                ref={nowPlayingRef}
+                className="-mx-5 md:-mx-8 px-5 md:px-8 sticky top-0 z-20 pt-3 pb-2"
+                style={{ background: 'rgba(245, 242, 236, 0.98)' }}
+              >
+                <div className="moment-card--support" style={{ background: 'var(--deep-pine)', boxShadow: 'var(--shadow-card)' }}>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] uppercase tracking-widest mb-1"
+                          style={{ color: 'rgba(255,255,255,0.4)' }}>
+                          Now Playing
+                        </p>
+                        <p className="text-[18px] font-bold truncate"
+                          style={{ fontFamily: 'var(--font-display)', color: 'rgba(255,255,255,0.93)' }}>
+                          {currentTrack.title}
+                        </p>
+                        <p className="text-[12px] capitalize mt-0.5"
+                          style={{ color: 'rgba(255,255,255,0.45)' }}>
+                          {currentTrack.category}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 ml-3 shrink-0">
+                        <button
+                          onClick={() => { if (!isPro) { openGate('favorites'); return } toggleFavorite(currentTrack.id) }}
+                          className="w-9 h-9 rounded-full flex items-center justify-center"
+                          style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer' }}
+                          aria-label="Toggle favorite"
+                        >
+                          <Heart size={16}
+                            color={favorites.includes(currentTrack.id) ? '#D9C17A' : 'rgba(255,255,255,0.5)'}
+                            fill={favorites.includes(currentTrack.id) ? '#D9C17A' : 'none'} />
                         </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {showVolume && (
-                    <div className="flex items-center gap-3 mt-4">
-                      <Volume2 size={14} color="rgba(255,255,255,0.4)" />
-                      <div className="relative flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                        <div className="absolute left-0 top-0 h-full rounded-full"
-                          style={{ width: `${volume * 100}%`, background: 'var(--gold)' }} />
-                        <input type="range" min={0} max={1} step={0.01} value={volume}
-                          onChange={e => setVolume(parseFloat(e.target.value))}
-                          aria-label="Volume"
-                          className="absolute inset-0 w-full opacity-0 cursor-pointer" style={{ height: '100%' }} />
+                        <button
+                          onClick={() => setShowVolume(v => !v)}
+                          className="w-9 h-9 rounded-full flex items-center justify-center"
+                          style={{
+                            background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer',
+                            color: showVolume ? 'var(--gold)' : 'rgba(255,255,255,0.5)',
+                          }}
+                          aria-label="Toggle volume"
+                        >
+                          <Volume2 size={16} />
+                        </button>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
 
-              {/* Category tabs */}
-              <div className="flex gap-2 mt-5 mb-3 overflow-x-auto">
+                    {/* Progress */}
+                    <NowPlayingTimeline onSeek={seek} />
+                  
+
+                    {/* Controls */}
+                    <div className="flex items-center justify-between">
+                      <button onClick={cyclePlayMode}
+                        className="w-9 h-9 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer',
+                          color: playMode !== 'all' ? 'var(--gold)' : 'rgba(255,255,255,0.6)' }}
+                        aria-label="Play mode">
+                        {PLAY_MODE_ICONS[playMode]}
+                      </button>
+                      <button onClick={prev}
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer' }}
+                        aria-label="Previous">
+                        <SkipBack size={18} color="rgba(255,255,255,0.8)" />
+                      </button>
+                      <button onClick={isPlaying ? pause : resume} disabled={isLoading}
+                        className="w-14 h-14 rounded-full flex items-center justify-center"
+                        style={{ background: 'var(--gold)', border: 'none', cursor: 'pointer',
+                          opacity: isLoading ? 0.6 : 1, boxShadow: '0 4px 16px rgba(217,193,122,0.4)' }}
+                        aria-label={isPlaying ? 'Pause' : 'Play'}>
+                        {isLoading ? (
+                          <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
+                            style={{ borderColor: 'var(--deep-pine)', borderTopColor: 'transparent' }} />
+                        ) : isPlaying ? (
+                          <Pause size={22} fill="var(--deep-pine)" color="var(--deep-pine)" />
+                        ) : (
+                          <Play size={22} fill="var(--deep-pine)" color="var(--deep-pine)" />
+                        )}
+                      </button>
+                      <button onClick={next}
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer' }}
+                        aria-label="Next">
+                        <SkipForward size={18} color="rgba(255,255,255,0.8)" />
+                      </button>
+                      <button onClick={() => setShowTimer(v => !v)}
+                        className="w-9 h-9 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer',
+                          color: timer !== null ? 'var(--gold)' : 'rgba(255,255,255,0.6)' }}
+                        aria-label="Timer">
+                        <Timer size={15} />
+                      </button>
+                    </div>
+
+                    {timer !== null && (
+                      <p className="text-center text-[12px] mt-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                        Stops in {formatTimer(timer)}
+                      </p>
+                    )}
+
+                    {showTimer && (
+                      <div className="flex gap-2 mt-4 justify-center">
+                        {TIMER_OPTIONS.map(opt => (
+                          <button key={opt.label}
+                            onClick={() => { setTimer(opt.seconds); setShowTimer(false) }}
+                            className="px-3 py-1.5 rounded-full text-[12px] font-medium flex items-center justify-center"
+                            style={{
+                              background: timer === opt.seconds ? 'var(--gold)' : 'rgba(255,255,255,0.12)',
+                              color: timer === opt.seconds ? 'var(--deep-pine)' : 'rgba(255,255,255,0.7)',
+                              border: 'none', cursor: 'pointer',
+                            }}>
+                            {opt.icon ? <opt.icon size={12} /> : opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {showVolume && (
+                      <div className="flex items-center gap-3 mt-4">
+                        <Volume2 size={14} color="rgba(255,255,255,0.4)" />
+                        <div className="relative flex-1 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                          <div className="absolute left-0 top-0 h-full rounded-full"
+                            style={{ width: `${volume * 100}%`, background: 'var(--gold)' }} />
+                          <input type="range" min={0} max={1} step={0.01} value={volume}
+                            onChange={e => setVolume(parseFloat(e.target.value))}
+                            aria-label="Volume"
+                            className="absolute inset-0 w-full opacity-0 cursor-pointer" style={{ height: '100%' }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+              </div>
+            )}
+
+            {/* Category tabs */}
+            <div
+              ref={tabsRef}
+              className="-mx-5 md:-mx-8 px-5 md:px-8 sticky z-10 pt-3 pb-2"
+              style={{ background: 'rgba(245, 242, 236, 0.98)', top: nowPlayingHeight }}
+            >
+              <div className="flex gap-2 overflow-x-auto">
                 {TABS.map(tab => {
                   const isDisabled = tab.id === 'favorites' && !isPro
                   return (

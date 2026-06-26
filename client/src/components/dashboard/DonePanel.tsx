@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
-import { motion } from 'motion/react'
-
 
 const QUOTES = [
   "That's one less thing between you and the rest of your day.",
@@ -45,14 +43,11 @@ export default function DonePanel({ taskTitle, onNext }: DonePanelProps) {
   const progress = (elapsed / DURATION) * 100
 
   return (
-    <motion.div
+    <div
       onClick={onNext}
-      className="rounded-2xl p-6 text-center cursor-pointer select-none"
+      className="rounded-2xl p-6 text-center cursor-pointer select-none animate-scale-in" 
       style={{ background: '#EAF3DE', border: '1px solid #C0DD97' }}
       title="Tap to continue"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
     >
       <div className="flex justify-center mb-3">
         <CheckCircle2 size={40} strokeWidth={1.5} color="var(--gp)" />
@@ -83,6 +78,6 @@ export default function DonePanel({ taskTitle, onNext }: DonePanelProps) {
           }}
         />
       </div>
-    </motion.div>
+    </div>
   )
 }

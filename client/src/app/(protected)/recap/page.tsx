@@ -7,7 +7,6 @@ import StatusBadge from '@/components/ui/StatusBadge'
 import { getRecap, getRecapRange, getCheckins, type RecapRangeItem } from '@/lib/api'
 import { useTasks, useActivateTasks } from '@/context/TaskContext'
 import type { Recap, Checkin } from '@/types'
-import { motion } from 'motion/react'
 import { useCreateTaskSheet } from '@/context/CreateTaskSheetContext'
 import { useMusic } from '@/context/MusicContext'
 import { usePlan } from '@/context/PlanContext'
@@ -77,7 +76,6 @@ function toBadgeStatus(status: Checkin['status']): 'done' | 'stuck' | 'in_progre
 }
 
 // ─── Reflections sub-view ────────────────────────────────────────────────────
-
 function ReflectionsView() {
   const [checkins, setCheckins] = useState<Checkin[]>([])
   const [loading, setLoading]   = useState(true)
@@ -204,6 +202,7 @@ export default function RecapPage() {
   const [recaps, setRecaps]       = useState<(Recap | null)[]>([])
   const [rangeData, setRangeData] = useState<RecapRangeItem[]>([])
   const [loading, setLoading]     = useState(true)
+const { base, liftPx } = useFabOffset()
   const { currentTrack } = useMusic()
   const { isPro } = usePlan()
   const { openSheet } = useCreateTaskSheet()
@@ -316,7 +315,7 @@ export default function RecapPage() {
         style={{ paddingBottom: currentTrack ? 200 : 152 }}
       >
         {/* Page header */}
-        <div className="-mx-5 md:-mx-8 px-5 md:px-8 pt-6 pb-3 moment-sticky-header">
+        <div className="pt-6 pb-3">
           <h1 className="text-[26px] font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--td)' }}>
             {view === 'recap' ? 'Recap' : 'Reflections'}
           </h1>
@@ -328,8 +327,8 @@ export default function RecapPage() {
         {/* View switcher */}
         {/* View switcher — sticky */}
         <div
-          className="sticky top-0 z-10 pt-1 pb-2"
-          style={{ background: 'var(--ow)' }}
+          className="sticky top-0 z-10 pt-3 pb-3"
+          style={{ background: 'rgba(245, 242, 236, 0.98)' }}
         >
           <div
             className="flex w-full rounded-2xl p-1"
@@ -475,7 +474,7 @@ export default function RecapPage() {
                     ))}
                   </div>
 
-                  <div className="rounded-2xl p-5">
+                  <div className="rounded-2xl p-5" style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}>
                     <div className="flex items-center justify-between mb-4">
                       <p className="moment-label">{chartHeading}</p>
                       {total === 0 && period !== 'daily' && (
@@ -511,24 +510,20 @@ export default function RecapPage() {
         )}
       </div>
 
-      <motion.button
+      <button
         aria-label="Add task"
         onClick={() => openSheet()}
-        className="fixed right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
+        className="fixed right-5 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40 will-change-transform active:scale-95"
         style={{
           background: 'var(--gp)',
           boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
-          bottom: useFabOffset(),
-          transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          bottom: base,                                    // static, no transition
+          transform: currentTrack ? `translateY(-${liftPx}px)` : 'translateY(0)',
+          transition: 'transform 0.3s var(--ease-out)',
         }}
-        initial={false}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.92 }}
       >
         <Plus size={24} strokeWidth={2} color="white" />
-      </motion.button>
+      </button>
     </>
   )
 }

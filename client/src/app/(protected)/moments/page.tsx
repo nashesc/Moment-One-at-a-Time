@@ -7,7 +7,6 @@ import Toggle from '@/components/ui/Toggle'
 import { useCreateTaskSheet } from '@/context/CreateTaskSheetContext'
 import { useTasks, useActivateTasks } from '@/context/TaskContext'
 import { useSettings } from '@/context/SettingsContext'
-import { motion } from 'motion/react'
 import { useMusic } from '@/context/MusicContext'
 import { useFabOffset } from '@/hooks/useFabOffset'
 
@@ -16,9 +15,10 @@ type Tab = typeof TABS[number]
 
 export default function MomentsPage() {
   useActivateTasks()
-  const { tasks, doneTodayCount, totalTodayCount, loading, error, refresh } = useTasks()
+  const { tasks, doneTodayCount, totalTodayCount, loading, error, refresh, updateStatus } = useTasks()
   const { prefs, setPref } = useSettings()
   const [tab, setTab]         = useState<Tab>('All')
+  const { base, liftPx } = useFabOffset()
   const { currentTrack } = useMusic()
   const { openSheet } = useCreateTaskSheet()
 
@@ -169,7 +169,14 @@ export default function MomentsPage() {
                 </p>
                 <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                   {todayFiltered.map(t => (
-                    <TaskGridCard key={t.id} title={t.title} estimatedMinutes={t.estimatedMinutes} priority={t.priority} status={t.status} />
+                    <TaskGridCard
+                      key={t.id}
+                      title={t.title}
+                      estimatedMinutes={t.estimatedMinutes}
+                      priority={t.priority}
+                      status={t.status}
+                      onReactivate={() => updateStatus(t.id, 'pending')}
+                    />
                   ))}
                 </div>
               </div>
@@ -222,24 +229,20 @@ export default function MomentsPage() {
       </div>
 
       {/* FAB */}
-      <motion.button
+      <button
         aria-label="Add task"
         onClick={() => openSheet()}
-        className="fixed right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
+        className="fixed right-5 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40 will-change-transform active:scale-95"
         style={{
           background: 'var(--gp)',
           boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
-          bottom: useFabOffset(),
-          transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          bottom: base,                                    // static, no transition
+          transform: currentTrack ? `translateY(-${liftPx}px)` : 'translateY(0)',
+          transition: 'transform 0.3s var(--ease-out)',
         }}
-        initial={false}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
-        whileHover={{ scale: 1.08 }}
-        whileTap={{ scale: 0.92 }}
       >
         <Plus size={24} strokeWidth={2} color="white" />
-      </motion.button>
+      </button>
     </>
   )
 }

@@ -13,7 +13,6 @@ import { useAuth } from '@/context/AuthContext'
 import { useSettings } from '@/context/SettingsContext'
 import { Plus } from 'lucide-react'
 import { useCreateTaskSheet } from '@/context/CreateTaskSheetContext'
-import { motion, AnimatePresence } from 'motion/react'
 import FocusOverlay from '@/components/dashboard/FocusOverlay'
 import { useMusic } from '@/context/MusicContext'
 import { useFabOffset } from '@/hooks/useFabOffset'
@@ -26,6 +25,7 @@ export default function DashboardPage() {
   const { todayTasks, updateStatus, moveToEnd, doneTodayCount, totalTodayCount, loading, error, refresh, isOffline } = useTasks()
   const { profile } = useAuth()
   const { prefs } = useSettings()
+  const { base, liftPx } = useFabOffset()
   const { currentTrack } = useMusic()
   const { openSheet } = useCreateTaskSheet()
 
@@ -194,15 +194,12 @@ export default function DashboardPage() {
           </div>
 
           {/* Momentum ring */}
-          <motion.div
+          <div
             className="mx-4 md:mx-8 rounded-2xl p-5 mb-4"
             style={{ background: 'white', boxShadow: 'var(--shadow-card)' }}
-            initial={false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
           >
             <MomentumRing done={doneTodayCount} total={totalTodayCount} size={76} showImage />
-          </motion.div>
+          </div>
 
           {/* Loading skeleton */}
           {loading && (
@@ -331,11 +328,8 @@ export default function DashboardPage() {
 
               {currentTask && (!allDone || focusState === 'done') && (
                 <>
-                  <motion.div
+                  <div
                     className="mx-4 md:mx-8 mb-3"
-                    initial={false}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.05, ease: [0.4, 0, 0.2, 1] }}
                   >
                     <TaskCard
                       title={currentTask.title}
@@ -344,7 +338,7 @@ export default function DashboardPage() {
                       priority={currentTask.priority}
                       isDone={focusState === 'done'}
                     />
-                  </motion.div>
+                  </div>
 
                   {focusState === 'done' && (
                     <div className="mx-4 md:mx-8 mb-3">
@@ -353,11 +347,8 @@ export default function DashboardPage() {
                   )}
 
                   {focusState !== 'done' && (
-                    <motion.div
+                    <div
                       className="mx-4 md:mx-8 flex flex-col gap-3 mb-2"
-                      initial={false}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.35, delay: 0.1, ease: [0.4, 0, 0.2, 1] }}
                     >
                       <button onClick={handleMainBtn}
                         className="w-full flex items-center justify-center gap-3 rounded-full py-[15px] text-[15px] font-semibold text-white transition-all duration-200 hover:opacity-90"
@@ -382,22 +373,20 @@ export default function DashboardPage() {
                           </button>
                         </div>
                       )}
-                    </motion.div>
+                    </div>
                   )}
                 </>
               )}
               <StuckSheet open={stuckSheetOpen} onClose={() => setStuckSheetOpen(false)} onSubmit={commitStuck} />
-              <AnimatePresence>
-                {overlayOpen && currentTask && (
-                  <FocusOverlay
-                    task={{ id: currentTask.id, title: currentTask.title, estimatedMinutes: currentTask.estimatedMinutes }}
-                    onClose={() => setOverlayOpen(false)}
-                    onFinish={handleOverlayFinish}
-                    onSkip={handleOverlaySkip}
-                    onStuck={handleOverlayStuck}
-                  />
-                )}
-              </AnimatePresence>
+              {overlayOpen && currentTask && (
+                <FocusOverlay
+                  task={{ id: currentTask.id, title: currentTask.title, estimatedMinutes: currentTask.estimatedMinutes }}
+                  onClose={() => setOverlayOpen(false)}
+                  onFinish={handleOverlayFinish}
+                  onSkip={handleOverlaySkip}
+                  onStuck={handleOverlayStuck}
+                />
+              )}
                 
               {/* Focus picker — mobile fixed overlay */}
               {showPicker && !allDone && activeTasks.length > 0 && todayTasks.length > 0 && (
@@ -476,28 +465,24 @@ export default function DashboardPage() {
         </div>
       </aside>
 
-      <motion.button
+      <button
           aria-label="Add task"
           onClick={() => openSheet(() => {
             setFocusState('idle')
             setFocused(null)
             setShowPicker(true)
           })}
-          className="fixed right-5 md:bottom-8 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40"
+          className="fixed right-5 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40 will-change-transform active:scale-95"
           style={{
             background: 'var(--gp)',
             boxShadow: '0 4px 20px rgba(45,90,39,0.4), 0 2px 6px rgba(45,90,39,0.2)',
-            bottom: useFabOffset(),
-            transition: 'bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            bottom: base,                                    // static, no transition
+            transform: currentTrack ? `translateY(-${liftPx}px)` : 'translateY(0)',
+            transition: 'transform 0.3s var(--ease-out)',
           }}
-          initial={false}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.92 }}
         >
           <Plus size={24} strokeWidth={2} color="white" />
-      </motion.button>
+      </button>
     </>
   )
 }

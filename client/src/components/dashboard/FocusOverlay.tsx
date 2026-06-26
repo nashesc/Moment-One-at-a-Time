@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
 import { ChevronLeft, Music, Pause, Play } from 'lucide-react'
 import { useFocusSession, type TimerMode } from '@/hooks/useFocusSession'
 import { useAuth } from '@/context/AuthContext'
@@ -62,33 +61,37 @@ export default function FocusOverlay({ task, onClose, onFinish, onStuck, onSkip 
     ? (hasOverrun ? overrunSeconds : Math.max(targetSeconds - elapsed, 0))
     : elapsed
 
+  const [entered, setEntered] = useState(false)
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setEntered(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
   return (
-    <motion.div
-      className="fixed inset-0 z-[100] flex flex-col"
-      style={{ background: 'linear-gradient(160deg, #1e3d18 0%, #2D5A27 45%, #3D7A35 100%)' }}
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+    <div
+      className="fixed inset-0 z-[100] flex flex-col transition-[opacity,transform] duration-300"
+      style={{
+        background: 'linear-gradient(160deg, #1e3d18 0%, #2D5A27 45%, #3D7A35 100%)',
+        opacity: entered ? 1 : 0,
+        transform: entered ? 'scale(1)' : 'scale(0.96)',
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
     >
-      <AnimatePresence>
-        {showTimesUp && (
-          <motion.div
-            onClick={() => { setShowTimesUp(false); onClose() }}
-            className="absolute inset-0 z-20 flex flex-col items-center justify-center px-8 text-center cursor-pointer select-none"
-            style={{ background: 'rgba(23,58,45,0.97)' }}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          >
-            <p className="text-[12px] uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              Time&apos;s up
-            </p>
-            <p className="text-[22px] leading-relaxed mb-10" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'rgba(255,255,255,0.93)' }}>
-              &ldquo;{task.title}&rdquo; is still open — pick it back up whenever you&apos;re ready.
-            </p>
-            <p className="text-[13px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Tap anywhere to continue</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showTimesUp && (
+        <div
+          onClick={() => { setShowTimesUp(false); onClose() }}
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center px-8 text-center cursor-pointer select-none animate-fade-in"
+        style={{ background: 'rgba(23,58,45,0.97)' }}
+        >
+          <p className="text-[12px] uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.45)' }}>
+            Time&apos;s up
+          </p>
+          <p className="text-[22px] leading-relaxed mb-10" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'rgba(255,255,255,0.93)' }}>
+            &ldquo;{task.title}&rdquo; is still open — pick it back up whenever you&apos;re ready.
+          </p>
+          <p className="text-[13px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Tap anywhere to continue</p>
+        </div>
+      )}
 
       <div className="flex items-center justify-between px-5 pt-6 pb-2">
         <button onClick={onClose} aria-label="Back to dashboard"
@@ -184,6 +187,6 @@ export default function FocusOverlay({ task, onClose, onFinish, onStuck, onSkip 
       <ProGateModal open={gateOpen} onClose={() => setGateOpen(false)}
         featureName="Full Music Library"
         description="Unlock 100+ tracks across every category — available with Pro." />
-    </motion.div>
+    </div>
   )
 }

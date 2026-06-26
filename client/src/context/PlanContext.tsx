@@ -27,6 +27,7 @@ const DEFAULTS: PlanData = {
   currentPeriodEnd: null,
 }
 
+
 export function PlanProvider({ children }: { children: React.ReactNode }) {
   const [data, setData]     = useState<PlanData>(DEFAULTS)
   const [loading, setLoading] = useState(true)

@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import Script from 'next/script'
 import Link from 'next/link'
 import { Check, X, Leaf, Sparkles } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
 import BottomNav from '@/components/ui/BottomNav'
 import DesktopSidebar from '@/components/ui/DesktopSidebar'
 import { usePlan } from '@/context/PlanContext'
@@ -145,12 +144,7 @@ export default function UpgradePage() {
       <div className="flex min-h-screen" style={{ background: 'var(--ow)' }}>
         <DesktopSidebar />
         <div className="flex flex-col flex-1 items-center justify-center px-6 pb-24 md:pb-8">
-          <motion.div
-            className="text-center max-w-sm w-full"
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          >
+          <div className="text-center max-w-sm w-full animate-scale-in"  >
             <div className="mb-6 flex justify-center">
               <Leaf size={64} color="var(--gp)" strokeWidth={1.5} />
             </div>
@@ -171,7 +165,7 @@ export default function UpgradePage() {
               <Leaf size={16} />
               Go to Dashboard
             </Link>
-          </motion.div>
+          </div>
         </div>
         <BottomNav />
       </div>
@@ -248,9 +242,9 @@ export default function UpgradePage() {
             <div className="mx-5 md:mx-8 mt-5 grid grid-cols-1 gap-3 md:grid-cols-2">
 
               {/* Monthly */}
-              <motion.button
+              <button
                 onClick={() => openCheckout('monthly')}
-                className="w-full rounded-2xl p-5 text-left relative overflow-hidden"
+                className="w-full rounded-2xl p-5 text-left relative overflow-hidden transition-transform duration-150 active:scale-[0.98]"
                 style={{
                   background: 'white',
                   border: selectedPlan === 'monthly' ? '2px solid var(--gp)' : '1.5px solid var(--border)',
@@ -258,7 +252,6 @@ export default function UpgradePage() {
                   cursor: paddleReady ? 'pointer' : 'not-allowed',
                   opacity: paddleReady ? 1 : 0.6,
                 }}
-                whileTap={{ scale: 0.98 }}
                 disabled={!paddleReady || paddleFailed}
               >
                 <div className="flex items-start justify-between mb-3">
@@ -288,12 +281,12 @@ export default function UpgradePage() {
                     ? 'Subscribe Monthly'
                     : 'Loading...'}
                 </div>
-              </motion.button>
+              </button>
 
               {/* Annual */}
-              <motion.button
+              <button
                 onClick={() => openCheckout('annual')}
-                className="w-full rounded-2xl p-5 text-left relative overflow-hidden"
+                className="w-full rounded-2xl p-5 text-left relative overflow-hidden transition-transform duration-150 active:scale-[0.98]"
                 style={{
                   background: 'var(--deep-pine)',
                   border: '1.5px solid var(--deep-pine)',
@@ -301,7 +294,6 @@ export default function UpgradePage() {
                   cursor: paddleReady ? 'pointer' : 'not-allowed',
                   opacity: paddleReady ? 1 : 0.6,
                 }}
-                whileTap={{ scale: 0.98 }}
                 disabled={!paddleReady || paddleFailed}
               >
                 <div className="absolute top-3 right-3">
@@ -326,7 +318,7 @@ export default function UpgradePage() {
                 >
                   {paddleReady ? 'Subscribe Annual' : 'Loading...'}
                 </div>
-              </motion.button>
+              </button>
             </div>
           )}
 
@@ -340,54 +332,52 @@ export default function UpgradePage() {
           )}
 
           {/* Paddle inline checkout */}
-          <AnimatePresence>
-            {checkoutOpen && (
-              <motion.div
-                className="mx-5 md:mx-8 mt-5 rounded-2xl overflow-hidden"
-                style={{ background: 'white', boxShadow: 'var(--shadow-card)', border: '1.5px solid var(--border)' }}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 12 }}
-                transition={{ duration: 0.3 }}
+          {checkoutOpen && (
+            <div
+              className="mx-5 md:mx-8 mt-5 rounded-2xl overflow-hidden animate-fade-up"
+              style={{ 
+                background: 'white', 
+                boxShadow: 'var(--shadow-card)', 
+                border: '1.5px solid var(--border)' 
+              }}
+            >
+              {/* Checkout header */}
+              <div
+                className="flex items-center justify-between px-5 py-3 border-b"
+                style={{ borderColor: 'var(--border)' }}
               >
-                {/* Checkout header */}
-                <div
-                  className="flex items-center justify-between px-5 py-3 border-b"
-                  style={{ borderColor: 'var(--border)' }}
-                >
-                  <div>
-                    <p className="text-[13px] font-semibold" style={{ color: 'var(--td)' }}>
-                      Moment Pro — {selectedPlan === 'monthly' ? 'Monthly' : 'Annual'}
-                    </p>
-                    <p className="text-[11px]" style={{ color: 'var(--tg)' }}>
-                      {selectedPlan === 'monthly' ? '$2.50/mo for 3 months, then $5/mo' : '$40/year · cancel anytime'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setCheckoutOpen(false)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: 'var(--gpa)', border: 'none', cursor: 'pointer' }}
-                    aria-label="Close checkout"
-                  >
-                    <X size={14} color="var(--tg)" />
-                  </button>
+                <div>
+                  <p className="text-[13px] font-semibold" style={{ color: 'var(--td)' }}>
+                    Moment Pro — {selectedPlan === 'monthly' ? 'Monthly' : 'Annual'}
+                  </p>
+                  <p className="text-[11px]" style={{ color: 'var(--tg)' }}>
+                    {selectedPlan === 'monthly' ? '$2.50/mo for 3 months, then $5/mo' : '$40/year · cancel anytime'}
+                  </p>
                 </div>
+                <button
+                  onClick={() => setCheckoutOpen(false)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center"
+                  style={{ background: 'var(--gpa)', border: 'none', cursor: 'pointer' }}
+                  aria-label="Close checkout"
+                >
+                  <X size={14} color="var(--tg)" />
+                </button>
+              </div>
 
-                {/* Loading state */}
-                {loading && (
-                  <div className="flex items-center justify-center py-16">
-                    <div
-                      className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-                      style={{ borderColor: 'var(--gso)', borderTopColor: 'var(--gp)' }}
-                    />
-                  </div>
-                )}
+              {/* Loading state */}
+              {loading && (
+                <div className="flex items-center justify-center py-16">
+                  <div
+                    className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+                    style={{ borderColor: 'var(--gso)', borderTopColor: 'var(--gp)' }}
+                  />
+                </div>
+              )}
 
-                {/* Paddle mounts here */}
-                <div className="paddle-checkout-frame" />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              {/* Paddle mounts here */}
+              <div className="paddle-checkout-frame" />
+            </div>
+          )}
 
           {/* Change plan button when checkout is open */}
           {checkoutOpen && (
