@@ -295,19 +295,19 @@ const { base, liftPx } = useFabOffset()
   const quote = QUOTES[done % QUOTES.length]
 
   const chartBars: number[] = (() => {
-    if (period === 'daily')   return getLastNDays(7).map(d => d === new Date().toISOString().split('T')[0] && total > 0 ? Math.round((done / total) * 100) : 0)
+    if (period === 'daily')   return [total > 0 ? Math.round((done / total) * 100) : 0]
     if (period === 'weekly')  return recaps.map(r => r && r.tasks_total > 0 ? Math.round((r.tasks_done / r.tasks_total) * 100) : 0)
     return rangeData.map(r => r.momentum_score)
   })()
 
   const chartLabels: string[] = (() => {
-    if (period === 'daily')   return getLastNDays(7).map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
+    if (period === 'daily')   return [new Date().toLocaleDateString('en', { weekday: 'short' }).slice(0, 1)]
     if (period === 'weekly')  return getLastNDays(7).map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
     if (period === 'monthly') return rangeData.map(r => new Date(r.period + 'T12:00').toLocaleDateString('en', { day: 'numeric' }))
     return rangeData.map(r => new Date(r.period + '-01T12:00').toLocaleDateString('en', { month: 'short' }))
   })()
 
-  const chartHeading = { daily: 'Last 7 days', weekly: 'Day by day', monthly: 'Day by day', yearly: 'Month by month' }[period]
+  const chartHeading = { daily: "Today's momentum", weekly: 'Day by day', monthly: 'Day by day', yearly: 'Month by month' }[period]
 
   return (
     <>

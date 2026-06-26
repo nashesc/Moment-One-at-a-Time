@@ -30,16 +30,24 @@ export function CreateTaskSheetProvider({ children }: { children: React.ReactNod
     setOpen(true)
   }, [isPro, totalTodayCount])
 
-  const handleClose = useCallback(() => {
+  // Cancel — sheet dismissed without creating a task. Fires the caller's reset callback.
+  const handleCancel = useCallback(() => {
     setOpen(false)
     onCloseRef.current?.()
+    onCloseRef.current = null
+  }, [])
+
+  // Success — task was created. Hide the sheet only; the reset callback exists to
+  // undo dashboard focus state on abandonment, not on a completed action.
+  const handleCreated = useCallback(() => {
+    setOpen(false)
     onCloseRef.current = null
   }, [])
 
   return (
     <CreateTaskSheetContext.Provider value={{ openSheet }}>
       {children}
-      <CreateTaskSheet open={open} onClose={handleClose} />
+      <CreateTaskSheet open={open} onClose={handleCancel} onCreated={handleCreated} />
       <ProGateModal
         open={gateOpen}
         onClose={() => setGateOpen(false)}

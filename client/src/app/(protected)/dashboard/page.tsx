@@ -108,6 +108,7 @@ export default function DashboardPage() {
     setOverlayOpen(false)
     const next = activeTasks.find(t => t.id !== currentTask.id)
     if (next) { setFocused(next); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
   }
 
   const [stuckSheetOpen, setStuckSheetOpen] = useState(false)
@@ -125,6 +126,7 @@ export default function DashboardPage() {
     setStuckSheetOpen(false)
     const next = activeTasks.find(t => t.id !== currentTask.id)
     if (next) { setFocused(next); setFocusState('idle') }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
   }
 
   function handleSkip() {

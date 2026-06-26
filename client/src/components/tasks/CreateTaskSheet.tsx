@@ -8,6 +8,7 @@ import ProGateModal from '@/components/plan/ProGateModal'
 interface CreateTaskSheetProps {
   open: boolean
   onClose: () => void
+  onCreated?: () => void
 }
 
 const PRIORITY_OPTIONS = [
@@ -18,7 +19,7 @@ const PRIORITY_OPTIONS = [
 
 const TIME_OPTIONS = [15, 30, 45, 60, 90, 120]
 
-export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps) {
+export default function CreateTaskSheet({ open, onClose, onCreated }: CreateTaskSheetProps) {
   const { addTask } = useTasks()
   const [title, setTitle]       = useState('')
   const [description, setDesc]  = useState('')
@@ -71,7 +72,7 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
         priority,
         estimatedMinutes: minutes,
       })
-      onClose()
+      onCreated ? onCreated() : onClose()
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
       if (msg.toLowerCase().includes('limited to 7') || msg.toLowerCase().includes('free plan')) {

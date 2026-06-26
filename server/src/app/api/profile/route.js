@@ -41,6 +41,7 @@ export async function PATCH(request) {
     // Update profiles table
     const profileUpdates = {}
     if (parsed.data.full_name !== undefined) profileUpdates.full_name = parsed.data.full_name
+    if (parsed.data.email !== undefined) profileUpdates.email = parsed.data.email
 
     const { error: dbError } = await supabase
       .from('profiles')
