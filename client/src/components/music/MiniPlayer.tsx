@@ -45,15 +45,15 @@ export default function MiniPlayer() {
 
   return (
     <div
-      className="fixed left-0 right-0 z-40 md:left-60 md:right-74 moment-miniplayer transition-[transform,opacity] duration-300"
-      style={{
-        transform: visible ? 'translateY(0)' : 'translateY(80px)',
-        opacity: visible ? 0.96 : 0,
-        transitionTimingFunction: 'var(--ease-spring)',
+      className="fixed inset-x-0 z-40 md:left-60 md:right-0 xl:right-80 moment-miniplayer flex justify-center px-3 transition-[transform,opacity] duration-300"
+      style={{ 
+        transform: visible ? 'translateY(0)' : 'translateY(80px)', 
+        opacity: visible ? 0.96 : 0, 
+        transitionTimingFunction: 'var(--ease-spring)' 
       }}
     >
       <div
-        className="mx-3 rounded-2xl flex items-center gap-3 px-4 py-3"
+        className="w-full max-w-2xl rounded-2xl flex items-center gap-3 px-4 py-3"
         style={{
           background: 'rgba(23, 58, 45, 0.96)',
           boxShadow: '0 -2px 20px rgba(0,0,0,0.25), 0 4px 24px rgba(0,0,0,0.15)',

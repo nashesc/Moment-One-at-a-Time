@@ -66,6 +66,7 @@ function EditableField({
               value={draft}
               onChange={e => { setDraft(e.target.value); setError('') }}
               autoFocus
+              aria-label={label}
               className="w-full rounded-xl px-3 py-2 text-[14px] outline-none"
               style={{
                 border: error ? '1.5px solid #C0392B' : '1.5px solid var(--gs)',
@@ -90,6 +91,7 @@ function EditableField({
         <div className="flex items-center gap-2 ml-3 shrink-0">
           <button
             onClick={handleCancel}
+            aria-label="Cancel edit"
             className="w-8 h-8 rounded-full flex items-center justify-center"
             style={{ background: 'var(--gpa)', border: 'none', cursor: 'pointer' }}
           >
@@ -98,6 +100,7 @@ function EditableField({
           <button
             onClick={handleSave}
             disabled={saving}
+            aria-label="Save"
             className="w-8 h-8 rounded-full flex items-center justify-center"
             style={{ background: saving ? 'var(--gso)' : 'var(--gp)', border: 'none', cursor: saving ? 'not-allowed' : 'pointer' }}
           >
@@ -170,6 +173,7 @@ function TimePickerRow({ value, onChange }: { value: string; onChange: (v: strin
             type="time"
             value={draft}
             onChange={e => setDraft(e.target.value)}
+            aria-label="Reminder time"
             className="rounded-xl px-3 py-2 text-[14px] outline-none flex-1"
             style={{
               border: '1.5px solid var(--gs)',
@@ -293,6 +297,7 @@ export default function SettingsPage() {
                   <Toggle
                     on={prefs.showOpeningQuote}
                     onChange={(v) => setPref('showOpeningQuote', v)}
+                    label="Show opening quote"
                   />
                 </div>
                 <div className="flex items-center justify-between px-5 py-4">
@@ -303,6 +308,7 @@ export default function SettingsPage() {
                   <Toggle
                     on={prefs.oneTaskAtATime}
                     onChange={(v) => setPref('oneTaskAtATime', v)}
+                    label="One task at a time"
                   />
                 </div>
               </div>
@@ -338,6 +344,7 @@ export default function SettingsPage() {
                       <Toggle
                         on={prefs.pushNotifications}
                         onChange={handlePushToggle}
+                        label="Push notifications"
                       />
                     )}
                   </div>

@@ -534,7 +534,8 @@ const TrackGridCard = memo(function TrackGridCard({
         {isPro && (
           <button onClick={(e) => { e.stopPropagation(); toggleFavorite(track.id) }}
             className="w-7 h-7 rounded-full flex items-center justify-center"
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+            aria-label="Toggle favorite">
             <Heart size={14} color={isFav ? '#D9C17A' : 'var(--tgl)'} fill={isFav ? '#D9C17A' : 'none'} />
           </button>
         )}

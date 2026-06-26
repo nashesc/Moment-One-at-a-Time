@@ -109,14 +109,15 @@ export default function CreateTaskSheet({ open, onClose }: CreateTaskSheetProps)
           {/* Sheet — bottom sheet on mobile, centered modal on desktop */}
           <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center pointer-events-none">
             <div
-              className="w-full md:w-[480px] md:max-w-[90vw] rounded-t-3xl md:rounded-3xl transition-transform duration-300"
+              className="w-full md:w-[480px] md:max-w-[90vw] rounded-t-3xl md:rounded-3xl transition-[transform,opacity] duration-300"
               style={{
                 background: 'var(--ow)', boxShadow: '0 -4px 32px rgba(0,0,0,0.12)', maxHeight: '92vh', overflowY: 'auto',
                 transform: open ? 'translateY(0)' : 'translateY(100%)',
+                opacity: open ? 1 : 0,
                 transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
                 pointerEvents: open ? 'auto' : 'none',
               }}
-              aria-hidden={!open}
+              inert={!open}
               onTransitionEnd={(e) => { if (open && e.propertyName === 'transform') titleRef.current?.focus() }}
             >
               {/* Handle — drag affordance only makes sense as a bottom sheet */}

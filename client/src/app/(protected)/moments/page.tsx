@@ -221,6 +221,7 @@ export default function MomentsPage() {
               <Toggle
                 on={prefs.oneTaskAtATime}
                 onChange={(v) => setPref('oneTaskAtATime', v)}
+                label="One task at a time"
               />
             </div>
           </div>

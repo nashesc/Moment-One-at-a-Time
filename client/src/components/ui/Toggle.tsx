@@ -3,13 +3,15 @@
 interface ToggleProps {
   on: boolean
   onChange?: (v: boolean) => void
+  label: string
 }
 
-export default function Toggle({ on, onChange }: ToggleProps) {
+export default function Toggle({ on, onChange, label }: ToggleProps) {
   return (
     <button
       role="switch"
       aria-checked={on}
+      aria-label={label}
       onClick={() => onChange?.(!on)}
       className="relative shrink-0 rounded-full border-none cursor-pointer transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       style={{
