@@ -481,9 +481,9 @@ const { base, liftPx } = useFabOffset()
                         <p className="text-[10px]" style={{ color: 'var(--tgl)' }}>History builds over time</p>
                       )}
                     </div>
-                    <div className="flex items-end gap-2 h-20">
+                    <div className="flex items-end justify-center gap-2 h-20">
                       {chartBars.map((pct, i) => (
-                        <div key={i} className="flex flex-1 flex-col items-center gap-1.5 h-full">
+                        <div key={i} className="flex flex-1 max-w-16 flex-col items-center gap-1.5 h-full">
                           <div className="flex-1 w-full rounded-lg overflow-hidden relative"
                             style={{ background: 'var(--gpa)' }}>
                             <div className="w-full h-full rounded-lg absolute bottom-0 left-0"
