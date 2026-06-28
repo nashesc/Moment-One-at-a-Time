@@ -35,6 +35,7 @@ interface TaskContextValue {
   updateStatus: (id: string, status: TaskStatus, opts?: { stuckReason?: string; durationSeconds?: number }) => void
   moveToEnd: (id: string) => void
   addTask: (payload: NewTaskPayload) => Promise<void>
+  reactivateTask: (id: string) => void 
   todayTasks: Task[]
   doneTodayCount: number
   totalTodayCount: number
@@ -320,6 +321,26 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
+  const reactivateTask = useCallback((id: string) => {
+    if (id.startsWith('temp-')) return
+    const today = todayStr.current
+
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'pending', date: 'Today' } : t))
+    db.tasks.update(id, { status: 'pending', scheduled_date: today, updated_at: new Date().toISOString() }).catch(() => {})
+    clearRecapCacheForDate(today)
+
+    if (navigator.onLine) {
+      api.updateTask(id, { status: 'pending', scheduled_date: today }).catch(console.error)
+    } else {
+      db.syncQueue.add({
+        type: 'updateTask',
+        payload: { id, updates: { status: 'pending', scheduled_date: today } },
+        createdAt: Date.now(),
+        retries: 0,
+      }).catch(() => {})
+    }
+  }, [])
+
   const addTask = useCallback(async (payload: NewTaskPayload) => {
     const today  = todayStr.current
     const tempId = `temp-${Date.now()}`
@@ -402,7 +423,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   return (
     <TaskContext.Provider value={{
       tasks, loading, error, isOffline,
-      updateStatus, moveToEnd, addTask, refresh: () => load(true),
+      updateStatus, moveToEnd, addTask, reactivateTask, refresh: () => load(true),
       todayTasks, doneTodayCount, totalTodayCount,
       setActive: setIsActive,  // ← expose it
     }}>

@@ -228,7 +228,6 @@ body {
 .moment-card--hero {
   background: var(--card-white);
   border: 1px solid var(--border);
-  border-top: 3px solid var(--gp);
   border-radius: var(--radius-2xl);
   padding: var(--space-8);
   box-shadow: var(--shadow-card);

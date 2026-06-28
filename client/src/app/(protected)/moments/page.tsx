@@ -15,7 +15,7 @@ type Tab = typeof TABS[number]
 
 export default function MomentsPage() {
   useActivateTasks()
-  const { tasks, doneTodayCount, totalTodayCount, loading, error, refresh, updateStatus } = useTasks()
+  const { tasks, doneTodayCount, totalTodayCount, loading, error, refresh, updateStatus, reactivateTask } = useTasks()
   const { prefs, setPref } = useSettings()
   const [tab, setTab]         = useState<Tab>('All')
   const { base, liftPx } = useFabOffset()
@@ -175,7 +175,11 @@ export default function MomentsPage() {
                       estimatedMinutes={t.estimatedMinutes}
                       priority={t.priority}
                       status={t.status}
-                      onReactivate={() => updateStatus(t.id, 'pending')}
+                      onReactivate={
+                        t.status === 'stuck' || t.status === 'skipped'
+                          ? () => updateStatus(t.id, 'pending')
+                          : undefined
+                      }
                     />
                   ))}
                 </div>
@@ -188,7 +192,14 @@ export default function MomentsPage() {
                 </p>
                 <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
                   {yesterdayFiltered.map(t => (
-                    <TaskGridCard key={t.id} title={t.title} estimatedMinutes={t.estimatedMinutes} priority={t.priority} status={t.status} />
+                    <TaskGridCard
+                      key={t.id}
+                      title={t.title}
+                      estimatedMinutes={t.estimatedMinutes}
+                      priority={t.priority}
+                      status={t.status}
+                      onReactivate={t.status !== 'done' ? () => reactivateTask(t.id) : undefined}
+                    />
                   ))}
                 </div>
               </div>

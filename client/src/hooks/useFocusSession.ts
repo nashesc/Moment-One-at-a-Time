@@ -10,6 +10,7 @@ interface PersistedSession {
   resumedAt: number | null
   hasOverrun: boolean
   estimatedMinutes: number
+  startedDate: string
 }
 
 function storageKey(userId: string, taskId: string) {
@@ -50,6 +51,7 @@ export function useFocusSession(
   const accumulatedRef = useRef(0)
   const resumedAtRef   = useRef<number | null>(null)
   const tickRef        = useRef<ReturnType<typeof setInterval> | null>(null)
+  const startedDateRef = useRef<string>(new Date().toISOString().split('T')[0])
   const onCrossedRef   = useRef(onThresholdCrossed)
   useEffect(() => { onCrossedRef.current = onThresholdCrossed }, [onThresholdCrossed])
 
@@ -59,7 +61,21 @@ export function useFocusSession(
   // including time that passed while this component wasn't mounted at all.
   useEffect(() => {
     if (!userId) return
+    const today = new Date().toISOString().split('T')[0]
     const existing = loadSession(userId, taskId)
+
+    // A session started on a previous calendar day is stale — the usual
+    // cause is a task that sat in_progress overnight and got reactivated
+    // the next day. Resuming it would silently restore a multi-hour
+    // accumulated time or an already-overrun countdown from yesterday.
+    if (existing && existing.startedDate !== today) {
+      clearSession(userId, taskId)
+      startedDateRef.current = today
+      setSessionEstimatedMinutes(estimatedMinutes)
+      return
+    }
+
+    startedDateRef.current = today
     if (!existing) {
       setSessionEstimatedMinutes(estimatedMinutes)
       return
@@ -89,6 +105,7 @@ export function useFocusSession(
       resumedAt: resumedAtRef.current,
       hasOverrun,
       estimatedMinutes: sessionEstimatedMinutes,
+      startedDate: startedDateRef.current,
       ...overrides,
     })
   }, [userId, taskId, mode, hasOverrun, sessionEstimatedMinutes])

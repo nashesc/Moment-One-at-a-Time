@@ -23,7 +23,7 @@ interface TaskGridCardProps {
 const priorityDot = { 1: '#5A9E50', 2: '#C4A35A', 3: '#1B3A6B' }
 
 export default function TaskGridCard({ title, estimatedMinutes, priority, status, onReactivate }: TaskGridCardProps) {
-  const canReactivate = (status === 'skipped' || status === 'stuck') && !!onReactivate
+  const canReactivate = status !== 'done' && !!onReactivate
 
   return (
     <div
@@ -53,7 +53,7 @@ export default function TaskGridCard({ title, estimatedMinutes, priority, status
       {canReactivate && (
         <span className="flex items-center gap-1.5 text-[11px] font-medium" style={{ color: 'var(--gp)' }}>
           <RotateCcw size={11} strokeWidth={2} />
-          Tap to do it again
+          {status === 'stuck' || status === 'skipped' ? 'Tap to do it again' : 'Tap to bring to today'}
         </span>
       )}
     </div>
