@@ -99,7 +99,7 @@ export function createTask(payload: {
 
 export function updateTask(
   id: string,
-  payload: Partial<Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'estimated_minutes' | 'order_index'>>
+  payload: Partial<Pick<Task, 'title' | 'description' | 'status' | 'priority' | 'estimated_minutes' | 'order_index' | 'scheduled_date'>>
 ): Promise<Task> {
   return apiFetch<Task>(`/api/tasks/${id}`, {
     method: 'PATCH',
