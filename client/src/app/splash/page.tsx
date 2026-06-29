@@ -4,18 +4,19 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { FREE_OPENING_QUOTE_COUNT, OPENING_QUOTES } from '@/data/quotes'
 import { usePlan } from '@/context/PlanContext'
+import { createClient } from '@/lib/supabase/client'
 import { Leaf } from 'lucide-react'
 
 export default function SplashPage() {
-  // Start with null — renders nothing on server, picks quote on client only
+  // Starts null on server and on first client render — picked client-side
+  // only, so there's no SSR/client text mismatch regardless of fade timing.
   const [quote, setQuote] = useState<{ text: string; author: string | null } | null>(null)
-  const [visible, setVisible] = useState(false)
+  const [quoteVisible, setQuoteVisible] = useState(false)
   const router = useRouter()
   const { isPro } = usePlan()
 
   useEffect(() => {
     const init = async () => {
-      const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.replace('/login'); return }
@@ -34,7 +35,7 @@ export default function SplashPage() {
       const pool = isPro ? OPENING_QUOTES : OPENING_QUOTES.slice(0, FREE_OPENING_QUOTE_COUNT)
       const picked = pool[Math.floor(Math.random() * pool.length)]
       setQuote(picked)
-      setTimeout(() => setVisible(true), 50)
+      requestAnimationFrame(() => setQuoteVisible(true))
     }
     init()
   }, [router])
@@ -49,20 +50,18 @@ export default function SplashPage() {
       className="fixed inset-0 flex flex-col items-center justify-center cursor-pointer select-none"
       style={{
         background: 'linear-gradient(160deg, #1e3d18 0%, #2D5A27 45%, #3D7A35 100%)',
-        opacity: visible ? 1 : 0,
-        transition: 'opacity 0.6s ease',
       }}
     >
       <div className="px-8 max-w-sm text-center">
-        <div className="mb-8 flex justify-center" 
+        <div
+          className="mb-8 flex justify-center"
           style={{ animation: 'leafFloat 3s ease-in-out infinite' }}
         >
-        <Leaf size={64} color="rgba(255,255,255,0.93)" strokeWidth={1.5} />
-      </div>
+          <Leaf size={64} color="rgba(255,255,255,0.93)" strokeWidth={1.5} />
+        </div>
 
-        {/* Only render quote after client hydration — no mismatch */}
         {quote && (
-          <>
+          <div style={{ opacity: quoteVisible ? 1 : 0, transition: 'opacity 0.4s ease' }}>
             <p
               className="leading-relaxed mb-3"
               style={{
@@ -84,7 +83,7 @@ export default function SplashPage() {
               </p>
             )}
             {!quote.author && <div className="mb-10" />}
-          </>
+          </div>
         )}
 
         <p

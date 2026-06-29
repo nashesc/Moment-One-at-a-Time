@@ -62,18 +62,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    const run = async () => {
-      await refreshProfile()
-      setLoading(false)
-    }
-    run()
-
     const supabase = createClient()
+    let initialLoadDone = false
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        refreshProfile()
+        refreshProfile().finally(() => {
+          if (!initialLoadDone) { initialLoadDone = true; setLoading(false) }
+        })
       } else if (event === 'SIGNED_OUT') {
         setProfile(null)
+        if (!initialLoadDone) { initialLoadDone = true; setLoading(false) }
       }
     })
     return () => subscription.unsubscribe()

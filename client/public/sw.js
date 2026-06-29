@@ -52,18 +52,28 @@ self.addEventListener('fetch', event => {
     return
   }
 
-  // Navigation requests — network-first, cache as fallback
+  // Navigation requests — stale-while-revalidate. The precached app-shell
+  // routes were already sitting in cache and being ignored unless the
+  // network request failed outright; a slow response isn't a failure, so
+  // every load paid the full round trip before first paint regardless.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then(res => {
-          if (res.ok) caches.open(CACHE_NAME).then(c => c.put(request, res.clone()))
-          return res
-        })
-        .catch(async () => {
-          const cached = await caches.match(request)
-          return cached || caches.match('/dashboard')
-        })
+      caches.match(request).then(cached => {
+        const networkUpdate = fetch(request)
+          .then(res => {
+            if (res.ok) caches.open(CACHE_NAME).then(c => c.put(request, res.clone()))
+            return res
+          })
+          .catch(() => null)
+
+        // Keep the background revalidation alive even after responding
+        // from cache — without this, the SW can be torn down mid-fetch
+        // and the cache update silently never happens.
+        event.waitUntil(networkUpdate)
+
+        if (cached) return cached
+        return networkUpdate.then(res => res || caches.match('/dashboard'))
+      })
     )
     return
   }

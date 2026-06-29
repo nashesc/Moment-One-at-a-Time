@@ -35,8 +35,11 @@ export function PlanProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { setData(DEFAULTS); setLoading(false); return }
+      // Local read only — no network round trip. /api/plan's getUser(token)
+      // call server-side is the actual security check; doing it again here
+      // was just a second hit to Supabase's Auth server on every mount.
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setData(DEFAULTS); setLoading(false); return }
 
       const plan = await apiFetch<PlanData>('/api/plan')
       setData(plan)
