@@ -12,7 +12,17 @@ export const taskSchema = z.object({
   order_index: z.number().int().default(0),
 })
 
-export const updateTaskSchema = taskSchema.partial()
+export const updateTaskSchema = z.object({
+  title: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).optional(),
+  status: z.enum(['pending', 'in_progress', 'done', 'stuck', 'skipped']).optional(),
+  priority: z.number().int().min(1).max(3).optional(),
+  scheduled_date: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD')
+    .optional(),
+  estimated_minutes: z.number().int().min(5).max(480).optional(),
+  order_index: z.number().int().optional(),
+})
 
 export const checkinSchema = z.object({
   task_id: z.string().uuid(),
