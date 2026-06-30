@@ -10,6 +10,7 @@ import { PlanProvider } from '@/context/PlanContext'
 import MiniPlayer from '@/components/music/MiniPlayer'
 import TrialBanner from '@/components/plan/TrialBanner'
 import TrialExpiryModal from '@/components/plan/TrialExpiryModal'
+import ServiceWorkerRegister from '@/components/ui/ServiceWorkerRegister'
 import '@/app/globals.css'
 
 const playfair = Playfair_Display({
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <body>
         <ErrorBoundary>
+        <ServiceWorkerRegister />
           <RippleProvider />
           <PlanProvider>
             <MusicProvider>
