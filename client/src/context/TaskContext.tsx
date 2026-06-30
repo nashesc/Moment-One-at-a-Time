@@ -381,7 +381,8 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
         api.updateTask(created.id, { status: pendingStatus }).catch(console.error)
       }
     } catch (err) {
-      if (!navigator.onLine) {
+      const isNetworkFailure = !navigator.onLine || err instanceof TypeError
+      if (isNetworkFailure) {
         // Keep temp task — persist to Dexie and queue creation for later
         db.tasks.put({
           id:                tempId,
@@ -410,6 +411,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
           retries: 0,
         }).catch(() => {})
       } else {
+        // Server actually rejected it (7-task limit, validation, etc) — surface it, don't queue
         setTasks(prev => prev.filter(t => t.id !== tempId))
         throw err
       }

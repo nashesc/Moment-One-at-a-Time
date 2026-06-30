@@ -1,6 +1,7 @@
 const CACHE_NAME = 'moment-v2'
 
 const APP_SHELL = [
+  '/login',
   '/dashboard',
   '/moments',
   '/recap',
@@ -22,9 +23,17 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    (async () => {
+      const cache = await caches.open(CACHE_NAME)
+      const keys = await cache.keys()
+      // New cache failed to populate (e.g. activated while offline) — keep old cache around as fallback
+      if (keys.length === 0) {
+        self.skipWaiting()
+        return
+      }
+      const allKeys = await caches.keys()
+      await Promise.all(allKeys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    })()
   )
   self.clients.claim()
 })
