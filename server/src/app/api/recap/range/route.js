@@ -16,9 +16,6 @@ export async function GET(request) {
     const user = await getUser(request)
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 }, request)
 
-    const plan = await getUserPlan(user.id)
-    if (!plan.isPro) return json({ error: 'Pro subscription required' }, { status: 403 }, request)
-
     const { searchParams } = new URL(request.url)
     const from    = searchParams.get('from')
     const to      = searchParams.get('to')
@@ -27,11 +24,21 @@ export async function GET(request) {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/
     if (!from || !dateRegex.test(from)) return json({ error: 'Invalid from date' }, { status: 400 }, request)
     if (!to   || !dateRegex.test(to))   return json({ error: 'Invalid to date' },   { status: 400 }, request)
+    if (groupBy !== 'day' && groupBy !== 'month') return json({ error: 'Invalid groupBy' }, { status: 400 }, request)
 
     const MAX_RANGE_DAYS = 400
     const rangeDays = (new Date(to) - new Date(from)) / (1000 * 60 * 60 * 24)
     if (rangeDays < 0 || rangeDays > MAX_RANGE_DAYS) {
       return json({ error: 'Date range too large' }, { status: 400 }, request)
+    }
+
+    // Weekly recap (groupBy=day, <=7 days) is Free-tier per the upgrade page's
+    // promised feature set. Monthly/yearly aggregation, or any longer custom
+    // range, stays Pro-only.
+    const isWeeklyRange = groupBy === 'day' && rangeDays <= 6
+    if (!isWeeklyRange) {
+      const plan = await getUserPlan(user.id)
+      if (!plan.isPro) return json({ error: 'Pro subscription required' }, { status: 403 }, request)
     }
 
     const { data: tasks, error } = await supabase

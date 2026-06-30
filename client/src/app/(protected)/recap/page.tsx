@@ -42,20 +42,6 @@ function getLastNDays(n: number): string[] {
   })
 }
 
-async function fetchRecaps(dates: string[]): Promise<(Recap | null)[]> {
-  const BATCH = 7
-  const results: (Recap | null)[] = []
-  for (let i = 0; i < dates.length; i += BATCH) {
-    const batch = dates.slice(i, i + BATCH)
-    const batchResults = await Promise.all(
-      batch.map(d => getRecap(d).catch(() => null))
-    )
-    results.push(...batchResults)
-    if (i + BATCH < dates.length) await new Promise(r => setTimeout(r, 400))
-  }
-  return results
-}
-
 function formatCheckinTime(dateStr: string): string {
   const d = new Date(dateStr)
   const now = new Date()
@@ -271,11 +257,22 @@ const { base, liftPx } = useFabOffset()
     try {
       const today = new Date().toISOString().split('T')[0]
 
-      if (p === 'daily' || p === 'weekly') {
-        const dates = p === 'daily' ? [today] : getLastNDays(7)
-        const data  = await fetchRecaps(dates)
-        setRecaps(data)
+      if (p === 'daily') {
+        const data = await getRecap(today).catch(() => null)
+        setRecaps([data])
         setRangeData([])
+      } else if (p === 'weekly') {
+        // One aggregate query instead of 7 — but the chart needs exactly 7
+        // bars including zero-task days, and the range endpoint only
+        // returns buckets that actually have tasks. Zero-fill the rest.
+        const dates = getLastNDays(7)
+        const raw = await getRecapRange(dates[0], dates[dates.length - 1], 'day')
+        const byDate = new Map(raw.map(r => [r.period, r]))
+        const filled = dates.map(d => byDate.get(d) ?? {
+          period: d, total: 0, done: 0, stuck: 0, skipped: 0, momentum_score: 0,
+        })
+        setRangeData(filled)
+        setRecaps([])
       } else {
         const now  = new Date()
         const from = p === 'monthly'
@@ -295,7 +292,7 @@ const { base, liftPx } = useFabOffset()
     if (view === 'recap') loadData(period)
   }, [period, view, loadData])
 
-  const isRange = period === 'monthly' || period === 'yearly'
+  const isRange = period !== 'daily'
 
   const aggDone       = isRange ? rangeData.reduce((s,r) => s + r.done, 0)    : recaps.reduce((s,r) => s + (r?.tasks_done ?? 0), 0)
   const aggTotal      = isRange ? rangeData.reduce((s,r) => s + r.total, 0)   : recaps.reduce((s,r) => s + (r?.tasks_total ?? 0), 0)
@@ -314,17 +311,17 @@ const { base, liftPx } = useFabOffset()
   const quote = QUOTES[done % QUOTES.length]
 
   const chartBars: number[] = (() => {
-    if (period === 'daily')   return [total > 0 ? Math.round((done / total) * 100) : 0]
-    if (period === 'weekly')  return recaps.map(r => r && r.tasks_total > 0 ? Math.round((r.tasks_done / r.tasks_total) * 100) : 0)
+    if (period === 'daily') return [total > 0 ? Math.round((done / total) * 100) : 0]
     return rangeData.map(r => r.momentum_score)
   })()
 
   const chartLabels: string[] = (() => {
     if (period === 'daily')   return [new Date().toLocaleDateString('en', { weekday: 'short' }).slice(0, 1)]
-    if (period === 'weekly')  return getLastNDays(7).map(d => new Date(d + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
+    if (period === 'weekly')  return rangeData.map(r => new Date(r.period + 'T12:00').toLocaleDateString('en', { weekday: 'short' }).slice(0, 1))
     if (period === 'monthly') return rangeData.map(r => new Date(r.period + 'T12:00').toLocaleDateString('en', { day: 'numeric' }))
     return rangeData.map(r => new Date(r.period + '-01T12:00').toLocaleDateString('en', { month: 'short' }))
   })()
+
 
   const chartHeading = { daily: "Today's momentum", weekly: 'Day by day', monthly: 'Day by day', yearly: 'Month by month' }[period]
 

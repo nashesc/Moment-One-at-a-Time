@@ -32,6 +32,7 @@ interface TaskContextValue {
   loading: boolean
   error: string | null
   isOffline: boolean
+  isTruncated: boolean
   updateStatus: (id: string, status: TaskStatus, opts?: { stuckReason?: string; durationSeconds?: number }) => void
   moveToEnd: (id: string) => void
   addTask: (payload: NewTaskPayload) => Promise<void>
@@ -62,6 +63,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const [isOffline, setIsOffline] = useState(false)
+  const [isTruncated, setIsTruncated] = useState(false)
   const [isActive, setIsActive]   = useState(false) 
   const todayStr                = useRef(new Date().toISOString().split('T')[0])
   const loadedUserIdRef         = useRef<string | null>(null)
@@ -78,6 +80,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     if (!session) {
       setTasks([])
       setLoading(false)
+      setIsTruncated(false)
       loadedUserIdRef.current = null
       isLoadingRef.current = false
       return
@@ -93,6 +96,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     // Different user logged in — clear stale cached data
     if (loadedUserIdRef.current && loadedUserIdRef.current !== session.user.id) {
       setTasks([])
+      setIsTruncated(false)
       clearApiCache()
       setCurrentUser(null)
       db.tasks.clear().catch(() => {})
@@ -105,16 +109,19 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
     const yester = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]
 
     try {
-      const [todayData, yesterData] = await Promise.all([
-        api.getTasks(today),
-        api.getTasks(yester).catch(() => [] as BackendTask[]),
+      const [todayResult, yesterResult] = await Promise.all([
+        api.getTasksWithMeta(today),
+        api.getTasksWithMeta(yester).catch(() => ({ tasks: [] as BackendTask[], truncated: false })),
       ])
+      const todayData  = todayResult.tasks
+      const yesterData = yesterResult.tasks
 
       // Write to Dexie for offline access
       db.tasks.bulkPut([...todayData, ...yesterData]).catch(() => {})
 
       loadedUserIdRef.current = session.user.id
       setIsOffline(false)
+      setIsTruncated(todayResult.truncated || yesterResult.truncated)
       setTasks([
         ...todayData.map(t  => toUITask(t, today)),
         ...yesterData.map(t => toUITask(t, today)),
@@ -424,7 +431,7 @@ export function TaskProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <TaskContext.Provider value={{
-      tasks, loading, error, isOffline,
+      tasks, loading, error, isOffline, isTruncated,
       updateStatus, moveToEnd, addTask, reactivateTask, refresh: () => load(true),
       todayTasks, doneTodayCount, totalTodayCount,
       setActive: setIsActive,  // ← expose it

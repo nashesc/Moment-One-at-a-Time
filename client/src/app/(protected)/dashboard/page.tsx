@@ -20,6 +20,10 @@ import StuckSheet from '@/components/dashboard/StuckSheet'
 
 type FocusState = 'idle' | 'focusing' | 'done'
 
+function focusStorageKey(userId: string) {
+  return `moment_focused_task_${userId}_${new Date().toISOString().split('T')[0]}`
+}
+
 export default function DashboardPage() {
   useActivateTasks()
   const { todayTasks, updateStatus, moveToEnd, doneTodayCount, totalTodayCount, loading, error, refresh, isOffline } = useTasks()
@@ -39,6 +43,15 @@ export default function DashboardPage() {
   const [showPicker, setShowPicker] = useState(true)
   const [forceFocusView, setForceFocusView] = useState(false)
 
+  function persistFocus(userId: string | undefined, taskId: string | null) {
+    if (!userId) return
+    try {
+      const key = focusStorageKey(userId)
+      if (taskId) localStorage.setItem(key, taskId)
+      else localStorage.removeItem(key)
+    } catch {}
+  }
+
   // Auto-select the task if there's only one — no need to show the picker
   useEffect(() => {
   if (loading) return
@@ -53,13 +66,32 @@ export default function DashboardPage() {
     return
   }
 
+  // Restore a previously-picked but not-yet-started task too — otherwise
+  // every navigation away and back re-shows the picker despite the user
+  // already having chosen.
+  if (profile?.id) {
+    try {
+      const storedId = localStorage.getItem(focusStorageKey(profile.id))
+      if (storedId) {
+        const restored = activeTasks.find(t => t.id === storedId)
+        if (restored) {
+          setFocused(restored)
+          setFocusState('idle')
+          setShowPicker(false)
+          return
+        }
+      }
+    } catch {}
+  }
+
   // Auto-select when only one task remains (skip picker)
   if (showPicker && activeTasks.length === 1) {
     setFocused(activeTasks[0])
     setFocusState('idle')
     setShowPicker(false)
+    persistFocus(profile?.id, activeTasks[0].id)
   }
-}, [loading, activeTasks, focused, showPicker])
+}, [loading, activeTasks, focused, showPicker, profile?.id])
 
 
   const now      = new Date()
@@ -74,6 +106,7 @@ export default function DashboardPage() {
     setFocused(task)
     setFocusState('idle')
     setShowPicker(false)
+    persistFocus(profile?.id, task.id)
   }
 
   function handleMainBtn() {
@@ -97,8 +130,8 @@ export default function DashboardPage() {
     updateStatus(currentTask.id, 'skipped', { durationSeconds })
     setOverlayOpen(false)
     const next = activeTasks.find(t => t.id !== currentTask.id)
-    if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
+    if (next) { setFocused(next); setFocusState('idle'); persistFocus(profile?.id, next.id) }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false); persistFocus(profile?.id, null) }
   }
 
   function handleOverlayStuck(durationSeconds: number, reason?: string) {
@@ -107,8 +140,8 @@ export default function DashboardPage() {
     moveToEnd(currentTask.id)
     setOverlayOpen(false)
     const next = activeTasks.find(t => t.id !== currentTask.id)
-    if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
+    if (next) { setFocused(next); setFocusState('idle'); persistFocus(profile?.id, next.id) }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false); persistFocus(profile?.id, null) }
   }
 
   const [stuckSheetOpen, setStuckSheetOpen] = useState(false)
@@ -125,22 +158,22 @@ export default function DashboardPage() {
     moveToEnd(currentTask.id)
     setStuckSheetOpen(false)
     const next = activeTasks.find(t => t.id !== currentTask.id)
-    if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
+    if (next) { setFocused(next); setFocusState('idle'); persistFocus(profile?.id, next.id) }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false); persistFocus(profile?.id, null) }
   }
 
   function handleSkip() {
     if (!currentTask) return
     updateStatus(currentTask.id, 'skipped')
     const next = activeTasks.find(t => t.id !== currentTask.id)
-    if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
+    if (next) { setFocused(next); setFocusState('idle'); persistFocus(profile?.id, next.id) }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false); persistFocus(profile?.id, null) }
   }
 
   function handleNext() {
     const next = activeTasks.find(t => t.id !== currentTask?.id)
-    if (next) { setFocused(next); setFocusState('idle') }
-    else { setFocused(null); setFocusState('idle'); setForceFocusView(false) }
+    if (next) { setFocused(next); setFocusState('idle'); persistFocus(profile?.id, next.id) }
+    else { setFocused(null); setFocusState('idle'); setForceFocusView(false); persistFocus(profile?.id, null) }
     setShowPicker(false)
   }
 
@@ -466,6 +499,7 @@ export default function DashboardPage() {
             setFocusState('idle')
             setFocused(null)
             setShowPicker(true)
+            persistFocus(profile?.id, null)
           })}
           className="fixed right-5 md:right-8 w-14 h-14 rounded-full text-white flex items-center justify-center z-40 will-change-transform active:scale-95"
           style={{

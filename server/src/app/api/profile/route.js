@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { getUser } from '@/lib/auth'
 import { writeLimiter } from '@/lib/ratelimit'
 import { optionsResponse, json } from '@/lib/cors'
@@ -26,10 +27,18 @@ export async function PATCH(request) {
     if (!parsed.success) return json({ error: parsed.error.issues[0].message }, { status: 400 }, request)
 
     if (parsed.data.email && parsed.data.email !== user.email) {
-      const { error: authError } = await supabase.auth.admin.updateUserById(user.id, {
-        email: parsed.data.email,
-        email_confirm: false, // sends confirmation link, doesn't apply immediately
-      })
+      // Service-role admin.updateUserById changes auth.users.email immediately,
+      // confirmed or not — that's an account-takeover vector if a token leaks.
+      // Use a client scoped to the requester's own token instead, so Supabase's
+      // built-in secure-email-change flow runs: it sends a confirmation to the
+      // new address and the email doesn't take effect until that's clicked.
+      const token = request.headers.get('authorization')?.split(' ')[1]
+      const userClient = createSupabaseClient(
+        process.env.SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        { global: { headers: { Authorization: `Bearer ${token}` } } }
+      )
+      const { error: authError } = await userClient.auth.updateUser({ email: parsed.data.email })
       if (authError) return json({ error: 'Could not update email. Please try again.' }, { status: 400 }, request)
     }
 

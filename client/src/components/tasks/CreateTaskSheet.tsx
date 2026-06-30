@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Clock, Flag } from 'lucide-react'
 import { useTasks } from '@/context/TaskContext'
+import { useAuth } from '@/context/AuthContext'
 import ProGateModal from '@/components/plan/ProGateModal'
 
 interface CreateTaskSheetProps {
@@ -21,6 +22,7 @@ const TIME_OPTIONS = [15, 30, 45, 60, 90, 120]
 
 export default function CreateTaskSheet({ open, onClose, onCreated }: CreateTaskSheetProps) {
   const { addTask } = useTasks()
+  const { profile } = useAuth()
   const [title, setTitle]       = useState('')
   const [description, setDesc]  = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -33,14 +35,15 @@ export default function CreateTaskSheet({ open, onClose, onCreated }: CreateTask
   const [minutes, setMinutes] = useState<number>(30)
 
   useEffect(() => {
-    const storedPriority = localStorage.getItem('moment_task_sheet_priority')
+    if (!profile?.id) return
+    const storedPriority = localStorage.getItem(`moment_task_sheet_priority_${profile.id}`)
     const parsedPriority = storedPriority ? parseInt(storedPriority) : NaN
     if ([1, 2, 3].includes(parsedPriority)) setPriority(parsedPriority as 1 | 2 | 3)
 
-    const storedMinutes = localStorage.getItem('moment_task_sheet_minutes')
+    const storedMinutes = localStorage.getItem(`moment_task_sheet_minutes_${profile.id}`)
     const parsedMinutes = storedMinutes ? parseInt(storedMinutes) : NaN
     if ([15, 30, 45, 60, 90, 120].includes(parsedMinutes)) setMinutes(parsedMinutes)
-  }, [])
+  }, [profile?.id])
 
   // Focus title on open
   useEffect(() => {
@@ -209,7 +212,7 @@ export default function CreateTaskSheet({ open, onClose, onCreated }: CreateTask
                       type="button"
                       onClick={() => {
                         setPriority(p.value)
-                        localStorage.setItem('moment_task_sheet_priority', String(p.value))
+                        if (profile?.id) localStorage.setItem(`moment_task_sheet_priority_${profile.id}`, String(p.value))
                       }}
                       className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-3 text-[13px] font-medium transition-all duration-150"
                       style={{
@@ -241,7 +244,7 @@ export default function CreateTaskSheet({ open, onClose, onCreated }: CreateTask
                       type="button"
                       onClick={() => {
                         setMinutes(t)
-                        localStorage.setItem('moment_task_sheet_minutes', String(t))
+                        if (profile?.id) localStorage.setItem(`moment_task_sheet_minutes_${profile.id}`, String(t))
                       }}
                       className="rounded-full px-4 py-2 text-[13px] font-medium transition-all duration-150"
                       style={{

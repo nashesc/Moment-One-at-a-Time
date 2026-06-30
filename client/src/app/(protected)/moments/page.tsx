@@ -15,7 +15,11 @@ type Tab = typeof TABS[number]
 
 export default function MomentsPage() {
   useActivateTasks()
-  const { tasks, doneTodayCount, totalTodayCount, loading, error, refresh, updateStatus, reactivateTask } = useTasks()
+  const { 
+    tasks, doneTodayCount, totalTodayCount, 
+    loading, error, refresh, updateStatus, 
+    reactivateTask, isTruncated 
+  } = useTasks()
   const { prefs, setPref } = useSettings()
   const [tab, setTab]         = useState<Tab>('All')
   const { base, liftPx } = useFabOffset()
@@ -99,6 +103,14 @@ export default function MomentsPage() {
             </button>
           )}
         </div>
+
+        {/* Truncation notice */}
+        {!loading && isTruncated && (
+          <div className="mx-5 md:mx-8 mt-4 rounded-2xl px-4 py-3 text-[12px]"
+            style={{ background: '#FAEEDA', color: '#854F0B', border: '1px solid #EDD59A' }}>
+            Showing the most recent 200 tasks for this day — older ones aren't displayed.
+          </div>
+        )}
 
         {/* Progress card */}
         {!loading && totalTodayCount > 0 && (
