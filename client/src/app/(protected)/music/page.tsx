@@ -88,6 +88,25 @@ export default function MusicPage() {
     setGateOpen(true)
   }, [])
 
+  const hasMountedRef = useRef(false)
+
+  useEffect(() => {
+    if (!hasMountedRef.current) { hasMountedRef.current = true; return }
+    if (activeTab === prevTabRef.current) return
+    const dir = TAB_INDEX[activeTab] > TAB_INDEX[prevTabRef.current] ? 'right' : 'left'
+    prevTabRef.current = activeTab
+    const el = trackListRef.current
+    if (!el) return
+    el.getAnimations().forEach(a => a.cancel())
+    el.animate(
+      [
+        { transform: `translateX(${dir === 'right' ? 20 : -20}px)`, opacity: 0 },
+        { transform: 'translateX(0)', opacity: 1 },
+      ],
+      { duration: 180, easing: 'cubic-bezier(0.4,0,0.2,1)', fill: 'both' }
+    )
+  }, [activeTab])
+
   // Tracks shown in the CENTER active-category list (mobile + desktop center)
   const tabTracks = useMemo(() => {
     if (activeTab === 'favorites') {

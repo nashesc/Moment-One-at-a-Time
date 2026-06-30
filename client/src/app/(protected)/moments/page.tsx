@@ -32,7 +32,9 @@ export default function MomentsPage() {
   const todayFiltered     = filterByTab(todayAll).slice().reverse()
   const yesterdayFiltered = filterByTab(yesterdayAll).slice().reverse()
   const momentumPct       = totalTodayCount === 0 ? 0 : Math.round((doneTodayCount / totalTodayCount) * 100)
-  
+
+  const hasMountedRef = useRef(false)
+
   function filterByTab(list: typeof tasks) {
     if (tab === 'Pending') return list.filter(t => t.status === 'pending' || t.status === 'in_progress')
     if (tab === 'Done')    return list.filter(t => t.status === 'done')
@@ -40,6 +42,23 @@ export default function MomentsPage() {
     return list
   }
 
+  useEffect(() => {
+    if (!hasMountedRef.current) { hasMountedRef.current = true; return }
+    if (tab === prevTabRef.current) return
+    const dir = TAB_INDEX[tab] > TAB_INDEX[prevTabRef.current] ? 'right' : 'left'
+    prevTabRef.current = tab
+    const el = contentRef.current
+    if (!el) return
+    el.getAnimations().forEach(a => a.cancel())
+    el.animate(
+      [
+        { transform: `translateX(${dir === 'right' ? 20 : -20}px)`, opacity: 0 },
+        { transform: 'translateX(0)', opacity: 1 },
+      ],
+      { duration: 180, easing: 'cubic-bezier(0.4,0,0.2,1)', fill: 'both' }
+    )
+  }, [tab])
+  
   useEffect(() => {
     if (tab === prevTabRef.current) return
     const dir = TAB_INDEX[tab] > TAB_INDEX[prevTabRef.current] ? 'right' : 'left'

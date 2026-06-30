@@ -215,6 +215,9 @@ const { base, liftPx } = useFabOffset()
   const PERIOD_INDEX: Record<Period, number> = { daily: 0, weekly: 1, monthly: 2, yearly: 3 }
   const VIEW_INDEX:   Record<View,   number> = { recap: 0, reflections: 1 }
 
+  const hasMountedPeriodRef = useRef(false)
+  const hasMountedViewRef = useRef(false)
+
   function animateRef(ref: React.RefObject<HTMLDivElement | null>, dir: 'left' | 'right') {
     const el = ref.current
     if (!el) return
@@ -227,6 +230,22 @@ const { base, liftPx } = useFabOffset()
       { duration: 180, easing: 'cubic-bezier(0.4,0,0.2,1)', fill: 'both' }
     )
   }
+
+  useEffect(() => {
+    if (!hasMountedPeriodRef.current) { hasMountedPeriodRef.current = true; return }
+    if (period === prevPeriodRef.current) return
+    const dir = PERIOD_INDEX[period] > PERIOD_INDEX[prevPeriodRef.current] ? 'right' : 'left'
+    prevPeriodRef.current = period
+    animateRef(recapContentRef, dir)
+  }, [period])
+
+  useEffect(() => {
+    if (!hasMountedViewRef.current) { hasMountedViewRef.current = true; return }
+    if (view === prevViewRef.current) return
+    const dir = VIEW_INDEX[view] > VIEW_INDEX[prevViewRef.current] ? 'right' : 'left'
+    prevViewRef.current = view
+    animateRef(view === 'reflections' ? reflectionsContentRef : recapContentRef, dir)
+  }, [view])
 
   useEffect(() => {
     if (period === prevPeriodRef.current) return

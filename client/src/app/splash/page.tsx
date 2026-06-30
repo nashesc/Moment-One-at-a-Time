@@ -8,8 +8,6 @@ import { createClient } from '@/lib/supabase/client'
 import { Leaf } from 'lucide-react'
 
 export default function SplashPage() {
-  // Starts null on server and on first client render — picked client-side
-  // only, so there's no SSR/client text mismatch regardless of fade timing.
   const [quote, setQuote] = useState<{ text: string; author: string | null } | null>(null)
   const [quoteVisible, setQuoteVisible] = useState(false)
   const router = useRouter()
@@ -54,10 +52,15 @@ export default function SplashPage() {
     >
       <div className="px-8 max-w-sm text-center">
         <div
-          className="mb-8 flex justify-center"
+          className="mb-6 flex justify-center"
           style={{ animation: 'leafFloat 3s ease-in-out infinite' }}
         >
-          <Leaf size={64} color="rgba(255,255,255,0.93)" strokeWidth={1.5} />
+          <div
+            className="flex items-center justify-center rounded-full"
+            style={{ width: 72, height: 72, background: 'rgba(255,255,255,0.12)' }}
+          >
+            <Leaf size={36} color="rgba(255,255,255,0.93)" strokeWidth={1.5} />
+          </div>
         </div>
 
         {quote && (
@@ -75,24 +78,17 @@ export default function SplashPage() {
               &ldquo;{quote.text}&rdquo;
             </p>
             {quote.author && (
-              <p
-                className="text-[12px] mb-10 uppercase tracking-widest"
-                style={{ color: 'rgba(255,255,255,0.4)' }}
-              >
-                — {quote.author}
+              <p className="text-[12px] mb-10 uppercase tracking-widest"
+                style={{ color: 'rgba(255,255,255,0.4)' }}>
+                - {quote.author} -
               </p>
             )}
             {!quote.author && <div className="mb-10" />}
           </div>
         )}
 
-        <p
-          className="text-[13px] tracking-wide"
-          style={{
-            color: 'rgba(255,255,255,0.35)',
-            animation: 'pulse 2.5s ease-in-out infinite',
-          }}
-        >
+        <p className="text-[13px] tracking-wide"
+          style={{ color: 'rgba(255,255,255,0.35)', animation: 'pulse 2.5s ease-in-out infinite' }}>
           Tap anywhere to continue
         </p>
       </div>
