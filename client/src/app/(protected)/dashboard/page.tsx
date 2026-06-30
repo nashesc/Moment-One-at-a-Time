@@ -154,13 +154,6 @@ export default function DashboardPage() {
     <>
       <div className="flex flex-col flex-1 min-w-0 relative">
         <div className="moment-col moment-col--center w-full">
-          {isOffline && (
-            <div className="mx-4 md:mx-8 rounded-2xl px-4 py-3 mt-3 text-[13px]"
-              style={{ background: '#FAEEDA', border: '1px solid #EDD59A', color: '#854F0B' }}>
-              You're offline — changes will sync when you reconnect.
-            </div>
-          )}
-
           {/* Mobile header */}
           <div className="md:hidden flex items-start justify-between px-5 pt-5 pb-2">
             <div>

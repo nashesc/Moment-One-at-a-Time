@@ -29,18 +29,18 @@ export default function CreateTaskSheet({ open, onClose, onCreated }: CreateTask
   const isSubmittingRef = useRef(false)
   const titleRef = useRef<HTMLInputElement>(null)
 
-  const [priority, setPriority] = useState<1 | 2 | 3>(() => {
-    if (typeof window === 'undefined') return 2
-    const stored = localStorage.getItem('moment_task_sheet_priority')
-    const parsed = stored ? parseInt(stored) : NaN
-    return ([1, 2, 3].includes(parsed) ? parsed : 2) as 1 | 2 | 3
-  })
-  const [minutes, setMinutes] = useState<number>(() => {
-    if (typeof window === 'undefined') return 30
-    const stored = localStorage.getItem('moment_task_sheet_minutes')
-    const parsed = stored ? parseInt(stored) : NaN
-    return [15, 30, 45, 60, 90, 120].includes(parsed) ? parsed : 30
-  })
+  const [priority, setPriority] = useState<1 | 2 | 3>(2)
+  const [minutes, setMinutes] = useState<number>(30)
+
+  useEffect(() => {
+    const storedPriority = localStorage.getItem('moment_task_sheet_priority')
+    const parsedPriority = storedPriority ? parseInt(storedPriority) : NaN
+    if ([1, 2, 3].includes(parsedPriority)) setPriority(parsedPriority as 1 | 2 | 3)
+
+    const storedMinutes = localStorage.getItem('moment_task_sheet_minutes')
+    const parsedMinutes = storedMinutes ? parseInt(storedMinutes) : NaN
+    if ([15, 30, 45, 60, 90, 120].includes(parsedMinutes)) setMinutes(parsedMinutes)
+  }, [])
 
   // Focus title on open
   useEffect(() => {

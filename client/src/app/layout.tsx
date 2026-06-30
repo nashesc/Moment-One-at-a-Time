@@ -11,6 +11,7 @@ import MiniPlayer from '@/components/music/MiniPlayer'
 import TrialBanner from '@/components/plan/TrialBanner'
 import TrialExpiryModal from '@/components/plan/TrialExpiryModal'
 import ServiceWorkerRegister from '@/components/ui/ServiceWorkerRegister'
+import OfflineBanner from '@/components/ui/OfflineBanner'
 import '@/app/globals.css'
 
 const playfair = Playfair_Display({
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <AuthProvider>
                   <TaskProvider>
                     <TrialBanner />
+                    <OfflineBanner />
                     {children}
                     <MiniPlayer />
                     <TrialExpiryModal />
