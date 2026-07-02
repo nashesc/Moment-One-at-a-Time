@@ -1,44 +1,62 @@
 import { createServerClient } from '@supabase/ssr'
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 import { Redis } from '@upstash/redis'
+import * as jose from 'jose'
+import { createHash } from 'crypto'
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 })
 
-// Module-level — created once per edge isolate, reused across requests
-const supabaseVerifier = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const CACHE_TTL = 60
+const REDIS_TIMEOUT_MS = 400
+
+// Supabase rotated to ECC (P-256) signing keys — static HS256 secret no
+// longer verifies current tokens. JWKS fetches the active key set and
+// handles future rotations without a redeploy.
+const JWKS = jose.createRemoteJWKSet(
+  new URL(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/.well-known/jwks.json`)
 )
 
-const CACHE_TTL = 60 // seconds — revoked tokens detected within this window
+function redisWith<T>(op: Promise<T>): Promise<T> {
+  return Promise.race([
+    op,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Redis timeout')), REDIS_TIMEOUT_MS)
+    ),
+  ])
+}
+
+async function verifyJwtLocally(token: string): Promise<{ id: string; email: string } | null> {
+  try {
+    const { payload } = await jose.jwtVerify(token, JWKS)
+    if (!payload.sub) return null
+    return { id: payload.sub, email: (payload.email as string) ?? '' }
+  } catch {
+    return null
+  }
+}
 
 async function getVerifiedUser(token: string): Promise<{ id: string; email: string } | null> {
-  const key = `mw:auth:${token.slice(0, 16)}`
+  const key = `mw:auth:${createHash('sha256').update(token).digest('hex')}`
 
-  // Cache hit — skip Supabase Auth network call entirely
   try {
-    const cached = await redis.get<{ id: string; email: string }>(key)
-    if (cached) return cached
+    const cached = await redisWith(redis.get<{ id: string; email: string }>(key))
+    if (cached) { console.log('[mw] cache hit'); return cached }
+    console.log('[mw] cache miss — verifying locally')
+
   } catch {
-    // Redis down — fall through to direct verification
+    // Redis slow/down — fall through to local verification
   }
 
-  // Cache miss — verify with Supabase Auth server
-  const { data: { user }, error } = await supabaseVerifier.auth.getUser(token)
-  if (error || !user) return null
+  // Local JWT verification — ~1ms, no network
+  const result = await verifyJwtLocally(token)
+  if (!result) return null
 
-  // Only cache valid results — revoked/invalid tokens are never cached
-  // so they keep hitting Supabase Auth until the cookie is cleared
-  const result = { id: user.id, email: user.email ?? '' }
   try {
-    await redis.setex(key, CACHE_TTL, result)
-  } catch {
-    // Redis down — continue without caching
-  }
+    await redisWith(redis.setex(key, CACHE_TTL, result))
+  } catch {}
 
   return result
 }

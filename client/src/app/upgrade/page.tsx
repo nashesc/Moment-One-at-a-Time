@@ -10,8 +10,35 @@ import { usePlan } from '@/context/PlanContext'
 import { useAuth } from '@/context/AuthContext'
 import { apiFetch } from '@/lib/api'
 
+interface PaddleCheckoutSettings {
+  displayMode: 'inline' | 'overlay'
+  frameTarget?: string
+  frameInitialHeight?: number
+  frameStyle?: string
+  allowLogout?: boolean
+  theme?: 'light' | 'dark'
+}
+
+interface PaddleCheckoutItem { priceId: string; quantity: number }
+
+interface PaddleCheckoutOpenOptions {
+  settings: PaddleCheckoutSettings
+  items: PaddleCheckoutItem[]
+  customer?: { email: string }
+  customData?: Record<string, string>
+  discountCode?: string
+}
+
+interface PaddleEvent { name: string; [key: string]: unknown }
+
+interface PaddleSDK {
+  Environment: { set: (env: 'sandbox' | 'production') => void }
+  Initialize: (options: { token: string | undefined; eventCallback: (event: PaddleEvent) => void }) => void
+  Checkout: { open: (options: PaddleCheckoutOpenOptions) => void }
+}
+
 declare global {
-  interface Window { Paddle: any }
+  interface Window { Paddle: PaddleSDK }
 }
 
 // ─── Price IDs ───────────────────────────────────────────────────────────────
